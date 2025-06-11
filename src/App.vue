@@ -1,8 +1,5 @@
 <template>
-  <div>
-    <header>
-      <h1>Enterprise System Hope Channel Indonesia - HRD</h1>
-    </header>
+  <div id="app">
     <router-view></router-view>
   </div>
 </template>
@@ -12,3 +9,7 @@ export default {
   name: 'App',
 };
 </script>
+
+<style>
+/* Global styles sudah di main.css */
+</style>

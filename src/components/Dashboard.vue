@@ -4,7 +4,7 @@
     <header class="header">
       <div class="header-content">
         <div class="logo-section">
-          <img src="/hopechannel.jpg" alt="Hope Channel Indonesia" class="logo" />
+          <img src="/hopechannel.png" alt="Hope Channel Indonesia" class="logo" />
           <div class="title-section">
             <h1>Hope Channel Indonesia</h1>
             <p>Enterprise HR Management System</p>
@@ -41,7 +41,7 @@
           <div class="stat-content">
             <h3>{{ activeEmployees }}</h3>
             <p>Karyawan Aktif</p>
-            <span class="stat-change positive">{{ Math.round((activeEmployees/employees.length)*100) }}% aktif</span>
+            <span class="stat-change positive">{{ Math.round((activeEmployees/employees.length)*100) || 0 }}% aktif</span>
           </div>
         </div>
         
@@ -168,7 +168,7 @@
                       <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn-icon delete" @click="deleteEmployee(employee.id)" title="Hapus">
-                      <i class="fas fa-trash"></i>
+                      <i class="fas fa-trash-alt"></i>
                     </button>
                   </div>
                 </td>
@@ -237,7 +237,7 @@ export default {
   },
   computed: {
     activeEmployees() {
-      return this.employees.length; // Semua karyawan dianggap aktif
+      return this.employees.length;
     },
     newEmployeesThisMonth() {
       const currentMonth = new Date().getMonth();

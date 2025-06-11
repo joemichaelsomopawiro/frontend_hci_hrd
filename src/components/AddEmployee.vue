@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="page-header">
       <div class="header-content">
-        <button @click="$router.go(-1)" class="back-btn">
+        <button @click="$router.go(-1)" class="back-btn" title="Kembali">
           <i class="fas fa-arrow-left"></i>
         </button>
         <div class="page-title">
@@ -348,18 +348,50 @@ export default {
     };
   },
   methods: {
+    validateForm() {
+      const requiredFields = [
+        'nama_lengkap', 'nik', 'tanggal_lahir', 'jenis_kelamin', 
+        'alamat', 'status_pernikahan', 'jabatan_saat_ini', 
+        'tanggal_mulai_kerja', 'tingkat_pendidikan', 'gaji_pokok'
+      ];
+      
+      for (let field of requiredFields) {
+        if (!this.form[field] || this.form[field].toString().trim() === '') {
+          this.showNotificationMessage(`Field ${field} harus diisi`, 'error');
+          return false;
+        }
+      }
+      
+      // Validasi NIK (16 digit)
+      if (this.form.nik.length !== 16) {
+        this.showNotificationMessage('NIK harus 16 digit', 'error');
+        return false;
+      }
+      
+      // Validasi gaji (harus angka positif)
+      if (isNaN(this.form.gaji_pokok) || this.form.gaji_pokok <= 0) {
+        this.showNotificationMessage('Gaji pokok harus berupa angka positif', 'error');
+        return false;
+      }
+      
+      return true;
+    },
+    
     handleFileUpload(event) {
       const files = Array.from(event.target.files);
       this.documents = [...this.documents, ...files];
     },
+    
     handleFileDrop(event) {
       event.preventDefault();
       const files = Array.from(event.dataTransfer.files);
       this.documents = [...this.documents, ...files];
     },
+    
     removeFile(index) {
       this.documents.splice(index, 1);
     },
+    
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -367,6 +399,7 @@ export default {
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
+    
     addEmploymentHistory() {
       this.employmentHistories.push({
         company_name: '',
@@ -375,9 +408,11 @@ export default {
         end_date: ''
       });
     },
+    
     removeEmploymentHistory(index) {
       this.employmentHistories.splice(index, 1);
     },
+    
     addTraining() {
       this.trainings.push({
         training_name: '',
@@ -386,9 +421,11 @@ export default {
         certificate_number: ''
       });
     },
+    
     removeTraining(index) {
       this.trainings.splice(index, 1);
     },
+    
     addBenefit() {
       this.benefits.push({
         benefit_type: '',
@@ -396,59 +433,98 @@ export default {
         start_date: ''
       });
     },
+    
     removeBenefit(index) {
       this.benefits.splice(index, 1);
     },
+    
+    debugRequest(formData) {
+      console.log('=== DEBUG REQUEST ===');
+      console.log('API URL:', `${this.apiUrl}/api/employees`);
+      console.log('Form Data Entries:');
+      
+      const entries = [];
+      for (let [key, value] of formData.entries()) {
+        entries.push({ key, value: value instanceof File ? `File: ${value.name}` : value });
+      }
+      console.table(entries);
+      
+      console.log('Documents count:', this.documents.length);
+      console.log('Employment histories count:', this.employmentHistories.length);
+      console.log('Trainings count:', this.trainings.length);
+      console.log('Benefits count:', this.benefits.length);
+      console.log('=== END DEBUG ===');
+    },
+    
     async submitForm() {
+      // Validasi form terlebih dahulu
+      if (!this.validateForm()) {
+        return;
+      }
+      
       this.isSubmitting = true;
       try {
         const formData = new FormData();
         
-        // Add form data
+        // Add basic form data dengan validasi
         Object.keys(this.form).forEach((key) => {
-          if (this.form[key]) formData.append(key, this.form[key]);
+          if (this.form[key] !== null && this.form[key] !== undefined && this.form[key] !== '') {
+            formData.append(key, this.form[key]);
+          }
         });
         
-        // Add documents
-        this.documents.forEach((file, index) => {
-          formData.append(`documents[${index}]`, file);
-        });
+        // Add documents dengan pengecekan yang lebih ketat
+        if (this.documents && this.documents.length > 0) {
+          this.documents.forEach((file, index) => {
+            formData.append(`documents[${index}]`, file);
+          });
+        }
 
-        // Add employment histories
-        this.employmentHistories.forEach((history, index) => {
-          if (history.company_name) {
-            Object.keys(history).forEach(key => {
-              if (history[key]) {
-                formData.append(`employment_histories[${index}][${key}]`, history[key]);
-              }
-            });
-          }
-        });
+        // Format employment histories dengan validasi
+        if (this.employmentHistories && this.employmentHistories.length > 0) {
+          this.employmentHistories.forEach((history, index) => {
+            if (history.company_name && history.company_name.trim() !== '') {
+              formData.append(`employment_histories[${index}][company_name]`, history.company_name);
+              if (history.position) formData.append(`employment_histories[${index}][position]`, history.position);
+              if (history.start_date) formData.append(`employment_histories[${index}][start_date]`, history.start_date);
+              if (history.end_date) formData.append(`employment_histories[${index}][end_date]`, history.end_date);
+            }
+          });
+        }
 
-        // Add trainings
-        this.trainings.forEach((training, index) => {
-          if (training.training_name) {
-            Object.keys(training).forEach(key => {
-              if (training[key]) {
-                formData.append(`trainings[${index}][${key}]`, training[key]);
-              }
-            });
-          }
-        });
+        // Format trainings dengan validasi
+        if (this.trainings && this.trainings.length > 0) {
+          this.trainings.forEach((training, index) => {
+            if (training.training_name && training.training_name.trim() !== '') {
+              formData.append(`trainings[${index}][training_name]`, training.training_name);
+              if (training.institution) formData.append(`trainings[${index}][institution]`, training.institution);
+              if (training.completion_date) formData.append(`trainings[${index}][completion_date]`, training.completion_date);
+              if (training.certificate_number) formData.append(`trainings[${index}][certificate_number]`, training.certificate_number);
+            }
+          });
+        }
 
-        // Add benefits
-        this.benefits.forEach((benefit, index) => {
-          if (benefit.benefit_type) {
-            Object.keys(benefit).forEach(key => {
-              if (benefit[key]) {
-                formData.append(`benefits[${index}][${key}]`, benefit[key]);
-              }
-            });
-          }
-        });
+        // Format benefits dengan validasi
+        if (this.benefits && this.benefits.length > 0) {
+          this.benefits.forEach((benefit, index) => {
+            if (benefit.benefit_type && benefit.benefit_type.trim() !== '') {
+              formData.append(`benefits[${index}][benefit_type]`, benefit.benefit_type);
+              formData.append(`benefits[${index}][amount]`, benefit.amount || '0');
+              if (benefit.start_date) formData.append(`benefits[${index}][start_date]`, benefit.start_date);
+            }
+          });
+        }
+
+        // Debug: Log formData content
+        this.debugRequest(formData);
 
         const response = await axios.post(`${this.apiUrl}/api/employees`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          timeout: 30000, // 30 second timeout
         });
 
         this.showNotificationMessage('Data karyawan berhasil disimpan!', 'success');
@@ -456,15 +532,34 @@ export default {
           this.$router.push('/');
         }, 2000);
       } catch (error) {
-        console.error('Error submitting form:', error);
-        this.showNotificationMessage(
-          error.response?.data?.message || 'Gagal menyimpan data karyawan.',
-          'error'
-        );
+        console.error('Full error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          headers: error.response?.headers,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            headers: error.config?.headers
+          }
+        });
+        
+        let errorMessage = 'Gagal menyimpan data karyawan.';
+        
+        if (error.response?.status === 500) {
+          errorMessage = 'Server error. Periksa koneksi dan coba lagi.';
+        } else if (error.response?.status === 422) {
+          errorMessage = 'Data tidak valid. Periksa form dan coba lagi.';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        this.showNotificationMessage(errorMessage, 'error');
       } finally {
         this.isSubmitting = false;
       }
     },
+    
     showNotificationMessage(message, type) {
       this.notificationMessage = message;
       this.notificationType = type;
