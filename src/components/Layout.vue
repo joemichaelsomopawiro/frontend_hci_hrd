@@ -56,8 +56,8 @@
               </div>
             </a>
             <ul class="submenu" :class="{ 'submenu-open': submenuOpen.dataPegawai }">
-              <li><router-link to="/employees" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
-              <li><router-link to="/add-employee" class="submenu-link" @click="closeMobileMenu">Ubah Data Pegawai</router-link></li>
+              <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
+              <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai</router-link></li>
             </ul>
           </li>
           <li class="nav-item has-submenu">

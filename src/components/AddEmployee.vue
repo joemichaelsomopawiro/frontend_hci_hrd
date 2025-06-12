@@ -7,7 +7,7 @@
           <i class="fas fa-arrow-left"></i>
         </button>
         <div class="page-title">
-          <h1>Tambah Karyawan Baru</h1>
+          <h1>Tambah Pegawai Baru</h1>
           <p>Hope Channel Indonesia - Enterprise HR System</p>
         </div>
       </div>

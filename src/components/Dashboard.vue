@@ -53,141 +53,66 @@
       <div class="action-section">
         <div class="section-header">
           <h2>Manajemen Karyawan</h2>
-          <router-link to="/add-employee" class="btn-primary">
-            <i class="fas fa-plus"></i>
-            Tambah Karyawan Baru
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Employee Table -->
-      <div class="table-section">
-        <div class="table-header">
-          <h3>Daftar Karyawan</h3>
-          <div class="table-controls">
-            <input 
-              type="text" 
-              placeholder="Cari karyawan..." 
-              v-model="searchQuery"
-              class="search-input"
-            />
-            <select v-model="filterDepartment" class="filter-select">
-              <option value="">Semua Departemen</option>
-              <option value="IT">IT</option>
-              <option value="HR">HR</option>
-              <option value="Finance">Finance</option>
-              <option value="Production">Production</option>
-              <option value="Marketing">Marketing</option>
-            </select>
+          <div class="action-buttons">
+            <router-link to="/lihat-data-pegawai" class="btn-secondary">
+              <i class="fas fa-list"></i>
+              Lihat Data Pegawai
+            </router-link>
+            <router-link to="/tambah-pegawai-baru" class="btn-primary">
+              <i class="fas fa-plus"></i>
+              Tambah Pegawai Baru
+            </router-link>
           </div>
         </div>
         
-        <div class="table-container" v-if="filteredEmployees.length">
-          <table class="modern-table">
-            <thead>
-              <tr>
-                <th>Nama Lengkap</th>
-                <th>NIK</th>
-                <th>NIP</th>
-                <th>Jabatan</th>
-                <th>Gaji Total</th>
-                <th>Pelatihan</th>
-                <th>Dokumen</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="employee in paginatedEmployees" :key="employee.id" class="table-row">
-                <td>
-                  <div class="employee-info">
-                    <strong>{{ employee.nama_lengkap }}</strong>
-                    <small>{{ employee.tingkat_pendidikan }}</small>
-                  </div>
-                </td>
-                <td>{{ employee.nik }}</td>
-                <td>{{ employee.nip || '-' }}</td>
-                <td>
-                  <span class="job-title">{{ employee.jabatan_saat_ini }}</span>
-                </td>
-                <td>
-                  <div class="salary-info">
-                    <strong>Rp {{ formatCurrency(calculateTotalSalary(employee)) }}</strong>
-                    <small>Gaji: {{ formatCurrency(employee.gaji_pokok) }}</small>
-                  </div>
-                </td>
-                <td>
-                  <span class="training-count">
-                    {{ employee.trainings ? employee.trainings.length : 0 }} pelatihan
-                  </span>
-                </td>
-                <td>
-                  <div class="documents-list">
-                    <span v-if="employee.documents && employee.documents.length" class="doc-count">
-                      {{ employee.documents.length }} dokumen
-                      <div class="doc-tooltip">
-                        <a
-                          v-for="doc in employee.documents"
-                          :key="doc.id"
-                          :href="`${apiUrl}/storage/${doc.file_path}`"
-                          target="_blank"
-                          class="doc-link"
-                        >
-                          <i class="fas fa-file-pdf"></i>
-                          {{ doc.document_type }}
-                        </a>
-                      </div>
-                    </span>
-                    <span v-else class="no-docs">Tidak ada</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <button class="btn-icon view" @click="viewEmployee(employee.id)" title="Lihat Detail">
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-icon edit" @click="editEmployee(employee.id)" title="Edit">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-icon delete" @click="deleteEmployee(employee.id)" title="Hapus">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div v-else class="empty-state">
-          <i class="fas fa-users"></i>
-          <h3>Belum ada data karyawan</h3>
-          <p>Mulai dengan menambahkan karyawan pertama Anda</p>
-          <router-link to="/add-employee" class="btn-primary">
-            Tambah Karyawan
-          </router-link>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination" v-if="totalPages > 1">
-          <button 
-            @click="currentPage--" 
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <span class="pagination-info">
-            Halaman {{ currentPage }} dari {{ totalPages }}
-          </span>
-          <button 
-            @click="currentPage++" 
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
-            <i class="fas fa-chevron-right"></i>
-          </button>
+        <!-- Quick Actions Card -->
+        <div class="quick-actions-card">
+          <h3>Aksi Cepat</h3>
+          <div class="quick-actions-grid">
+            <router-link to="/lihat-data-pegawai" class="quick-action-item">
+              <div class="quick-action-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="quick-action-content">
+                <h4>Data Pegawai</h4>
+                <p>Lihat dan kelola semua data pegawai</p>
+              </div>
+            </router-link>
+            
+            <router-link to="/tambah-pegawai-baru" class="quick-action-item">
+              <div class="quick-action-icon">
+                <i class="fas fa-user-plus"></i>
+              </div>
+              <div class="quick-action-content">
+                <h4>Tambah Pegawai</h4>
+                <p>Daftarkan pegawai baru ke sistem</p>
+              </div>
+            </router-link>
+            
+            <div class="quick-action-item" @click="generateReport">
+              <div class="quick-action-icon">
+                <i class="fas fa-chart-bar"></i>
+              </div>
+              <div class="quick-action-content">
+                <h4>Laporan</h4>
+                <p>Generate laporan pegawai</p>
+              </div>
+            </div>
+            
+            <div class="quick-action-item" @click="exportData">
+              <div class="quick-action-icon">
+                <i class="fas fa-download"></i>
+              </div>
+              <div class="quick-action-content">
+                <h4>Export Data</h4>
+                <p>Download data dalam format Excel</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+
     </div>
 
     <!-- Notification -->
@@ -206,10 +131,6 @@ export default {
   data() {
     return {
       employees: [],
-      searchQuery: '',
-      filterDepartment: '',
-      currentPage: 1,
-      itemsPerPage: 10,
       apiUrl: 'http://localhost:8000',
       showNotification: false,
       notificationMessage: '',
@@ -218,7 +139,7 @@ export default {
   },
   computed: {
     activeEmployees() {
-      return this.employees.length;
+      return this.employees.filter(emp => emp.status === 'active' || !emp.status).length;
     },
     newEmployeesThisMonth() {
       const currentMonth = new Date().getMonth();
@@ -237,33 +158,6 @@ export default {
       return this.employees.reduce((total, emp) => {
         return total + this.calculateTotalSalary(emp);
       }, 0);
-    },
-    filteredEmployees() {
-      let filtered = this.employees;
-      
-      if (this.searchQuery) {
-        filtered = filtered.filter(emp => 
-          emp.nama_lengkap.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          emp.nik.includes(this.searchQuery) ||
-          emp.jabatan_saat_ini.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-      }
-      
-      if (this.filterDepartment) {
-        filtered = filtered.filter(emp => 
-          emp.jabatan_saat_ini.toLowerCase().includes(this.filterDepartment.toLowerCase())
-        );
-      }
-      
-      return filtered;
-    },
-    paginatedEmployees() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredEmployees.slice(start, end);
-    },
-    totalPages() {
-      return Math.ceil(this.filteredEmployees.length / this.itemsPerPage);
     }
   },
   mounted() {
@@ -273,45 +167,45 @@ export default {
     async fetchEmployees() {
       try {
         const response = await axios.get(`${this.apiUrl}/api/employees`);
-        this.employees = response.data;
+        this.employees = response.data.data || response.data || [];
       } catch (error) {
         console.error('Error fetching employees:', error);
         this.showNotificationMessage('Gagal mengambil data karyawan', 'error');
+        this.employees = [];
       }
     },
     calculateTotalSalary(employee) {
       const gaji = parseFloat(employee.gaji_pokok) || 0;
-      const tunjangan = parseFloat(employee.tunjangan) || 0;
+      const tunjangan = parseFloat(employee.tunjangan_jabatan) || 0;
       const bonus = parseFloat(employee.bonus) || 0;
       return gaji + tunjangan + bonus;
     },
     formatCurrency(amount) {
       return new Intl.NumberFormat('id-ID').format(amount);
     },
-    viewEmployee(id) {
-      this.$router.push(`/employee/${id}`);
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     },
-    editEmployee(id) {
-      this.$router.push(`/edit-employee/${id}`);
+
+    generateReport() {
+      this.showNotificationMessage('Fitur laporan akan segera tersedia', 'info');
     },
-    async deleteEmployee(id) {
-      if (confirm('Apakah Anda yakin ingin menghapus karyawan ini beserta semua data terkait?')) {
-        try {
-          await axios.delete(`${this.apiUrl}/api/employees/${id}`);
-          this.fetchEmployees();
-          this.showNotificationMessage('Karyawan berhasil dihapus', 'success');
-        } catch (error) {
-          this.showNotificationMessage('Gagal menghapus karyawan', 'error');
-        }
-      }
+    exportData() {
+      this.showNotificationMessage('Fitur export data akan segera tersedia', 'info');
     },
-    showNotificationMessage(message, type) {
+    showNotificationMessage(message, type = 'success') {
       this.notificationMessage = message;
       this.notificationType = type;
       this.showNotification = true;
       setTimeout(() => {
         this.showNotification = false;
-      }, 5000);
+      }, 3000);
     }
   },
 };
@@ -413,17 +307,24 @@ export default {
   margin-bottom: 1.5rem;
 }
 
-.section-header h2 {
+.section-header h2, .section-header h3 {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--gray-900);
+  margin: 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
   color: white;
-  padding: 0.75rem 1.5rem;
   border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
   text-decoration: none;
@@ -437,6 +338,184 @@ export default {
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Quick Actions Card */
+.quick-actions-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.quick-actions-card h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.quick-action-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid var(--gray-100);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.quick-action-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.quick-action-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.quick-action-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.quick-action-content p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+/* Recent Activity Section */
+.recent-activity-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.view-all-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.view-all-link:hover {
+  text-decoration: underline;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--gray-100);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.activity-item:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-200);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.activity-content p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.activity-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.empty-activity {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--gray-500);
+}
+
+.empty-activity i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--gray-300);
+}
+
+.empty-activity p {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
 }
 
 /* Search and Filter */
@@ -592,20 +671,26 @@ export default {
 }
 
 .btn-icon {
-  width: 36px;
-  height: 36px;
+  width: 35px;
+  height: 35px;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.875rem;
 }
 
 .btn-icon.view {
-  background-color: rgba(6, 182, 212, 0.1);
-  color: var(--info-color);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+}
+
+.btn-icon.view:hover {
+  background: rgba(37, 99, 235, 0.2);
+  transform: translateY(-1px);
 }
 
 .btn-icon.edit {
@@ -689,12 +774,12 @@ export default {
 /* Notification */
 .notification {
   position: fixed;
-  top: 2rem;
-  right: 2rem;
+  top: 20px;
+  right: 20px;
   padding: 1rem 1.5rem;
   border-radius: 8px;
   color: white;
-  font-weight: 500;
+  font-weight: 600;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -703,11 +788,15 @@ export default {
 }
 
 .notification.success {
-  background-color: var(--success-color);
+  background: var(--success-color);
 }
 
 .notification.error {
-  background-color: var(--error-color);
+  background: var(--error-color);
+}
+
+.notification.info {
+  background: var(--info-color);
 }
 
 @keyframes slideIn {
