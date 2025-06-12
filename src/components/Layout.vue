@@ -18,7 +18,7 @@
             <img src="/hopechannel.jpg" alt="Hope Channel" class="logo" />
           </div>
           <div class="title-section">
-            <h2>online system</h2>
+            <h2>Enterprise System</h2>
           </div>
         </div>
         <button 
@@ -56,8 +56,13 @@
               </div>
             </a>
             <ul class="submenu" :class="{ 'submenu-open': submenuOpen.dataPegawai }">
+<<<<<<< HEAD
               <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
               <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai</router-link></li>
+=======
+              <li><router-link to="/employees" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
+              <li><router-link to="/add-employee" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai Baru</router-link></li>
+>>>>>>> 44e707367f8f1238b47fb2999a42596cf141372e
             </ul>
           </li>
           <li class="nav-item has-submenu">
