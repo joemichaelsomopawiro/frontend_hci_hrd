@@ -3,6 +3,10 @@ import Dashboard from '../components/Dashboard.vue'
 import AddEmployee from '../components/AddEmployee.vue'
 import ViewEmployee from '../components/ViewEmployee.vue'
 import EditEmployee from '../components/EditEmployee.vue'
+import Attendance from '../components/Attendance.vue'
+import WorkHoursSummary from '../components/WorkHoursSummary.vue'
+import DashboardCuti from '../components/DashboardCuti.vue'
+import LeaveDashboard from '../components/LeaveDashboard.vue'
 
 const routes = [
   {
@@ -24,6 +28,29 @@ const routes = [
     path: '/edit-employee/:id',
     name: 'EditEmployee',
     component: EditEmployee
+  },
+  // FITUR 1: Absensi (masuk, izin, sakit, cuti, lembur)
+  {
+    path: '/absensi',
+    name: 'Attendance',
+    component: Attendance
+  },
+  // FITUR 2: Rekapitulasi jam kerja
+  {
+    path: '/rekapitulasi',
+    name: 'WorkHoursSummary',
+    component: WorkHoursSummary
+  },
+  // FITUR 3: Dashboard cuti & absensi
+  {
+    path: '/dashboard-cuti',
+    name: 'DashboardCuti',
+    component: DashboardCuti
+  },
+  {
+    path: '/leave-dashboard',
+    name: 'LeaveDashboard',
+    component: LeaveDashboard
   }
 ]
 
