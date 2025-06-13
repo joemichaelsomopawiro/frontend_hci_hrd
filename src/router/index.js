@@ -3,30 +3,17 @@ import Dashboard from '../components/Dashboard.vue'
 import AddEmployee from '../components/AddEmployee.vue'
 import ViewEmployee from '../components/ViewEmployee.vue'
 import EditEmployee from '../components/EditEmployee.vue'
-<<<<<<< HEAD
 import EmployeeList from '../components/EmployeeList.vue'
-=======
 import Attendance from '../components/Attendance.vue'
 import WorkHoursSummary from '../components/WorkHoursSummary.vue'
 import DashboardCuti from '../components/DashboardCuti.vue'
 import LeaveDashboard from '../components/LeaveDashboard.vue'
->>>>>>> 44e707367f8f1238b47fb2999a42596cf141372e
 
 const routes = [
   {
     path: '/',
     name: 'Dashboard',
     component: Dashboard
-  },
-  {
-    path: '/data-pegawai',
-    name: 'EmployeeList',
-    component: EmployeeList
-  },
-  {
-    path: '/tambah-pegawai',
-    name: 'AddEmployee',
-    component: AddEmployee
   },
   {
     path: '/lihat-data-pegawai',
