@@ -8,12 +8,24 @@ import Attendance from '../components/Attendance.vue'
 import WorkHoursSummary from '../components/WorkHoursSummary.vue'
 import DashboardCuti from '../components/DashboardCuti.vue'
 import LeaveDashboard from '../components/LeaveDashboard.vue'
+import InputJatahCuti from '../components/InputJatahCuti.vue'
+import PenerimaanPermohonanCuti from '../components/PenerimaanPermohonanCuti.vue'
 
 const routes = [
   {
     path: '/',
     name: 'Dashboard',
     component: Dashboard
+  },
+  {
+    path: '/data-pegawai',
+    name: 'EmployeeList',
+    component: EmployeeList
+  },
+  {
+    path: '/tambah-pegawai',
+    name: 'AddEmployee',
+    component: AddEmployee
   },
   {
     path: '/lihat-data-pegawai',
@@ -57,6 +69,17 @@ const routes = [
     path: '/leave-dashboard',
     name: 'LeaveDashboard',
     component: LeaveDashboard
+  },
+  // MANAJEMEN CUTI
+  {
+    path: '/cuti/input-jatah',
+    name: 'InputJatahCuti',
+    component: InputJatahCuti
+  },
+  {
+    path: '/cuti/permohonan',
+    name: 'PenerimaanPermohonanCuti',
+    component: PenerimaanPermohonanCuti
   }
 ]
 
