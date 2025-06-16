@@ -85,7 +85,7 @@ class AuthService {
   }
   
   // Verifikasi OTP untuk registrasi
-  async verifyRegistrationOTP(phone, otp, token) {
+  async verifyRegistrationOTP(phone, otp_code) {
     try {
       const response = await apiClient.post('/auth/verify-otp', {
         phone,
@@ -168,11 +168,11 @@ class AuthService {
   }
   
   // Verifikasi OTP untuk reset password
-  async verifyResetPasswordOTP(phone, otp, token) {
+  async verifyResetPasswordOTP(phone, otp_code, token) {
     try {
       const response = await apiClient.post('/auth/verify-reset-otp', {
         phone,
-        otp,
+        otp_code,
         token
       })
       
