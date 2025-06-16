@@ -712,5 +712,307 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
+/* General Layout & Spacing */
+.form-container {
+    padding: 2.5rem; /* Slightly more overall padding */
+}
+
+.employee-form {
+    border: 1px solid var(--gray-200); /* Add a subtle border to the whole form */
+}
+
+.form-section {
+    padding: 2rem; /* Consistent padding inside each section */
+    border-bottom: 1px solid var(--gray-100); /* Lighter separator */
+}
+
+.form-section:first-child {
+    padding-top: 2rem; /* Ensure top section has consistent padding */
+}
+
+.form-section:last-child {
+    border-bottom: none; /* No border on the last section */
+    padding-bottom: 2rem; /* Ensure bottom section has consistent padding */
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Slightly smaller min-width for more flexibility */
+    gap: 1.5rem 1.75rem; /* Increased column gap for more breathing room */
+}
+
+.form-group {
+    margin-bottom: 0; /* Remove default margin-bottom as grid gap handles spacing */
+}
+
+/* Typography & Labels */
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600; /* Make labels slightly bolder */
+    color: var(--gray-800);
+    margin-bottom: 0.5rem; /* More space between label and input */
+    display: block; /* Ensure label takes full width */
+}
+
+.page-title h1 {
+    font-size: 1.75rem; /* Slightly larger main title */
+}
+
+.page-title p {
+    font-size: 0.95rem; /* Slightly larger subtitle */
+}
+
+/* Input Field Enhancements */
+.form-input,
+.form-select,
+.form-textarea {
+    padding: 0.85rem 1rem; /* Slightly more vertical padding */
+    border-radius: 8px; /* Slightly larger border-radius for softer look */
+    border: 1px solid var(--gray-300);
+    transition: all 0.2s ease-in-out; /* Smooth transitions */
+    font-size: 0.95rem; /* Slightly larger font size */
+    color: var(--gray-900);
+    background-color: var(--white);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); /* More prominent but soft shadow */
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+
+.input-group:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.input-prefix {
+    background-color: var(--gray-100);
+    padding: 0.85rem 1rem;
+    border-right: 1px solid var(--gray-300);
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1; /* Ensure alignment with input text */
+}
+
+.input-group .form-input {
+    border: none; /* Remove individual input border */
+    flex: 1;
+    padding-left: 0.75rem; /* Adjust padding after prefix */
+}
+
+/* Button Improvements */
+.btn-primary, .btn-secondary {
+    padding: 0.9rem 1.75rem; /* Slightly larger buttons */
+    border-radius: 10px; /* More rounded corners */
+    font-size: 0.95rem; /* Slightly larger font size */
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #4f87ff 100%); /* Lighter primary for gradient end */
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.2); /* Stronger but softer shadow */
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+    border-color: var(--gray-400); /* Slightly stronger border */
+    color: var(--gray-700);
+    box-shadow: var(--shadow-sm); /* Add a small shadow */
+}
+
+.btn-secondary:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-500);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* File Upload Area */
+.file-upload-area {
+    border: 2px dashed var(--gray-300);
+    border-radius: 12px; /* Consistent with form */
+    background-color: var(--gray-50);
+    padding: 2.5rem; /* More generous padding */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background-color: var(--gray-100);
+}
+
+.file-upload-area .upload-content i {
+    font-size: 2.5rem; /* Larger icon */
+    color: var(--gray-400);
+    margin-bottom: 0.75rem;
+}
+
+.file-upload-area .upload-content p {
+    color: var(--gray-600);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.file-upload-area .upload-content .upload-link {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.file-list {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--gray-200); /* Subtle line for list separation */
+    padding-top: 1.5rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background-color: var(--gray-50);
+    border-radius: 8px;
+    margin-bottom: 0.75rem; /* Space between file items */
+    border: 1px solid var(--gray-200);
+}
+
+.file-item .file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.file-item .file-info i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.file-item .file-info span {
+    font-weight: 500;
+    color: var(--gray-800);
+}
+
+.file-item .file-info small {
+    color: var(--gray-500);
+    font-size: 0.8rem;
+}
+
+.remove-file {
+    background: none;
+    border: none;
+    color: var(--error-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.remove-file:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* History Item Styling */
+.history-item {
+    background-color: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem; /* Space between history items */
+    position: relative;
+}
+
+.history-item .form-grid {
+    gap: 1rem 1.5rem; /* Tighter grid for history items */
+}
+
+.history-item .remove-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.history-item .remove-btn:hover {
+    color: var(--error-color);
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+/* Loading Overlay & Notification */
+.loading-overlay {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+.loading-spinner i {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+.loading-spinner p {
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.notification {
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    z-index: 1001;
+    animation: slideInFromRight 0.3s ease-out; /* Add animation */
+}
+
+.notification.success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.notification.error {
+    background-color: var(--error-color);
+    color: white;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 
 
