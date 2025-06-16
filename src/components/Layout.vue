@@ -93,7 +93,7 @@
             <p class="user-role">Administrator</p>
           </div>
         </div>
-        <button class="logout-btn">
+        <button class="logout-btn" @click="handleLogout">
           <span class="nav-icon">🚪</span>
           <span class="nav-text">Logout</span>
         </button>
@@ -125,7 +125,7 @@
             </button>
             <div class="user-menu">
               <div class="user-avatar-small">👤</div>
-              <span class="welcome-text">Selamat datang, Admin</span>
+              <span class="welcome-text">Selamat datang, {{ userName }}</span>
             </div>
           </div>
         </div>
@@ -158,11 +158,19 @@ export default {
         'AddEmployee': 'Tambah Karyawan',
         'ViewEmployee': 'Detail Karyawan',
         'EditEmployee': 'Edit Karyawan',
-        'employees': 'Data Karyawan',
-        'reports': 'Laporan',
-        'settings': 'Pengaturan'
+        'EmployeeList': 'Data Karyawan',
+        'Attendance': 'Absensi',
+        'WorkHoursSummary': 'Rekapitulasi Jam Kerja',
+        'DashboardCuti': 'Dashboard Cuti',
+        'LeaveDashboard': 'Dashboard Cuti',
+        'InputJatahCuti': 'Input Jatah Cuti',
+        'PenerimaanPermohonanCuti': 'Penerimaan Permohonan Cuti'
       }
       return routeNames[this.$route.name] || 'Sistem Manajemen SDM'
+    },
+    userName() {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      return user.fullName || user.name || 'Admin'
     }
   },
   methods: {
@@ -174,6 +182,17 @@ export default {
     },
     toggleSubmenu(menuName) {
       this.submenuOpen[menuName] = !this.submenuOpen[menuName]
+    },
+    handleLogout() {
+      // Confirm logout
+      if (confirm('Apakah Anda yakin ingin keluar?')) {
+        // Clear authentication data
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        
+        // Redirect to login
+        this.$router.push('/login')
+      }
     }
   },
   mounted() {
