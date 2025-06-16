@@ -123,9 +123,52 @@
               <span class="notification-icon">🔔</span>
               <span class="notification-badge">3</span>
             </button>
-            <div class="user-menu">
+            <div class="user-menu" @click="toggleUserDropdown" ref="userMenu">
               <div class="user-avatar-small">👤</div>
               <span class="welcome-text">Selamat datang, {{ userName }}</span>
+              <div class="dropdown-arrow" :class="{ 'dropdown-arrow-open': isUserDropdownOpen }">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                </svg>
+              </div>
+              
+              <!-- User Dropdown Menu -->
+              <div class="user-dropdown" :class="{ 'user-dropdown-open': isUserDropdownOpen }">
+                <div class="dropdown-header">
+                  <div class="user-avatar-large">
+                    <img v-if="userAvatar" 
+                         :src="userAvatar" 
+                         alt="User Avatar" 
+                         class="avatar-image" />
+                    <span v-else>👤</span>
+                  </div>
+                  <div class="user-info-dropdown">
+                    <h4>{{ userName }}</h4>
+                    <p>{{ userEmail }}</p>
+                  </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="#" @click.prevent="viewProfile" class="dropdown-item">
+                      <span class="dropdown-icon">👤</span>
+                      <span>Lihat Profil</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" @click.prevent="openSettings" class="dropdown-item">
+                      <span class="dropdown-icon">⚙️</span>
+                      <span>Pengaturan</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" @click.prevent="handleLogout" class="dropdown-item logout-item">
+                      <span class="dropdown-icon">🚪</span>
+                      <span>Logout</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -145,6 +188,7 @@ export default {
   data() {
     return {
       isMobileMenuOpen: false,
+      isUserDropdownOpen: false,
       submenuOpen: {
         dataPegawai: false,
         manajemenCuti: false
@@ -169,8 +213,44 @@ export default {
       return routeNames[this.$route.name] || 'Sistem Manajemen SDM'
     },
     userName() {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      return user.fullName || user.name || 'Admin'
+      try {
+        const userStr = localStorage.getItem('user')
+        if (!userStr || userStr === 'undefined' || userStr === 'null') {
+          return 'Admin'
+        }
+        const user = JSON.parse(userStr)
+        console.log('User data from localStorage:', user) // Debug log
+        return user.name || user.fullName || user.username || 'Admin'
+      } catch (error) {
+        console.warn('Error parsing user data:', error)
+        return 'Admin'
+      }
+    },
+    userEmail() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (!userStr || userStr === 'undefined' || userStr === 'null') {
+          return 'admin@example.com'
+        }
+        const user = JSON.parse(userStr)
+        return user.email || user.phone || 'admin@example.com'
+      } catch (error) {
+        console.warn('Error parsing user data:', error)
+        return 'admin@example.com'
+      }
+    },
+    userAvatar() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (!userStr || userStr === 'undefined' || userStr === 'null') {
+          return null
+        }
+        const user = JSON.parse(userStr)
+        return user.avatar || null
+      } catch (error) {
+        console.warn('Error parsing user data:', error)
+        return null
+      }
     }
   },
   methods: {
@@ -183,7 +263,24 @@ export default {
     toggleSubmenu(menuName) {
       this.submenuOpen[menuName] = !this.submenuOpen[menuName]
     },
+    toggleUserDropdown() {
+      this.isUserDropdownOpen = !this.isUserDropdownOpen
+    },
+    closeUserDropdown() {
+      this.isUserDropdownOpen = false
+    },
+    viewProfile() {
+      this.closeUserDropdown()
+      // Navigate to profile page
+      this.$router.push('/profile')
+    },
+    openSettings() {
+      this.closeUserDropdown()
+      // Navigate to settings page
+      this.$router.push('/settings')
+    },
     handleLogout() {
+      this.closeUserDropdown()
       // Confirm logout
       if (confirm('Apakah Anda yakin ingin keluar?')) {
         // Clear authentication data
@@ -193,6 +290,12 @@ export default {
         // Redirect to login
         this.$router.push('/login')
       }
+    },
+    handleStorageChange(event) {
+      // Update user data when localStorage changes
+      if (event.key === 'user') {
+        this.$forceUpdate()
+      }
     }
   },
   mounted() {
@@ -201,6 +304,24 @@ export default {
         this.isMobileMenuOpen = false
       }
     })
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (event) => {
+      if (this.$refs.userMenu && !this.$refs.userMenu.contains(event.target)) {
+        this.isUserDropdownOpen = false
+      }
+    })
+    
+    // Listen for storage changes to update user data
+    window.addEventListener('storage', this.handleStorageChange)
+    
+    // Force update user data on mount
+    this.$forceUpdate()
+  },
+  beforeDestroy() {
+    // Clean up event listeners
+    document.removeEventListener('click', this.handleOutsideClick)
+    window.removeEventListener('storage', this.handleStorageChange)
   }
 }
 </script>
@@ -454,6 +575,7 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
+  overflow: hidden;
 }
 
 .user-details {
@@ -630,6 +752,15 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.user-menu:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .user-avatar-small {
@@ -648,6 +779,133 @@ export default {
   font-size: 0.875rem;
   color: #1e3a8a;
   font-weight: 500;
+}
+
+.dropdown-arrow {
+  transition: transform 0.2s ease;
+  color: #1e3a8a;
+}
+
+.dropdown-arrow-open {
+  transform: rotate(180deg);
+}
+
+/* User Dropdown Styles */
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.user-dropdown-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar-large {
+  width: 60px;
+  height: 60px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  overflow: hidden;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-info-dropdown h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.user-info-dropdown p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0;
+}
+
+.dropdown-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.dropdown-menu li {
+  margin: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: #374151;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background-color: #f8fafc;
+  color: #1e3a8a;
+}
+
+.dropdown-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.logout-item {
+  color: #dc2626;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+}
+
+.logout-item:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
 }
 
 /* Desktop Styles */
@@ -707,6 +965,19 @@ export default {
 
   .notification-icon {
     font-size: 1.125rem;
+  }
+
+  .user-dropdown {
+    min-width: 260px;
+    right: -1rem;
+  }
+
+  .dropdown-header {
+    padding: 1rem;
+  }
+
+  .dropdown-item {
+    padding: 0.75rem 1rem;
   }
 
   .notification-badge {

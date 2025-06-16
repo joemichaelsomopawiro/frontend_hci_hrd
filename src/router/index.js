@@ -11,6 +11,8 @@ import DashboardCuti from '../components/DashboardCuti.vue'
 import LeaveDashboard from '../components/LeaveDashboard.vue'
 import InputJatahCuti from '../components/InputJatahCuti.vue'
 import PenerimaanPermohonanCuti from '../components/PenerimaanPermohonanCuti.vue'
+import Profile from '../components/Profile.vue'
+import Settings from '../components/Settings.vue'
 
 // Auth Components
 import Login from '../components/auth/Login.vue'
@@ -119,6 +121,17 @@ const routes = [
         path: 'cuti/permohonan',
         name: 'PenerimaanPermohonanCuti',
         component: PenerimaanPermohonanCuti
+      },
+      // USER PROFILE & SETTINGS
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: Profile
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: Settings
       }
     ]
   }

@@ -1,14 +1,15 @@
 import axios from 'axios'
 
 // Base URL untuk API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 
 // Axios instance dengan konfigurasi default
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 })
 
@@ -31,10 +32,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired atau invalid
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+      // Token expired atau invalid - hanya redirect jika bukan di halaman login
+      const currentPath = window.location.pathname
+      if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/forgot-password') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
@@ -45,7 +49,7 @@ class AuthService {
   async login(identifier, password) {
     try {
       const response = await apiClient.post('/auth/login', {
-        identifier,
+        login: identifier,
         password
       })
       
@@ -54,6 +58,12 @@ class AuthService {
       // Simpan token dan user data
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
+      
+      // Trigger storage event untuk update UI
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'user',
+        newValue: JSON.stringify(user)
+      }))
       
       return { success: true, data: { token, user } }
     } catch (error) {
@@ -128,7 +138,14 @@ class AuthService {
   // Registrasi user baru
   async register(userData) {
     try {
-      const response = await apiClient.post('/auth/register', userData)
+      const response = await apiClient.post('/auth/register', {
+        phone: userData.phone,
+        name: userData.fullName, // Backend expects 'name' not 'fullName'
+        email: userData.email,
+        password: userData.password,
+        password_confirmation: userData.password, // Add password confirmation
+        otpToken: userData.otpToken
+      })
       
       const { token, user } = response.data
       
@@ -136,11 +153,22 @@ class AuthService {
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       
+      // Trigger storage event untuk update UI
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'user',
+        newValue: JSON.stringify(user)
+      }))
+      
       return {
         success: true,
         data: { token, user }
       }
     } catch (error) {
+      // For validation errors (422), throw the error to be handled by the component
+      if (error.response?.status === 422) {
+        throw error;
+      }
+      
       return {
         success: false,
         message: error.response?.data?.message || 'Registrasi gagal'

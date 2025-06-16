@@ -369,6 +369,12 @@ export default {
         })
         
         if (result.success) {
+          // Trigger storage event untuk update UI
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'user',
+            newValue: localStorage.getItem('user')
+          }))
+          
           // Redirect ke dashboard
           this.$router.push('/')
         } else {
@@ -379,7 +385,27 @@ export default {
           }
         }
       } catch (error) {
-        this.errors.general = 'Gagal mendaftar. Silakan coba lagi.'
+        console.log('Registration error:', error.response?.data); // Debug log
+        
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+          // Handle specific field validation errors
+          const errors = error.response.data.errors;
+          this.errors = {}; // Clear previous errors
+          
+          if (errors.email) this.errors.email = errors.email[0];
+          if (errors.phone) this.errors.phone = errors.phone[0];
+          if (errors.fullName) this.errors.fullName = errors.fullName[0];
+          if (errors.name) this.errors.fullName = errors.name[0]; // Backend might expect 'name'
+          if (errors.password) this.errors.password = errors.password[0];
+          if (errors.otpToken) this.errors.general = 'Token OTP tidak valid atau sudah kadaluarsa';
+          
+          // If no specific field errors, show general message
+          if (Object.keys(this.errors).length === 0) {
+            this.errors.general = error.response?.data?.message || 'Data tidak valid';
+          }
+        } else {
+          this.errors.general = error.response?.data?.message || 'Gagal mendaftar. Silakan coba lagi.';
+        }
       } finally {
         this.loading = false
       }
