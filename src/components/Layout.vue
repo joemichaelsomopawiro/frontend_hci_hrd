@@ -87,10 +87,16 @@
 
       <div class="sidebar-footer">
         <div class="user-info">
-          <div class="user-avatar">👤</div>
+          <div class="user-avatar">
+            <img v-if="userAvatar" 
+                 :src="userAvatar" 
+                 alt="User Avatar" 
+                 class="avatar-image" />
+            <span v-else>👤</span>
+          </div>
           <div class="user-details">
-            <p class="user-name">Admin User</p>
-            <p class="user-role">Administrator</p>
+            <p class="user-name">{{ userName }}</p>
+            <p class="user-role">{{ userRole }}</p>
           </div>
         </div>
         <button class="logout-btn" @click="handleLogout">
@@ -124,7 +130,13 @@
               <span class="notification-badge">3</span>
             </button>
             <div class="user-menu" @click="toggleUserDropdown" ref="userMenu">
-              <div class="user-avatar-small">👤</div>
+              <div class="user-avatar-small">
+                <img v-if="userAvatar" 
+                     :src="userAvatar" 
+                     alt="User Avatar" 
+                     class="avatar-image-small" />
+                <span v-else>👤</span>
+              </div>
               <span class="welcome-text">Selamat datang, {{ userName }}</span>
               <div class="dropdown-arrow" :class="{ 'dropdown-arrow-open': isUserDropdownOpen }">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -183,6 +195,8 @@
 </template>
 
 <script>
+import authService from '../services/authService'
+
 export default {
   name: 'Layout',
   data() {
@@ -208,7 +222,9 @@ export default {
         'DashboardCuti': 'Dashboard Cuti',
         'LeaveDashboard': 'Dashboard Cuti',
         'InputJatahCuti': 'Input Jatah Cuti',
-        'PenerimaanPermohonanCuti': 'Penerimaan Permohonan Cuti'
+        'PenerimaanPermohonanCuti': 'Penerimaan Permohonan Cuti',
+        'Profile': 'Profil Pengguna',
+        'Settings': 'Pengaturan'
       }
       return routeNames[this.$route.name] || 'Sistem Manajemen SDM'
     },
@@ -219,7 +235,6 @@ export default {
           return 'Admin'
         }
         const user = JSON.parse(userStr)
-        console.log('User data from localStorage:', user) // Debug log
         return user.name || user.fullName || user.username || 'Admin'
       } catch (error) {
         console.warn('Error parsing user data:', error)
@@ -239,6 +254,19 @@ export default {
         return 'admin@example.com'
       }
     },
+    userRole() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (!userStr || userStr === 'undefined' || userStr === 'null') {
+          return 'Administrator'
+        }
+        const user = JSON.parse(userStr)
+        return user.role || user.position || 'Administrator'
+      } catch (error) {
+        console.warn('Error parsing user data:', error)
+        return 'Administrator'
+      }
+    },
     userAvatar() {
       try {
         const userStr = localStorage.getItem('user')
@@ -246,7 +274,7 @@ export default {
           return null
         }
         const user = JSON.parse(userStr)
-        return user.avatar || null
+        return user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
       } catch (error) {
         console.warn('Error parsing user data:', error)
         return null
@@ -271,34 +299,41 @@ export default {
     },
     viewProfile() {
       this.closeUserDropdown()
-      // Navigate to profile page
       this.$router.push('/profile')
     },
     openSettings() {
       this.closeUserDropdown()
-      // Navigate to settings page
       this.$router.push('/settings')
     },
-    handleLogout() {
+    async handleLogout() {
       this.closeUserDropdown()
-      // Confirm logout
       if (confirm('Apakah Anda yakin ingin keluar?')) {
-        // Clear authentication data
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        
-        // Redirect to login
+        await authService.logout()
         this.$router.push('/login')
       }
     },
     handleStorageChange(event) {
-      // Update user data when localStorage changes
       if (event.key === 'user') {
         this.$forceUpdate()
       }
+    },
+    async refreshUserData() {
+      try {
+        const result = await authService.fetchUserProfile()
+        if (result.success) {
+          localStorage.setItem('user', JSON.stringify(result.data))
+          this.$forceUpdate()
+        }
+      } catch (error) {
+        console.warn('Failed to refresh user data:', error)
+      }
     }
   },
-  mounted() {
+  async mounted() {
+    // Refresh user data saat komponen dimount
+    await this.refreshUserData()
+    
+    // Listen for window resize
     window.addEventListener('resize', () => {
       if (window.innerWidth > 768) {
         this.isMobileMenuOpen = false
@@ -314,13 +349,9 @@ export default {
     
     // Listen for storage changes to update user data
     window.addEventListener('storage', this.handleStorageChange)
-    
-    // Force update user data on mount
-    this.$forceUpdate()
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // Clean up event listeners
-    document.removeEventListener('click', this.handleOutsideClick)
     window.removeEventListener('storage', this.handleStorageChange)
   }
 }
@@ -341,7 +372,7 @@ export default {
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 998; /* Below sidebar */
+  z-index: 998;
   display: none;
 }
 
@@ -356,13 +387,12 @@ export default {
   top: 0;
   left: 0;
   height: 100vh;
-  z-index: 1000; /* Above navbar */
+  z-index: 1000;
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Hide scrollbar */
 .sidebar-nav {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -578,6 +608,20 @@ export default {
   overflow: hidden;
 }
 
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-image-small {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .user-details {
   flex: 1;
 }
@@ -644,7 +688,7 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 999; /* Below sidebar */
+  z-index: 999;
 }
 
 .navbar-content {
@@ -773,6 +817,7 @@ export default {
   justify-content: center;
   font-size: 1rem;
   color: #1e3a8a;
+  overflow: hidden;
 }
 
 .welcome-text {
@@ -835,13 +880,6 @@ export default {
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   overflow: hidden;
-}
-
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
 }
 
 .user-info-dropdown h4 {
@@ -1013,7 +1051,7 @@ export default {
   }
 
   .main-content {
-    padding: 80px 0.75rem 0.75rem 0.75rem;
+    padding: 70px 0.75rem 0.75rem 0.75rem;
   }
 }
 </style>

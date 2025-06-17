@@ -10,16 +10,26 @@
       <div class="profile-card">
         <div class="profile-avatar-section">
           <div class="profile-avatar">
-            <img v-if="avatarPreview || userProfile.avatar" 
-                 :src="avatarPreview || userProfile.avatar" 
+            <img v-if="userProfile.avatar" 
+                 :src="userProfile.avatar" 
                  alt="Profile Avatar" 
                  class="avatar-image" />
             <span v-else class="avatar-text">{{ userInitials }}</span>
           </div>
-          <button class="change-avatar-btn" @click="changeAvatar">
-            <span class="icon">📷</span>
-            Ubah Foto
-          </button>
+          <div class="avatar-actions">
+            <button class="change-avatar-btn" @click="changeAvatar" :disabled="uploading">
+              <span v-if="uploading" class="loading-spinner">⏳</span>
+              <span v-else class="icon">📷</span>
+              {{ uploading ? 'Mengunggah...' : 'Ubah Foto' }}
+            </button>
+            <button v-if="userProfile.avatar" 
+                    class="delete-avatar-btn" 
+                    @click="deleteAvatar" 
+                    :disabled="uploading">
+              <span class="icon">🗑️</span>
+              Hapus Foto
+            </button>
+          </div>
         </div>
 
         <div class="profile-info">
@@ -37,6 +47,7 @@
               type="text" 
               class="edit-input"
               placeholder="Masukkan nama lengkap"
+              required
             />
           </div>
 
@@ -54,6 +65,7 @@
               type="email" 
               class="edit-input"
               placeholder="Masukkan email"
+              required
             />
           </div>
 
@@ -71,6 +83,7 @@
               type="tel" 
               class="edit-input"
               placeholder="Masukkan nomor telepon"
+              required
             />
           </div>
 
@@ -92,6 +105,11 @@
               <span class="icon">❌</span>
               Batal
             </button>
+          </div>
+
+          <!-- Error Messages -->
+          <div v-if="errors.general" class="error-message">
+            {{ errors.general }}
           </div>
         </div>
       </div>
@@ -136,8 +154,9 @@
               v-model="passwordForm.newPassword" 
               type="password" 
               class="form-input"
-              placeholder="Masukkan password baru"
+              placeholder="Masukkan password baru (minimal 8 karakter)"
               required
+              minlength="8"
             />
           </div>
           <div class="form-group">
@@ -149,6 +168,9 @@
               placeholder="Konfirmasi password baru"
               required
             />
+          </div>
+          <div v-if="passwordErrors.general" class="error-message">
+            {{ passwordErrors.general }}
           </div>
           <div class="modal-actions">
             <button type="submit" class="save-btn" :disabled="passwordLoading">
@@ -163,19 +185,32 @@
         </form>
       </div>
     </div>
+
+    <!-- Hidden file input for avatar upload -->
+    <input 
+      ref="fileInput"
+      type="file" 
+      accept="image/*" 
+      style="display: none"
+      @change="handleAvatarUpload"
+    />
   </div>
 </template>
 
 <script>
+import authService from '../services/authService'
+
 export default {
   name: 'Profile',
   data() {
     return {
       isEditing: false,
       loading: false,
+      uploading: false,
       passwordLoading: false,
       showChangePassword: false,
-      avatarPreview: null,
+      errors: {},
+      passwordErrors: {},
       editForm: {
         name: '',
         email: '',
@@ -188,51 +223,38 @@ export default {
       }
     }
   },
-  mounted() {
-    // Initialize avatar preview from localStorage
-    try {
-      const userStr = localStorage.getItem('user')
-      if (userStr && userStr !== 'undefined' && userStr !== 'null') {
-        const user = JSON.parse(userStr)
-        if (user.avatar) {
-          this.avatarPreview = user.avatar
-        }
-      }
-    } catch (error) {
-      console.warn('Error loading avatar:', error)
-    }
+  async mounted() {
+    // Refresh user data saat komponen dimount
+    await this.refreshUserData()
+    
+    // Listen for storage changes
+    window.addEventListener('storage', this.handleStorageChange)
+  },
+  beforeUnmount() {
+    // Clean up event listeners
+    window.removeEventListener('storage', this.handleStorageChange)
   },
   computed: {
     userProfile() {
       try {
         const userStr = localStorage.getItem('user')
         if (!userStr || userStr === 'undefined' || userStr === 'null') {
-          return {
-            name: 'Admin',
-            email: 'admin@example.com',
-            phone: '-',
-            created_at: new Date().toISOString()
-          }
+          return this.getDefaultProfile()
         }
-        const user = JSON.parse(userStr)
-        console.log('Profile user data:', user) // Debug log
         
-        // Normalize user data structure
+        const user = JSON.parse(userStr)
+        
+        // Pastikan menggunakan data terbaru dari database
         return {
           name: user.name || user.fullName || user.username || 'Admin',
           email: user.email || 'admin@example.com',
-          phone: user.phone || user.phoneNumber || user.telephone || '-',
-          created_at: user.created_at || user.createdAt || user.joinDate || new Date().toISOString(),
-          avatar: user.avatar || null
+          phone: user.phone || user.phoneNumber || '-',
+          created_at: user.created_at || user.createdAt || new Date().toISOString(),
+          avatar: user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
         }
       } catch (error) {
         console.warn('Error parsing user data:', error)
-        return {
-          name: 'Admin',
-          email: 'admin@example.com',
-          phone: '-',
-          created_at: new Date().toISOString()
-        }
+        return this.getDefaultProfile()
       }
     },
     userInitials() {
@@ -241,68 +263,92 @@ export default {
     }
   },
   methods: {
+    getDefaultProfile() {
+      return {
+        name: 'Admin',
+        email: 'admin@example.com',
+        phone: '-',
+        created_at: new Date().toISOString(),
+        avatar: null
+      }
+    },
+    
+    async refreshUserData() {
+      try {
+        const result = await authService.refreshUserData()
+        if (result.success) {
+          this.$forceUpdate()
+        }
+      } catch (error) {
+        console.warn('Failed to refresh user data:', error)
+      }
+    },
+    
+    handleStorageChange(event) {
+      if (event.key === 'user') {
+        this.$forceUpdate()
+      }
+    },
+    
     startEditing() {
       this.isEditing = true
+      this.errors = {}
       this.editForm = {
         name: this.userProfile.name || '',
         email: this.userProfile.email || '',
         phone: this.userProfile.phone || ''
       }
     },
+    
     cancelEditing() {
       this.isEditing = false
+      this.errors = {}
       this.editForm = {
         name: '',
         email: '',
         phone: ''
       }
     },
+    
     async saveProfile() {
       this.loading = true
+      this.errors = {}
+      
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Get current user data from localStorage
-        const userStr = localStorage.getItem('user')
-        let currentUser = {}
-        if (userStr && userStr !== 'undefined' && userStr !== 'null') {
-          currentUser = JSON.parse(userStr)
-        }
-        
-        // Update user data while preserving existing fields
-        const updatedUser = {
-          ...currentUser,
+        const result = await authService.updateProfile({
           name: this.editForm.name,
           email: this.editForm.email,
           phone: this.editForm.phone
+        })
+        
+        if (result.success) {
+          this.isEditing = false
+          alert('Profil berhasil diperbarui!')
+          
+          // Trigger storage event untuk update layout
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'user',
+            newValue: JSON.stringify(result.data)
+          }))
+        } else {
+          this.errors.general = result.message || 'Gagal memperbarui profil'
         }
-        
-        localStorage.setItem('user', JSON.stringify(updatedUser))
-        
-        this.isEditing = false
-        alert('Profil berhasil diperbarui!')
       } catch (error) {
         console.error('Error updating profile:', error)
-        alert('Gagal memperbarui profil. Silakan coba lagi.')
+        this.errors.general = 'Gagal memperbarui profil. Silakan coba lagi.'
       } finally {
         this.loading = false
       }
     },
+    
     changeAvatar() {
-      // Create file input element
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.onchange = (event) => {
-        const file = event.target.files[0]
-        if (file) {
-          this.handleAvatarUpload(file)
-        }
-      }
-      input.click()
+      this.$refs.fileInput.click()
     },
-    handleAvatarUpload(file) {
+    
+    async handleAvatarUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+      
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         alert('Ukuran file terlalu besar. Maksimal 2MB.')
@@ -315,66 +361,117 @@ export default {
         return
       }
       
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        // Update avatar preview
-        this.avatarPreview = e.target.result
+      this.uploading = true
+      
+      try {
+        const result = await authService.uploadProfilePicture(file)
         
-        // Save to localStorage (in real app, upload to server)
-        try {
-          const userStr = localStorage.getItem('user')
-          let userData = {}
-          if (userStr && userStr !== 'undefined' && userStr !== 'null') {
-            userData = JSON.parse(userStr)
-          }
-          userData.avatar = e.target.result
-          localStorage.setItem('user', JSON.stringify(userData))
-        } catch (error) {
-          console.error('Error saving avatar:', error)
-          alert('Gagal menyimpan foto profil.')
-          return
+        if (result.success) {
+          alert('Foto profil berhasil diubah!')
+          
+          // Trigger storage event untuk update layout
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'user',
+            newValue: JSON.stringify(result.data)
+          }))
+          
+          this.$forceUpdate()
+        } else {
+          alert(result.message || 'Gagal mengunggah foto profil')
         }
-        
-        alert('Foto profil berhasil diubah!')
+      } catch (error) {
+        console.error('Error uploading avatar:', error)
+        alert('Gagal mengunggah foto profil. Silakan coba lagi.')
+      } finally {
+        this.uploading = false
+        // Reset file input
+        event.target.value = ''
       }
-      reader.readAsDataURL(file)
     },
+    
+    async deleteAvatar() {
+      if (!confirm('Apakah Anda yakin ingin menghapus foto profil?')) {
+        return
+      }
+      
+      this.uploading = true
+      
+      try {
+        const result = await authService.deleteProfilePicture()
+        
+        if (result.success) {
+          alert('Foto profil berhasil dihapus!')
+          
+          // Trigger storage event untuk update layout
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'user',
+            newValue: JSON.stringify(result.data)
+          }))
+          
+          this.$forceUpdate()
+        } else {
+          alert(result.message || 'Gagal menghapus foto profil')
+        }
+      } catch (error) {
+        console.error('Error deleting avatar:', error)
+        alert('Gagal menghapus foto profil. Silakan coba lagi.')
+      } finally {
+        this.uploading = false
+      }
+    },
+    
     closeChangePassword() {
       this.showChangePassword = false
+      this.passwordErrors = {}
       this.passwordForm = {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       }
     },
+    
     async changePassword() {
+      this.passwordErrors = {}
+      
+      // Validate passwords
+      if (this.passwordForm.newPassword.length < 8) {
+        this.passwordErrors.general = 'Password baru minimal 8 karakter'
+        return
+      }
+      
       if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-        alert('Password baru dan konfirmasi password tidak cocok!')
+        this.passwordErrors.general = 'Password baru dan konfirmasi password tidak cocok!'
         return
       }
       
       this.passwordLoading = true
+      
       try {
-        // Simulate API call
+        // Simulate API call for changing password
         await new Promise(resolve => setTimeout(resolve, 1000))
         
         alert('Password berhasil diubah!')
         this.closeChangePassword()
       } catch (error) {
         console.error('Error changing password:', error)
-        alert('Gagal mengubah password. Silakan coba lagi.')
+        this.passwordErrors.general = 'Gagal mengubah password. Silakan coba lagi.'
       } finally {
         this.passwordLoading = false
       }
     },
+    
     formatDate(dateString) {
       if (!dateString) return '-'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
+      try {
+        const date = new Date(dateString)
+        return date.toLocaleDateString('id-ID', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      } catch (error) {
+        return '-'
+      }
     }
   }
 }
@@ -437,6 +534,7 @@ export default {
   justify-content: center;
   margin-bottom: 1rem;
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  overflow: hidden;
 }
 
 .avatar-text {
@@ -452,7 +550,14 @@ export default {
   border-radius: 50%;
 }
 
-.change-avatar-btn {
+.avatar-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.change-avatar-btn, .delete-avatar-btn {
   background: #f8fafc;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -466,8 +571,23 @@ export default {
   color: #374151;
 }
 
-.change-avatar-btn:hover {
+.change-avatar-btn:hover:not(:disabled) {
   background: #e5e7eb;
+}
+
+.delete-avatar-btn {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.delete-avatar-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.change-avatar-btn:disabled, .delete-avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .profile-info {
@@ -570,6 +690,16 @@ export default {
 
 .cancel-btn:hover {
   background: #e5e7eb;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
 }
 
 .security-card h3 {
@@ -696,6 +826,7 @@ export default {
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -744,6 +875,16 @@ export default {
   
   .modal-actions {
     flex-direction: column;
+  }
+  
+  .avatar-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .change-avatar-btn, .delete-avatar-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

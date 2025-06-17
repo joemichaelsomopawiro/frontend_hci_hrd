@@ -53,11 +53,16 @@ class AuthService {
         password
       })
       
-      const { token, user } = response.data
+      // Backend mengembalikan nested structure: response.data.data
+      const { user, token } = response.data.data
       
       // Simpan token dan user data dari response login
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
+      
+      // Debug log untuk memastikan data tersimpan
+      console.log('Login successful - User data:', user)
+      console.log('Login successful - Token:', token)
       
       // Trigger storage event untuk update UI
       window.dispatchEvent(new StorageEvent('storage', {
@@ -67,6 +72,7 @@ class AuthService {
       
       return { success: true, data: { token, user } }
     } catch (error) {
+      console.error('Login error:', error.response?.data)
       return {
         success: false,
         message: error.response?.data?.message || 'Login gagal'
@@ -78,8 +84,7 @@ class AuthService {
   async sendRegistrationOTP(phone) {
     try {
       const response = await apiClient.post('/auth/send-register-otp', {
-        phone,
-        type: 'register'
+        phone
       })
       
       return {
@@ -99,8 +104,7 @@ class AuthService {
     try {
       const response = await apiClient.post('/auth/verify-otp', {
         phone,
-        otp_code,
-        type: 'register'
+        otp_code
       })
       
       return {
@@ -140,18 +144,22 @@ class AuthService {
     try {
       const response = await apiClient.post('/auth/register', {
         phone: userData.phone,
-        name: userData.fullName, // Backend expects 'name' not 'fullName'
+        name: userData.fullName,
         email: userData.email,
         password: userData.password,
-        password_confirmation: userData.password, // Add password confirmation
-        otpToken: userData.otpToken
+        password_confirmation: userData.password
       })
       
-      const { token, user } = response.data
+      // Backend mengembalikan nested structure: response.data.data
+      const { user, token } = response.data.data
       
       // Simpan token dan user data
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
+      
+      // Debug log untuk memastikan data tersimpan
+      console.log('Register successful - User data:', user)
+      console.log('Register successful - Token:', token)
       
       // Trigger storage event untuk update UI
       window.dispatchEvent(new StorageEvent('storage', {
@@ -179,19 +187,15 @@ class AuthService {
   // Kirim OTP untuk reset password
   async sendResetPasswordOTP(phone) {
     try {
-      console.log('Sending reset password OTP to:', phone) // Debug log
       const response = await apiClient.post('/auth/send-forgot-password-otp', {
         phone
       })
       
-      console.log('Reset password OTP response:', response.data) // Debug log
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
-      console.error('Reset password OTP error:', error) // Debug log
-      console.error('Error response:', error.response?.data) // Debug log
       return {
         success: false,
         message: error.response?.data?.message || 'Gagal mengirim OTP reset password'
@@ -199,11 +203,12 @@ class AuthService {
     }
   }
   
-  // Kirim ulang OTP untuk reset password (menggunakan endpoint yang sama)
+  // Kirim ulang OTP untuk reset password
   async resendResetPasswordOTP(phone) {
     try {
-      const response = await apiClient.post('/auth/send-forgot-password-otp', {
-        phone
+      const response = await apiClient.post('/auth/resend-otp', {
+        phone,
+        type: 'forgot_password'
       })
       
       return {
@@ -245,10 +250,8 @@ class AuthService {
     try {
       await apiClient.post('/auth/logout')
     } catch (error) {
-      // Ignore error, just clear local storage
       console.warn('Logout API call failed:', error.message)
     } finally {
-      // Clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('user')
     }
@@ -263,7 +266,12 @@ class AuthService {
   // Get current user
   getCurrentUser() {
     const userStr = localStorage.getItem('user')
-    return userStr ? JSON.parse(userStr) : null
+    try {
+      return userStr ? JSON.parse(userStr) : null
+    } catch (error) {
+      console.warn('Error parsing user data:', error)
+      return null
+    }
   }
   
   // Get token
@@ -271,36 +279,15 @@ class AuthService {
     return localStorage.getItem('token')
   }
   
-  // Refresh token
-  async refreshToken() {
-    try {
-      const response = await apiClient.post('/auth/refresh-token')
-      
-      const { token } = response.data
-      localStorage.setItem('token', token)
-      
-      return {
-        success: true,
-        data: { token }
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Refresh token gagal'
-      }
-    }
-  }
-
   // Fetch user profile from API
   async fetchUserProfile() {
     try {
       const response = await apiClient.get('/auth/me')
       return {
         success: true,
-        data: response.data
+        data: response.data.data
       }
     } catch (error) {
-      console.warn('Failed to fetch user profile:', error.message)
       return {
         success: false,
         message: error.response?.data?.message || 'Gagal mengambil data user'
@@ -308,19 +295,93 @@ class AuthService {
     }
   }
 
+  // Upload profile picture
+  async uploadProfilePicture(file) {
+    try {
+      const formData = new FormData()
+      formData.append('profile_picture', file)
+      
+      const response = await apiClient.post('/auth/upload-profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      // Update user data di localStorage dengan foto profil baru
+      const currentUser = this.getCurrentUser()
+      if (currentUser && response.data.data?.profile_picture_url) {
+        currentUser.profile_picture = response.data.data.profile_picture_url
+        localStorage.setItem('user', JSON.stringify(currentUser))
+        
+        // Trigger storage event
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(currentUser)
+        }))
+      }
+      
+      return {
+        success: true,
+        data: currentUser
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Gagal mengunggah foto profil'
+      }
+    }
+  }
+
+  // Delete profile picture
+  async deleteProfilePicture() {
+    try {
+      const response = await apiClient.delete('/auth/delete-profile-picture')
+      
+      // Update user data di localStorage
+      const currentUser = this.getCurrentUser()
+      if (currentUser) {
+        currentUser.profile_picture = null
+        localStorage.setItem('user', JSON.stringify(currentUser))
+        
+        // Trigger storage event
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(currentUser)
+        }))
+      }
+      
+      return {
+        success: true,
+        data: currentUser
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Gagal menghapus foto profil'
+      }
+    }
+  }
+
   // Refresh user data in localStorage
   async refreshUserData() {
-    const result = await this.fetchUserProfile()
-    if (result.success) {
-      localStorage.setItem('user', JSON.stringify(result.data))
-      
-      // Trigger storage event untuk update UI
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'user',
-        newValue: JSON.stringify(result.data)
-      }))
+    try {
+      const result = await this.fetchUserProfile()
+      if (result.success) {
+        localStorage.setItem('user', JSON.stringify(result.data))
+        
+        // Trigger storage event untuk update UI
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(result.data)
+        }))
+        
+        return result
+      }
+      return result
+    } catch (error) {
+      console.warn('Failed to refresh user data:', error)
+      return { success: false, message: 'Failed to refresh user data' }
     }
-    return result
   }
 }
 
