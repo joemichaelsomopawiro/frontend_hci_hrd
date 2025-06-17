@@ -5,7 +5,7 @@
         <div class="logo-section">
           <img src="/hopechannel.jpg" alt="Hope Channel" class="auth-logo" />
           <h2>Reset Password</h2>
-          <p>{{ currentStep === 1 ? 'Masukkan nomor handphone untuk reset password' : currentStep === 2 ? 'Masukkan kode OTP yang dikirim' : 'Buat password baru Anda' }}</p>
+          <p>{{ currentStep === 1 ? 'Masukkan nomor handphone untuk reset password' : 'Masukkan kode OTP dan password baru Anda' }}</p>
         </div>
       </div>
 
@@ -16,14 +16,9 @@
           <span class="step-label">Verifikasi HP</span>
         </div>
         <div class="step-line" :class="{ completed: currentStep > 1 }"></div>
-        <div class="step" :class="{ active: currentStep >= 2, completed: currentStep > 2 }">
+        <div class="step" :class="{ active: currentStep >= 2 }">
           <span class="step-number">2</span>
-          <span class="step-label">Kode OTP</span>
-        </div>
-        <div class="step-line" :class="{ completed: currentStep > 2 }"></div>
-        <div class="step" :class="{ active: currentStep >= 3 }">
-          <span class="step-number">3</span>
-          <span class="step-label">Password Baru</span>
+          <span class="step-label">Reset Password</span>
         </div>
       </div>
 
@@ -59,8 +54,8 @@
         </div>
       </form>
 
-      <!-- Step 2: OTP Verification -->
-      <form v-if="currentStep === 2" @submit.prevent="verifyResetOTP" class="auth-form">
+      <!-- Step 2: OTP and New Password -->
+      <form v-if="currentStep === 2" @submit.prevent="resetPassword" class="auth-form">
         <div class="form-group">
           <label for="otp">Kode OTP</label>
           <input
@@ -86,27 +81,6 @@
             {{ resendCooldown > 0 ? `Kirim ulang dalam ${resendCooldown}s` : 'Kirim Ulang OTP' }}
           </button>
         </div>
-
-        <button
-          type="submit"
-          class="auth-button"
-          :disabled="loading"
-        >
-          <span v-if="loading" class="loading-spinner"></span>
-          {{ loading ? 'Memverifikasi...' : 'Verifikasi OTP' }}
-        </button>
-
-        <button
-          type="button"
-          class="back-button"
-          @click="currentStep = 1"
-        >
-          Kembali
-        </button>
-      </form>
-
-      <!-- Step 3: New Password -->
-      <form v-if="currentStep === 3" @submit.prevent="resetPassword" class="auth-form">
         <div class="form-group">
           <label for="newPassword">Password Baru</label>
           <div class="password-input">
@@ -114,7 +88,7 @@
               id="newPassword"
               v-model="form.newPassword"
               :type="showNewPassword ? 'text' : 'password'"
-              placeholder="Minimal 6 karakter"
+              placeholder="Minimal 8 karakter"
               :class="{ 'error': errors.newPassword }"
               required
             />
@@ -163,14 +137,14 @@
         <button
           type="button"
           class="back-button"
-          @click="currentStep = 2"
+          @click="currentStep = 1"
         >
           Kembali
         </button>
       </form>
 
       <!-- Success Message -->
-      <div v-if="currentStep === 4" class="success-message">
+      <div v-if="currentStep === 3" class="success-message">
         <div class="success-icon">✅</div>
         <h3>Password Berhasil Diubah!</h3>
         <p>Password Anda telah berhasil diubah. Silakan login dengan password baru.</p>
@@ -200,8 +174,7 @@ export default {
       loading: false,
       showNewPassword: false,
       showConfirmNewPassword: false,
-      resendCooldown: 0,
-      resetToken: ''
+      resendCooldown: 0
     }
   },
   methods: {
@@ -224,7 +197,8 @@ export default {
     },
     
     validateOTP() {
-      this.errors = {}
+      // Don't clear all errors, only OTP-related ones
+      delete this.errors.otp
       
       if (!this.form.otp.trim()) {
         this.errors.otp = 'Kode OTP harus diisi'
@@ -240,12 +214,14 @@ export default {
     },
     
     validateNewPassword() {
-      this.errors = {}
+      // Don't clear all errors, only password-related ones
+      delete this.errors.newPassword
+      delete this.errors.confirmNewPassword
       
       if (!this.form.newPassword) {
         this.errors.newPassword = 'Password baru harus diisi'
-      } else if (this.form.newPassword.length < 6) {
-        this.errors.newPassword = 'Password minimal 6 karakter'
+      } else if (this.form.newPassword.length < 8) {
+        this.errors.newPassword = 'Password minimal 8 karakter'
       }
       
       if (!this.form.confirmNewPassword) {
@@ -254,7 +230,7 @@ export default {
         this.errors.confirmNewPassword = 'Password tidak cocok'
       }
       
-      return Object.keys(this.errors).length === 0
+      return !this.errors.newPassword && !this.errors.confirmNewPassword
     },
     
     async sendResetOTP() {
@@ -264,12 +240,13 @@ export default {
       
       try {
         const result = await authService.sendResetPasswordOTP(this.form.phone)
+        console.log('Send Reset OTP Result:', result) // Debug log
         
         if (result.success) {
-          this.resetToken = result.data.token
           this.currentStep = 2
           this.startResendCooldown()
         } else {
+          console.error('Send Reset OTP Failed:', result.message) // Debug log
           if (result.message.includes('tidak terdaftar') || result.message.includes('tidak ditemukan')) {
             this.errors.phone = 'Nomor handphone tidak terdaftar'
           } else {
@@ -277,27 +254,8 @@ export default {
           }
         }
       } catch (error) {
+        console.error('Send Reset OTP Error:', error) // Debug log
         this.errors.phone = 'Gagal mengirim OTP. Silakan coba lagi.'
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    async verifyResetOTP() {
-      if (!this.validateOTP()) return
-      
-      this.loading = true
-      
-      try {
-        const result = await authService.verifyResetPasswordOTP(this.form.phone, this.form.otp, this.resetToken)
-        
-        if (result.success) {
-          this.currentStep = 3
-        } else {
-          this.errors.otp = result.message || 'Kode OTP tidak valid atau sudah kadaluarsa'
-        }
-      } catch (error) {
-        this.errors.otp = 'Gagal memverifikasi OTP. Silakan coba lagi.'
       } finally {
         this.loading = false
       }
@@ -310,7 +268,6 @@ export default {
         const result = await authService.resendResetPasswordOTP(this.form.phone)
         
         if (result.success) {
-          this.resetToken = result.data.token
           this.form.otp = ''
           this.startResendCooldown()
         } else {
@@ -324,20 +281,43 @@ export default {
     },
     
     async resetPassword() {
-      if (!this.validateNewPassword()) return
+      if (!this.validateOTP() || !this.validateNewPassword()) return
       
       this.loading = true
       
       try {
-        const result = await authService.resetPassword(this.form.phone, this.form.newPassword, this.resetToken)
+        const result = await authService.resetPassword(
+          this.form.phone, 
+          this.form.otp, 
+          this.form.newPassword, 
+          this.form.confirmNewPassword
+        )
         
         if (result.success) {
-          this.currentStep = 4
+          this.currentStep = 3
         } else {
-          this.errors.newPassword = result.message || 'Gagal mengubah password. Silakan coba lagi.'
+          // Handle validation errors from backend
+          if (result.message && result.message.includes('OTP')) {
+            this.errors.otp = result.message
+          } else {
+            this.errors.newPassword = result.message || 'Gagal mengubah password. Silakan coba lagi.'
+          }
         }
       } catch (error) {
-        this.errors.newPassword = 'Gagal mengubah password. Silakan coba lagi.'
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+          const backendErrors = error.response.data.errors
+          if (backendErrors.otp_code) {
+            this.errors.otp = backendErrors.otp_code[0]
+          }
+          if (backendErrors.password) {
+            this.errors.newPassword = backendErrors.password[0]
+          }
+          if (backendErrors.phone) {
+            this.errors.phone = backendErrors.phone[0]
+          }
+        } else {
+          this.errors.newPassword = 'Gagal mengubah password. Silakan coba lagi.'
+        }
       } finally {
         this.loading = false
       }

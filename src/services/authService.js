@@ -179,15 +179,19 @@ class AuthService {
   // Kirim OTP untuk reset password
   async sendResetPasswordOTP(phone) {
     try {
-      const response = await apiClient.post('/auth/forgot-password', {
+      console.log('Sending reset password OTP to:', phone) // Debug log
+      const response = await apiClient.post('/auth/send-forgot-password-otp', {
         phone
       })
       
+      console.log('Reset password OTP response:', response.data) // Debug log
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
+      console.error('Reset password OTP error:', error) // Debug log
+      console.error('Error response:', error.response?.data) // Debug log
       return {
         success: false,
         message: error.response?.data?.message || 'Gagal mengirim OTP reset password'
@@ -195,31 +199,10 @@ class AuthService {
     }
   }
   
-  // Verifikasi OTP untuk reset password
-  async verifyResetPasswordOTP(phone, otp_code, token) {
-    try {
-      const response = await apiClient.post('/auth/verify-reset-otp', {
-        phone,
-        otp_code,
-        token
-      })
-      
-      return {
-        success: true,
-        data: response.data
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Verifikasi OTP reset password gagal'
-      }
-    }
-  }
-  
-  // Kirim ulang OTP untuk reset password
+  // Kirim ulang OTP untuk reset password (menggunakan endpoint yang sama)
   async resendResetPasswordOTP(phone) {
     try {
-      const response = await apiClient.post('/auth/resend-reset-otp', {
+      const response = await apiClient.post('/auth/send-forgot-password-otp', {
         phone
       })
       
@@ -235,13 +218,14 @@ class AuthService {
     }
   }
   
-  // Reset password
-  async resetPassword(phone, newPassword, token) {
+  // Reset password dengan OTP
+  async resetPassword(phone, otp_code, password, password_confirmation) {
     try {
       const response = await apiClient.post('/auth/reset-password', {
         phone,
-        newPassword,
-        token
+        otp_code,
+        password,
+        password_confirmation
       })
       
       return {
