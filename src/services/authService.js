@@ -55,7 +55,7 @@ class AuthService {
       
       const { token, user } = response.data
       
-      // Simpan token dan user data
+      // Simpan token dan user data dari response login
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       
@@ -289,6 +289,38 @@ class AuthService {
         message: error.response?.data?.message || 'Refresh token gagal'
       }
     }
+  }
+
+  // Fetch user profile from API
+  async fetchUserProfile() {
+    try {
+      const response = await apiClient.get('/auth/me')
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.warn('Failed to fetch user profile:', error.message)
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Gagal mengambil data user'
+      }
+    }
+  }
+
+  // Refresh user data in localStorage
+  async refreshUserData() {
+    const result = await this.fetchUserProfile()
+    if (result.success) {
+      localStorage.setItem('user', JSON.stringify(result.data))
+      
+      // Trigger storage event untuk update UI
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'user',
+        newValue: JSON.stringify(result.data)
+      }))
+    }
+    return result
   }
 }
 
