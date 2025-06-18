@@ -56,10 +56,8 @@
               </td>
               <td>{{ quota.year }}</td>
               <td>
-                <div class="quota-info">
-                  <span class="quota-used">{{ quota.annual_leave_used }}</span>
-                  <span class="quota-separator">/</span>
-                  <span class="quota-total">{{ quota.annual_leave_quota }}</span>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.annual_leave_used }}/{{ quota.annual_leave_quota }}</span>
                   <div class="quota-bar">
                     <div 
                       class="quota-progress" 
@@ -69,10 +67,8 @@
                 </div>
               </td>
               <td>
-                <div class="quota-info">
-                  <span class="quota-used">{{ quota.sick_leave_used }}</span>
-                  <span class="quota-separator">/</span>
-                  <span class="quota-total">{{ quota.sick_leave_quota }}</span>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.sick_leave_used }}/{{ quota.sick_leave_quota }}</span>
                   <div class="quota-bar">
                     <div 
                       class="quota-progress sick" 
@@ -82,10 +78,8 @@
                 </div>
               </td>
               <td>
-                <div class="quota-info">
-                  <span class="quota-used">{{ quota.emergency_leave_used }}</span>
-                  <span class="quota-separator">/</span>
-                  <span class="quota-total">{{ quota.emergency_leave_quota }}</span>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.emergency_leave_used }}/{{ quota.emergency_leave_quota }}</span>
                   <div class="quota-bar">
                     <div 
                       class="quota-progress emergency" 
@@ -542,40 +536,48 @@ export default {
   font-weight: 600;
 }
 
+.quota-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 80px;
+}
+
+.quota-text {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  min-width: 40px;
+  text-align: center;
+}
+
 .quota-bar {
-  width: 80px;
-  height: 8px;
-  background: var(--gray-200);
-  border-radius: var(--radius-sm);
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  min-width: 40px;
 }
 
 .quota-progress {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
-  transition: var(--transition-slow);
-  border-radius: var(--radius-sm);
-  position: relative;
-}
-
-.quota-progress::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--primary-color);
+  border-radius: 3px;
+  transition: width 0.3s ease;
 }
 
 .quota-progress.sick {
-  background: linear-gradient(90deg, var(--warning-color) 0%, var(--warning-light) 100%);
+  background: #f59e0b;
 }
 
 .quota-progress.emergency {
-  background: linear-gradient(90deg, var(--error-color) 0%, var(--error-light) 100%);
+  background: #ef4444;
+}
+
+/* Responsive untuk mobile */
+@media (max-width: 768px) {
+
 }
 
 .action-buttons {
@@ -928,22 +930,21 @@ export default {
 
 .notification {
   position: fixed;
-  top: 1rem;
+  bottom: 1rem;
   right: 1rem;
-  padding: 0.375rem 0.625rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
   color: white;
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   z-index: 1001;
   display: flex;
   align-items: center;
   gap: 0.375rem;
   animation: slideIn 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border: none;
-  max-width: 250px;
-  min-width: 180px;
+  max-width: 280px;
+  min-width: 160px;
 }
 
 .notification.success {
@@ -957,17 +958,17 @@ export default {
 }
 
 .notification i {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   opacity: 0.9;
 }
 
 @keyframes slideIn {
   from {
-    transform: translateX(100%) scale(0.9);
+    transform: translateY(100%) scale(0.9);
     opacity: 0;
   }
   to {
-    transform: translateX(0) scale(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
@@ -1035,8 +1036,20 @@ export default {
     padding: 0.75rem 0.5rem;
   }
   
+  .quota-display {
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-start;
+  }
+  
+  .quota-text {
+    font-size: 0.8rem;
+    min-width: auto;
+  }
+  
   .quota-bar {
-    width: 60px;
+    width: 100%;
+    min-width: 60px;
   }
   
   .btn-icon {
@@ -1075,10 +1088,12 @@ export default {
   }
   
   .notification {
-    top: 1rem;
+    bottom: 1rem;
     right: 1rem;
-    left: 1rem;
-    max-width: none;
+    max-width: 240px;
+    min-width: 140px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -1097,6 +1112,19 @@ export default {
   
   .empty-state h3 {
     font-size: 1.25rem;
+  }
+  
+  .notification {
+    bottom: 1rem;
+    right: 1rem;
+    max-width: 200px;
+    min-width: 120px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  .notification i {
+    font-size: 0.65rem;
   }
 }
 </style>

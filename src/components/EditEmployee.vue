@@ -848,6 +848,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
+  align-items: start;
 }
 
 .form-group.full-width {
@@ -877,10 +878,11 @@ export default {
 
 .input-prefix {
   position: absolute;
-  left: 1rem;
+  left: 2.5rem;
   color: var(--gray-500);
   font-weight: 500;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .form-input, .form-select, .form-textarea {
@@ -901,6 +903,10 @@ export default {
 
 .form-input.currency {
   padding-left: 3rem;
+}
+
+.form-input[type="number"] {
+  padding-left: 4rem;
 }
 
 .input-wrapper .form-input {
@@ -971,37 +977,88 @@ export default {
 .salary-summary {
   background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
   color: white;
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: 12px;
   margin-top: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.salary-summary::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  z-index: 1;
 }
 
 .salary-summary h4 {
   margin-bottom: 1rem;
   font-size: 1.125rem;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.salary-summary h4::before {
+  content: '💰';
+  font-size: 1.2rem;
 }
 
 .salary-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
 }
 
 .salary-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
+  align-items: center;
+  padding: 0.625rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.95rem;
+}
+
+.salary-item span:first-child {
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.salary-item span:last-child {
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: right;
+  min-width: 120px;
 }
 
 .salary-total {
   display: flex;
   justify-content: space-between;
-  padding: 0.75rem 0;
+  align-items: center;
+  padding: 0.875rem 0 0.5rem 0;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 1.2rem;
   border-top: 2px solid rgba(255, 255, 255, 0.3);
   margin-top: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.salary-total span:last-child {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  min-width: 140px;
+  text-align: center;
 }
 
 /* Form Actions */
@@ -1130,6 +1187,15 @@ export default {
   
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .input-prefix {
+    left: 2.25rem;
+  }
+  
+  .form-input[type="number"] {
+    padding-left: 3.5rem;
   }
   
   .radio-group {
@@ -1143,6 +1209,37 @@ export default {
   .notification {
     right: 1rem;
     left: 1rem;
+  }
+  
+  .salary-summary {
+    padding: 1rem;
+    margin-top: 0.75rem;
+  }
+  
+  .salary-summary h4 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .salary-item {
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+  
+  .salary-item span:last-child {
+    min-width: 100px;
+    font-size: 0.95rem;
+  }
+  
+  .salary-total {
+    font-size: 1.1rem;
+    padding: 0.75rem 0 0.375rem 0;
+  }
+  
+  .salary-total span:last-child {
+    min-width: 120px;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
   }
 }
 
@@ -1165,6 +1262,34 @@ export default {
   
   .form-actions {
     padding: 1rem;
+  }
+  
+  .salary-summary {
+    padding: 0.875rem;
+  }
+  
+  .salary-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+  }
+  
+  .salary-item span:last-child {
+    min-width: auto;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  
+  .salary-total {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .salary-total span:last-child {
+    width: 100%;
+    min-width: auto;
   }
 }
 </style>

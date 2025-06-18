@@ -292,6 +292,7 @@ export default {
       if (!this.validatePhone()) return
       
       this.loading = true
+      this.errors = {} // Clear previous errors
       
       try {
         const result = await authService.sendRegistrationOTP(this.form.phone)
@@ -301,14 +302,39 @@ export default {
           this.currentStep = 2
           this.startResendCooldown()
         } else {
-          if (result.message.includes('sudah terdaftar')) {
-            this.errors.phone = 'Nomor handphone sudah terdaftar'
+          if (result.message.includes('sudah terdaftar') || result.message.includes('already exists') || result.message.includes('duplicate')) {
+            this.errors.phone = 'Nomor handphone sudah terdaftar. Silakan gunakan nomor lain atau login jika Anda sudah memiliki akun.'
           } else {
             this.errors.phone = result.message || 'Gagal mengirim OTP. Silakan coba lagi.'
           }
         }
       } catch (error) {
-        this.errors.phone = 'Gagal mengirim OTP. Silakan coba lagi.'
+        console.log('SendOTP Error:', error.response?.data); // Debug log
+        
+        // Handle specific validation errors
+        if (error.response?.status === 422) {
+          const errorData = error.response.data
+          
+          // Check for validation errors object
+          if (errorData.errors && errorData.errors.phone) {
+            this.errors.phone = errorData.errors.phone[0]
+          } 
+          // Check for general message about duplicate
+          else if (errorData.message) {
+            if (errorData.message.includes('sudah terdaftar') || 
+                errorData.message.includes('already exists') || 
+                errorData.message.includes('duplicate') ||
+                errorData.message.includes('taken')) {
+              this.errors.phone = 'Nomor handphone sudah terdaftar. Silakan gunakan nomor lain atau login jika Anda sudah memiliki akun.'
+            } else {
+              this.errors.phone = errorData.message
+            }
+          } else {
+            this.errors.phone = 'Nomor handphone sudah terdaftar atau tidak valid.'
+          }
+        } else {
+          this.errors.phone = 'Gagal mengirim OTP. Silakan coba lagi.'
+        }
       } finally {
         this.loading = false
       }
