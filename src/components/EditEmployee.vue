@@ -123,19 +123,15 @@
               
               <div class="form-group">
                 <label>Jenis Kelamin *</label>
-                <div class="radio-group">
-                  <label class="radio-option">
-                    <input type="radio" v-model="form.jenis_kelamin" value="Laki-laki" required />
-                    <span class="radio-custom"></span>
-                    <i class="fas fa-mars"></i>
-                    Laki-laki
-                  </label>
-                  <label class="radio-option">
-                    <input type="radio" v-model="form.jenis_kelamin" value="Perempuan" required />
-                    <span class="radio-custom"></span>
-                    <i class="fas fa-venus"></i>
-                    Perempuan
-                  </label>
+                <div class="input-wrapper">
+                  <i class="fas fa-user input-icon"></i>
+                  <input 
+                    v-model="form.jenis_kelamin" 
+                    type="text" 
+                    required 
+                    class="form-input" 
+                    placeholder="Laki-laki / Perempuan"
+                  />
                 </div>
               </div>
               
@@ -220,13 +216,13 @@
               
               <div class="form-group">
                 <label>Gaji Pokok *</label>
-                <div class="input-wrapper">
-                  <span class="input-prefix">Rp</span>
+                <div class="currency-input-wrapper">
+                  <span class="currency-label">Rp</span>
                   <input 
                     v-model="form.gaji_pokok" 
                     type="number" 
                     required 
-                    class="form-input currency"
+                    class="form-input currency-input"
                     placeholder="0"
                   />
                 </div>
@@ -234,12 +230,12 @@
               
               <div class="form-group">
                 <label>Tunjangan</label>
-                <div class="input-wrapper">
-                  <span class="input-prefix">Rp</span>
+                <div class="currency-input-wrapper">
+                  <span class="currency-label">Rp</span>
                   <input 
                     v-model="form.tunjangan" 
                     type="number" 
-                    class="form-input currency"
+                    class="form-input currency-input"
                     placeholder="0"
                   />
                 </div>
@@ -247,12 +243,12 @@
               
               <div class="form-group">
                 <label>Bonus</label>
-                <div class="input-wrapper">
-                  <span class="input-prefix">Rp</span>
+                <div class="currency-input-wrapper">
+                  <span class="currency-label">Rp</span>
                   <input 
                     v-model="form.bonus" 
                     type="number" 
-                    class="form-input currency"
+                    class="form-input currency-input"
                     placeholder="0"
                   />
                 </div>
@@ -866,14 +862,23 @@ export default {
 .input-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .input-icon {
   position: absolute;
   left: 1rem;
+  top: 1rem;
   color: var(--gray-400);
   z-index: 1;
+}
+
+.input-wrapper.textarea-wrapper {
+  align-items: flex-start;
+}
+
+.input-wrapper.textarea-wrapper .input-icon {
+  top: 1.2rem;
 }
 
 .input-prefix {
@@ -915,64 +920,25 @@ export default {
 
 .select-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-wrapper .input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--gray-400);
+  z-index: 1;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .select-wrapper .form-select {
   padding-left: 3rem;
+  width: 100%;
 }
 
-.radio-group {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 0.5rem;
-}
 
-.radio-option {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  padding: 1rem;
-  border: 2px solid var(--gray-200);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  flex: 1;
-}
-
-.radio-option:hover {
-  border-color: var(--warning-color);
-  background: rgba(245, 158, 11, 0.05);
-}
-
-.radio-option input[type="radio"] {
-  display: none;
-}
-
-.radio-custom {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--gray-300);
-  border-radius: 50%;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.radio-option input[type="radio"]:checked + .radio-custom {
-  border-color: var(--warning-color);
-  background: var(--warning-color);
-}
-
-.radio-option input[type="radio"]:checked + .radio-custom::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  background: white;
-  border-radius: 50%;
-}
 
 .salary-summary {
   background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
@@ -1059,6 +1025,30 @@ export default {
   border-radius: 8px;
   min-width: 140px;
   text-align: center;
+}
+
+/* Currency Input Styling */
+.currency-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.currency-label {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  padding: 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.currency-input {
+  flex: 1;
+  padding: 1rem !important;
 }
 
 /* Form Actions */
@@ -1198,9 +1188,7 @@ export default {
     padding-left: 3.5rem;
   }
   
-  .radio-group {
-    flex-direction: column;
-  }
+
   
   .form-actions {
     flex-direction: column;

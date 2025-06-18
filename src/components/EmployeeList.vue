@@ -80,6 +80,7 @@
           <table class="modern-table">
             <thead>
               <tr>
+                <th class="number-column">No</th>
                 <th>Nama Lengkap</th>
                 <th>NIK</th>
                 <th>NIP</th>
@@ -91,58 +92,86 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="employee in paginatedEmployees" :key="employee.id" class="table-row">
+              <tr v-for="(employee, index) in paginatedEmployees" :key="employee.id" class="table-row">
+                <td class="number-cell">
+                  <span class="row-number">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</span>
+                </td>
                 <td>
                   <div class="employee-info">
-                    <strong>{{ employee.nama_lengkap }}</strong>
-                    <small>{{ employee.tingkat_pendidikan }}</small>
-                  </div>
-                </td>
-                <td>{{ employee.nik }}</td>
-                <td>{{ employee.nip || '-' }}</td>
-                <td>
-                  <span class="job-title">{{ employee.jabatan_saat_ini }}</span>
-                </td>
-                <td>
-                  <div class="salary-info">
-                    <strong>Rp {{ formatCurrency(calculateTotalSalary(employee)) }}</strong>
-                    <small>Gaji: {{ formatCurrency(employee.gaji_pokok) }}</small>
+                    <div class="employee-name">
+                      <i class="fas fa-user employee-icon"></i>
+                      <strong>{{ employee.nama_lengkap }}</strong>
+                    </div>
+                    <small class="employee-education">{{ employee.tingkat_pendidikan }}</small>
                   </div>
                 </td>
                 <td>
-                  <span class="training-count">
-                    {{ employee.trainings ? employee.trainings.length : 0 }} pelatihan
+                  <div class="nik-info">
+                    <i class="fas fa-id-card field-icon"></i>
+                    <span>{{ employee.nik }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="nip-info">
+                    <i class="fas fa-id-badge field-icon"></i>
+                    <span>{{ employee.nip || '-' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="job-title">
+                    <i class="fas fa-briefcase field-icon"></i>
+                    {{ employee.jabatan_saat_ini }}
                   </span>
                 </td>
                 <td>
-                  <div class="documents-list">
-                    <span v-if="employee.documents && employee.documents.length" class="doc-count">
-                      {{ employee.documents.length }} dokumen
-                      <div class="doc-tooltip">
-                        <a
-                          v-for="doc in employee.documents"
-                          :key="doc.id"
-                          :href="`${apiUrl}/storage/${doc.file_path}`"
-                          target="_blank"
-                          class="doc-link"
-                        >
-                          <i class="fas fa-file-pdf"></i>
-                          {{ doc.document_type }}
-                        </a>
-                      </div>
+                  <div class="salary-info">
+                    <div class="total-salary">
+                      <i class="fas fa-money-bill-wave field-icon"></i>
+                      <strong>Rp {{ formatCurrency(calculateTotalSalary(employee)) }}</strong>
+                    </div>
+                    <small class="base-salary">Gaji Pokok: Rp {{ formatCurrency(employee.gaji_pokok) }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="training-info">
+                    <i class="fas fa-graduation-cap field-icon"></i>
+                    <span class="training-count">
+                      {{ employee.trainings ? employee.trainings.length : 0 }} pelatihan
                     </span>
-                    <span v-else class="no-docs">Tidak ada</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="documents-info">
+                    <i class="fas fa-folder field-icon"></i>
+                    <div class="documents-list">
+                      <span v-if="employee.documents && employee.documents.length" class="doc-count">
+                        {{ employee.documents.length }} dokumen
+                        <div class="doc-tooltip">
+                          <a
+                            v-for="doc in employee.documents"
+                            :key="doc.id"
+                            :href="`${apiUrl}/storage/${doc.file_path}`"
+                            target="_blank"
+                            class="doc-link"
+                          >
+                            <i class="fas fa-file-pdf"></i>
+                            {{ doc.document_type }}
+                          </a>
+                        </div>
+                      </span>
+                      <span v-else class="no-docs">Tidak ada</span>
+                    </div>
                   </div>
                 </td>
                 <td>
                   <div class="action-buttons">
-                    <button class="btn-icon" @click="viewEmployee(employee.id)" title="Lihat Detail">
+                    <button class="btn-icon view-btn" @click="viewEmployee(employee.id)" title="Lihat Detail">
                       <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn-icon" @click="editEmployee(employee.id)" title="Edit">
+                    <button class="btn-icon edit-btn" @click="editEmployee(employee.id)" title="Edit">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-icon" @click="deleteEmployee(employee.id)" title="Hapus">
+                    <button class="btn-icon delete-btn" @click="deleteEmployee(employee.id)" title="Hapus">
                       <i class="fas fa-trash-alt"></i>
                     </button>
                   </div>
@@ -306,216 +335,216 @@ export default {
 }
 </script>
 
-<style scoped>
-.employee-list-container {
-  min-height: 100vh;
-  background: #f7fafd;
-  padding: 28px 0;
+/* Tambahkan CSS ini di bagian <style scoped> */
+
+/* Kolom nomor urut */
+.number-column {
+  width: 60px;
+  text-align: center;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
 }
 
-.page-header {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px 32px;
-  margin-bottom: 28px;
-  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
-  border: 1.5px solid #e5e7eb;
+.number-cell {
+  text-align: center;
+  background: #f8fafc;
+  border-right: 2px solid #e2e8f0;
 }
 
-.header-content {
+.row-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Styling untuk field dengan ikon */
+.field-icon {
+  color: #6b7280;
+  margin-right: 8px;
+  font-size: 0.875rem;
+  width: 16px;
+  text-align: center;
+}
+
+.employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.employee-name {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 22px;
+  gap: 8px;
 }
 
-.back-btn {
-  background: #f3f4f6;
+.employee-icon {
+  color: #3b82f6;
+  font-size: 1rem;
+}
+
+.employee-education {
+  color: #6b7280;
+  font-style: italic;
+  margin-left: 24px;
+}
+
+.nik-info, .nip-info {
+  display: flex;
+  align-items: center;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.job-title {
+  display: flex;
+  align-items: center;
+  background: #eff6ff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: #1d4ed8;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.salary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.total-salary {
+  display: flex;
+  align-items: center;
+  color: #059669;
+  font-weight: 600;
+}
+
+.base-salary {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-left: 24px;
+}
+
+.training-info {
+  display: flex;
+  align-items: center;
+  color: #7c3aed;
+}
+
+.documents-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.documents-list {
+  position: relative;
+}
+
+.doc-count {
+  color: #dc2626;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.no-docs {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Action buttons styling */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
   border: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.view-btn {
+  background: #eff6ff;
   color: #2563eb;
-  font-size: 1.25rem;
-  transition: background 0.18s;
-}
-.back-btn:hover {
-  background: #e5e7eb;
 }
 
-.page-title h1 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 2rem;
-  font-weight: 700;
-}
-.page-title p {
-  margin: 6px 0 0 0;
-  color: #64748b;
-  font-size: 1.05rem;
+.view-btn:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
 }
 
-.header-actions {
-  display: flex;
-  gap: 14px;
-}
-.btn-primary {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  padding: 0.85rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 1rem;
-  box-shadow: 0 1px 4px 0 rgb(37 99 235 / 0.07);
-  transition: background 0.18s, box-shadow 0.18s;
-}
-.btn-primary:hover {
-  background: #1746b3;
-  box-shadow: 0 6px 18px 0 rgb(37 99 235 / 0.13);
+.edit-btn {
+  background: #fef3c7;
+  color: #d97706;
 }
 
-.employee-list-content {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px 28px;
-  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
-  border: 1.5px solid #e5e7eb;
+.edit-btn:hover {
+  background: #fde68a;
+  transform: translateY(-1px);
 }
 
-.stats-summary {
-  display: flex;
-  gap: 22px;
-  margin-bottom: 28px;
-}
-.stat-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 20px 16px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 4px 0 rgb(37 99 235 / 0.04);
-}
-.stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: #e6edfa;
-  color: #2563eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-}
-.stat-icon.success {
-  background: #e7f6ef;
-  color: #10b981;
-}
-.stat-info h3 {
-  margin: 0;
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-.stat-info p {
-  margin: 4px 0 0 0;
-  color: #64748b;
-  font-size: 1.05rem;
+.delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
-.controls-section {
-  margin-bottom: 22px;
-}
-.search-controls {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.search-box {
-  position: relative;
-  flex: 1;
-  min-width: 220px;
-}
-.search-box i {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  font-size: 1rem;
-}
-.search-input {
-  width: 100%;
-  padding: 0.78rem 1rem 0.78rem 2.5rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f9fafb;
-  transition: border-color 0.18s;
-}
-.search-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  background: #fff;
+.delete-btn:hover {
+  background: #fecaca;
+  transform: translateY(-1px);
 }
 
-.filter-select {
-  padding: 0.78rem 1.1rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f9fafb;
-  min-width: 170px;
-  transition: border-color 0.18s;
-}
-.filter-select:focus {
-  outline: none;
-  border-color: #2563eb;
-  background: #fff;
-}
-
-.table-section {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1.5px solid #e5e7eb;
-}
-.table-container {
-  overflow-x: auto;
-}
+/* Responsive table */
 .modern-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1rem;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 .modern-table th {
-  background: #f3f4f6;
-  padding: 1rem 0.9rem;
+  background: #f8fafc;
+  padding: 16px 12px;
   text-align: left;
-  font-weight: 700;
-  color: #1e293b;
+  font-weight: 600;
+  color: #374151;
   border-bottom: 2px solid #e5e7eb;
-  white-space: nowrap;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
 .modern-table td {
-  padding: 1rem 0.9rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 12px;
+  border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
-  background: #fff;
 }
+
 .table-row:hover {
   background: #f9fafb;
+}
+
+.table-row:hover .number-cell {
+  background: #f1f5f9;
 }
 .employee-info strong {
   display: block;
