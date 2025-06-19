@@ -415,7 +415,7 @@ export default {
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -510,7 +510,7 @@ export default {
   padding: 0.5rem 1rem;
   border: 1px solid var(--gray-300);
   border-radius: 8px;
-  background: white;
+  background: var(--bg-secondary);
   color: var(--gray-700);
   font-size: 0.875rem;
 }
@@ -522,7 +522,7 @@ export default {
 }
 
 .quota-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -599,7 +599,7 @@ export default {
 }
 
 .requests-table {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -770,7 +770,7 @@ export default {
 }
 
 .action-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);

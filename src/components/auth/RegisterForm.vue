@@ -40,7 +40,7 @@ const register = async () => {
 };
 </script>
 <style scoped>
-.auth-form { max-width: 350px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+.auth-form { max-width: 350px; margin: auto; background: var(--bg-secondary); padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
 input, button { display: block; margin: 10px 0; width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; }
 .error { color: red; margin-top: 10px; }
 </style>

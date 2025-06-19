@@ -416,7 +416,7 @@ export default {
 }
 
 .action-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -478,7 +478,7 @@ export default {
 }
 
 .table-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -593,7 +593,7 @@ export default {
 .pagination-btn {
   padding: 0.5rem 1rem;
   border: 1px solid var(--gray-300);
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -624,7 +624,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow-xl);
   max-width: 500px;

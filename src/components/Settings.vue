@@ -415,7 +415,7 @@ export default {
 }
 
 .settings-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -487,7 +487,7 @@ export default {
   padding: 0.5rem 1rem;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  background: white;
+  background: var(--bg-secondary);
   color: #374151;
   font-size: 0.875rem;
   cursor: pointer;
@@ -533,7 +533,7 @@ export default {
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: var(--bg-secondary);
   transition: 0.3s;
   border-radius: 50%;
 }

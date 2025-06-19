@@ -684,7 +684,7 @@ export default {
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--border-radius);
   padding: 2rem;
   box-shadow: var(--shadow);
@@ -796,7 +796,7 @@ export default {
 }
 
 .chart-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -822,7 +822,7 @@ export default {
   padding: 0.5rem 1rem;
   border: 1px solid var(--gray-300);
   border-radius: 6px;
-  background: white;
+  background: var(--bg-secondary);
   color: var(--gray-700);
   font-size: 0.875rem;
 }
@@ -864,7 +864,7 @@ export default {
   padding: 0.75rem 1rem;
   border: 1px solid var(--gray-300);
   border-radius: 8px;
-  background: white;
+  background: var(--bg-secondary);
   color: var(--gray-700);
   font-size: 0.875rem;
   min-width: 120px;
@@ -877,7 +877,7 @@ export default {
 }
 
 .summary-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--border-radius);
   padding: 2rem;
   box-shadow: var(--shadow);
@@ -944,7 +944,7 @@ export default {
 }
 
 .action-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--border-radius);
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -1034,7 +1034,7 @@ export default {
 }
 
 .activities-list {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -1122,7 +1122,7 @@ export default {
 }
 
 .activity-status.pending {
-  background: #FFF3CD;
+  background: var(--bg-secondary)3CD;
   color: #856404;
 }
 

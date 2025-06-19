@@ -370,7 +370,7 @@ export default {
 }
 
 .filter-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -409,7 +409,7 @@ export default {
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -458,7 +458,7 @@ export default {
 }
 
 .table-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;

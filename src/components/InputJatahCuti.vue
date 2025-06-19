@@ -359,7 +359,7 @@ export default {
 }
 
 .page-header {
-  background: linear-gradient(135deg, white 0%, var(--gray-50) 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
   border-radius: var(--radius-xl);
   padding: 2.5rem;
   margin-bottom: 2rem;
@@ -404,7 +404,7 @@ export default {
 }
 
 .filters-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   padding: 2rem;
   margin-bottom: 2rem;
@@ -426,7 +426,7 @@ export default {
   font-size: 0.9rem;
   font-weight: 500;
   min-width: 180px;
-  background: white;
+  background: var(--bg-secondary);
   color: var(--gray-700);
   transition: var(--transition);
   cursor: pointer;
@@ -443,7 +443,7 @@ export default {
 }
 
 .table-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--gray-100);
@@ -702,7 +702,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-2xl);
   max-width: 650px;
@@ -796,13 +796,13 @@ export default {
 
 .form-input:hover {
   border-color: var(--gray-300);
-  background: white;
+  background: var(--bg-secondary);
 }
 
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  background: white;
+  background: var(--bg-secondary);
   box-shadow: 0 0 0 4px var(--primary-bg);
   transform: translateY(-1px);
 }
@@ -882,7 +882,7 @@ export default {
 }
 
 .btn-secondary {
-  background: white;
+  background: var(--bg-secondary);
   color: var(--gray-700);
   border: 2px solid var(--gray-300);
   padding: 1rem 2rem;
@@ -991,7 +991,7 @@ export default {
 @media (max-width: 768px) {
   .input-jatah-container {
     padding: 1rem;
-    background: white;
+    background: var(--bg-secondary);
   }
   
   .page-header {

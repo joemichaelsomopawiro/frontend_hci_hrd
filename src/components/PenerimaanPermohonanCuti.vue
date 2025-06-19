@@ -362,14 +362,17 @@ export default {
 </script>
 
 <style scoped>
+/* Tambahkan di awal style section */
 .permohonan-container {
+  background: var(--bg-primary);
+  color: var(--text-primary);
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .page-header {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
@@ -387,12 +390,12 @@ export default {
 .page-title h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .page-title p {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -403,7 +406,7 @@ export default {
 }
 
 .pending-count {
-  background: #f59e0b;
+  background: var(--warning-color);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -412,7 +415,7 @@ export default {
 }
 
 .filters-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -428,14 +431,16 @@ export default {
 
 .filter-select {
   padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 0.9rem;
   min-width: 150px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .table-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -452,33 +457,39 @@ export default {
 }
 
 .modern-table th {
-  background: #f9fafb;
+  background: var(--bg-tertiary);
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
 }
 
 .modern-table td {
+  background: var(--bg-secondary);
   padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-color);
   vertical-align: top;
+  color: var(--text-primary);
 }
 
 .table-row:hover {
-  background: #f9fafb;
+  background: var(--bg-tertiary) !important;
+}
+
+.table-row:hover td {
+  background: var(--bg-tertiary) !important;
 }
 
 .employee-info strong {
   display: block;
   margin-bottom: 0.25rem;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .employee-info small {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.75rem;
 }
 
@@ -489,12 +500,12 @@ export default {
 
 .approved-by {
   font-weight: 500;
-  color: #059669;
+  color: var(--success-color);
   margin-bottom: 0.25rem;
 }
 
 .approval-info small {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.75rem;
 }
 
@@ -507,41 +518,48 @@ export default {
 }
 
 .leave-type-badge.annual {
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .leave-type-badge.sick {
-  background: #fef3c7;
-  color: #92400e;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .leave-type-badge.emergency {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .leave-type-badge.maternity {
-  background: #f3e8ff;
+  background: rgba(124, 58, 237, 0.1);
   color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.3);
 }
 
 .leave-type-badge.paternity {
-  background: #ecfdf5;
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .date-range strong {
   display: block;
   margin-bottom: 0.25rem;
+  color: var(--text-primary);
 }
 
 .duration {
-  background: #f3f4f6;
+  background: var(--bg-tertiary);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
   font-weight: 500;
+  color: var(--text-primary);
 }
 
 .reason-text {
@@ -550,6 +568,7 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.875rem;
+  color: var(--text-primary);
 }
 
 .status-badge {
@@ -561,18 +580,21 @@ export default {
 }
 
 .status-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .status-badge.approved {
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .status-badge.rejected {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .action-buttons {
@@ -596,52 +618,53 @@ export default {
 
 .btn-icon.approve {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--success-color);
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .btn-icon.approve:hover {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
 }
 
 .btn-icon.reject {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--error-color);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .btn-icon.reject:hover {
-  background: #ef4444;
+  background: var(--error-color);
   color: white;
 }
 
 .btn-icon.view {
   background: rgba(6, 182, 212, 0.1);
-  color: #06b6d4;
+  color: var(--info-color);
   border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 .btn-icon.view:hover {
-  background: #06b6d4;
+  background: var(--info-color);
   color: white;
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .empty-state i {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #d1d5db;
+  color: var(--text-secondary);
+  opacity: 0.5;
 }
 
 .empty-state h3 {
   margin-bottom: 0.5rem;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .modal-overlay {
@@ -658,7 +681,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-width: 600px;
@@ -669,7 +692,7 @@ export default {
 
 .modal-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -678,6 +701,7 @@ export default {
 .modal-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .close-btn {
@@ -685,7 +709,11 @@ export default {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-secondary);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
 }
 
 .modal-body {
@@ -693,7 +721,7 @@ export default {
 }
 
 .request-details, .detail-section {
-  background: #f9fafb;
+  background: var(--bg-tertiary);
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
@@ -701,12 +729,13 @@ export default {
 
 .request-details h4, .detail-section h4 {
   margin-bottom: 0.5rem;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .request-details p, .detail-section p {
   margin-bottom: 0.25rem;
   font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
 .form-group {
@@ -717,34 +746,36 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.3s ease;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .modal-footer {
   padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-color);
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
 }
 
 .btn-primary {
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -758,7 +789,7 @@ export default {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--primary-hover);
   transform: translateY(-1px);
 }
 
@@ -768,9 +799,9 @@ export default {
 }
 
 .btn-secondary {
-  background: #e5e7eb;
-  color: #374151;
-  border: none;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 500;
@@ -782,7 +813,8 @@ export default {
 }
 
 .btn-secondary:hover {
-  background: #d1d5db;
+  background: var(--bg-primary);
+  border-color: var(--primary-color);
 }
 
 .notification {
@@ -801,11 +833,11 @@ export default {
 }
 
 .notification.success {
-  background: #10b981;
+  background: var(--success-color);
 }
 
 .notification.error {
-  background: #ef4444;
+  background: var(--error-color);
 }
 
 @keyframes slideIn {

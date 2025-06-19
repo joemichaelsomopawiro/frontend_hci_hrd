@@ -1,5 +1,5 @@
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'dark-mode': isDarkMode }">
     <!-- Mobile Menu Overlay -->
     <div 
       v-if="isMobileMenuOpen" 
@@ -125,6 +125,20 @@
           </div>
 
           <div class="navbar-actions">
+            <!-- Dark Mode Toggle Button -->
+            <button 
+              class="theme-toggle-btn" 
+              @click="toggleDarkMode"
+              :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            >
+              <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+              </svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/>
+              </svg>
+            </button>
+            
             <button class="notification-btn">
               <span class="notification-icon">🔔</span>
               <span class="notification-badge">3</span>
@@ -203,6 +217,7 @@ export default {
     return {
       isMobileMenuOpen: false,
       isUserDropdownOpen: false,
+      isDarkMode: false,
       submenuOpen: {
         dataPegawai: false,
         manajemenCuti: false
@@ -312,6 +327,28 @@ export default {
         this.$router.push('/login')
       }
     },
+    toggleDarkMode() {
+      this.isDarkMode = !this.isDarkMode
+      localStorage.setItem('darkMode', this.isDarkMode.toString())
+      this.applyTheme()
+    },
+    applyTheme() {
+      if (this.isDarkMode) {
+        document.documentElement.classList.add('dark-mode')
+      } else {
+        document.documentElement.classList.remove('dark-mode')
+      }
+    },
+    loadThemePreference() {
+      const savedTheme = localStorage.getItem('darkMode')
+      if (savedTheme !== null) {
+        this.isDarkMode = savedTheme === 'true'
+      } else {
+        // Default to system preference
+        this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+      }
+      this.applyTheme()
+    },
     handleStorageChange(event) {
       if (event.key === 'user') {
         this.$forceUpdate()
@@ -330,6 +367,9 @@ export default {
     }
   },
   async mounted() {
+    // Load theme preference
+    this.loadThemePreference()
+    
     // Refresh user data saat komponen dimount
     await this.refreshUserData()
     
@@ -361,7 +401,8 @@ export default {
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--bg-primary, #f8fafc);
+  transition: background-color 0.3s ease;
 }
 
 /* Mobile Overlay */
@@ -677,18 +718,21 @@ export default {
   overflow-y: auto;
   width: 100%;
   min-height: calc(100vh - 80px);
+  background-color: var(--bg-primary, #f8fafc);
+  transition: background-color 0.3s ease;
 }
 
 /* Navbar Styles */
 .navbar {
-  background: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-secondary, #ffffff);
+  border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+  box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 999;
+  transition: all 0.3s ease;
 }
 
 .navbar-content {
@@ -708,7 +752,7 @@ export default {
 .navbar-title h1 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e3a8a;
+  color: var(--text-primary, #1e3a8a);
   margin: 0;
   letter-spacing: -0.025em;
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -840,7 +884,7 @@ export default {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  background: var(--bg-secondary);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -1027,6 +1071,131 @@ export default {
   .main-content {
     padding: 80px 1rem 1rem 1rem;
   }
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  color: var(--text-secondary, #1e3a8a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--gray-100, rgba(0, 0, 0, 0.05));
+  color: var(--text-primary, #1e3a8a);
+  transform: scale(1.05);
+}
+
+/* Dark Mode Styles */
+.dark-mode {
+  background-color: #1a1a1a;
+  color: #e5e7eb;
+}
+
+.dark-mode .sidebar {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 50%, #020617 100%);
+}
+
+.dark-mode .navbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .navbar-title h1 {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .theme-toggle-btn {
+  color: var(--text-secondary, #e5e7eb);
+}
+
+.dark-mode .theme-toggle-btn:hover {
+  background-color: var(--gray-700, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #e5e7eb);
+}
+
+.dark-mode .notification-btn {
+  color: var(--text-secondary, #e5e7eb);
+}
+
+.dark-mode .notification-btn:hover {
+  background-color: var(--gray-700, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #e5e7eb);
+}
+
+.dark-mode .notification-icon {
+  color: #e5e7eb;
+}
+
+.dark-mode .hamburger {
+  background-color: #e5e7eb;
+}
+
+.dark-mode .user-menu:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .welcome-text {
+  color: #e5e7eb;
+}
+
+.dark-mode .dropdown-arrow {
+  color: #e5e7eb;
+}
+
+.dark-mode .user-dropdown {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .dropdown-header {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  border-bottom-color: #4a5568;
+}
+
+.dark-mode .user-info-dropdown h4 {
+  color: #e5e7eb;
+}
+
+.dark-mode .user-info-dropdown p {
+  color: #a0aec0;
+}
+
+.dark-mode .dropdown-divider {
+  background: #4a5568;
+}
+
+.dark-mode .dropdown-item {
+  color: var(--text-primary);
+}
+
+.dark-mode .dropdown-item:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.dark-mode .logout-item {
+  color: #fc8181;
+  border-top-color: #4a5568;
+}
+
+.dark-mode .logout-item:hover {
+  background-color: #742a2a;
+  color: #fc8181;
+}
+
+.dark-mode .main-content {
+  background-color: var(--bg-primary);
 }
 
 @media (max-width: 480px) {

@@ -18,7 +18,7 @@
 <script setup></script>
 <style scoped>
 .auth-bg { min-height: 100vh; background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%); display: flex; align-items: center; justify-content: center; }
-.auth-center { width: 100%; max-width: 420px; margin: 2rem; background: #fff; border-radius: 16px; box-shadow: 0 8px 32px rgba(30,58,138,0.12); padding: 2.5rem 2rem 1.5rem 2rem; display: flex; flex-direction: column; align-items: center; }
+.auth-center { width: 100%; max-width: 420px; margin: 2rem; background: var(--bg-secondary); border-radius: 16px; box-shadow: 0 8px 32px rgba(30,58,138,0.12); padding: 2.5rem 2rem 1.5rem 2rem; display: flex; flex-direction: column; align-items: center; }
 .auth-logo-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; }
 .auth-logo { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; margin-bottom: 0.7rem; box-shadow: 0 2px 8px #0002; }
 .auth-title h1 { font-size: 1.25rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.25rem; text-align: center; }

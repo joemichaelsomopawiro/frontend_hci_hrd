@@ -546,7 +546,7 @@ body {
 
 /* Header */
 .page-header {
-  background: white;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--gray-200);
   padding: 1.5rem 2rem;
 }
@@ -575,7 +575,7 @@ body {
   width: 44px;
   height: 44px;
   border: 2px solid var(--gray-300);
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -650,7 +650,7 @@ body {
 }
 
 .employee-form {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -775,7 +775,7 @@ body {
   color: white;
 }
 .btn-secondary {
-  background: white;
+  background: var(--bg-secondary);
   color: var(--gray-700);
   border: 1px solid var(--gray-400);
   box-shadow: var(--shadow-sm);

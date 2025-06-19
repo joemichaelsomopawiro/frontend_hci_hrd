@@ -339,13 +339,78 @@ export default {
 /* Container utama */
 .employee-list-container {
   padding: 20px;
-  background-color: #f5f5f5;
+  background-color: var(--bg-primary);
   min-height: 100vh;
+  transition: background-color 0.3s ease;
+}
+
+.page-header {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.page-title h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.stat-item {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.stat-info p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Table Styles */
+.employee-table {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.table-header {
+  background: var(--bg-tertiary);
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 /* Header */
 .page-header {
-  background: white;
+  background: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -373,14 +438,14 @@ export default {
 
 .page-title h1 {
   margin: 0;
-  color: #1f2937;
+  color: var(--text-primary); /* Ganti dari #1f2937 */
   font-size: 1.8rem;
   font-weight: 600;
 }
 
 .page-title p {
   margin: 5px 0 0 0;
-  color: #6b7280;
+  color: var(--text-secondary); /* Ganti dari #6b7280 */
   font-size: 0.9rem;
 }
 
@@ -409,7 +474,7 @@ export default {
 }
 
 .stat-item {
-  background: white;
+  background: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -437,19 +502,19 @@ export default {
 .stat-info h3 {
   margin: 0;
   font-size: 1.5rem;
-  color: #1f2937;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .stat-info p {
   margin: 5px 0 0 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 /* Search Section */
 .controls-section {
-  background: white;
+  background: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -495,7 +560,7 @@ export default {
   padding: 10px;
   border: 1px solid #d1d5db;
   border-radius: 5px;
-  background: white;
+  background: var(--bg-secondary);
   font-size: 0.9rem;
   min-width: 150px;
 }
@@ -507,7 +572,7 @@ export default {
 
 /* Tabel Sederhana */
 .table-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
@@ -519,7 +584,7 @@ export default {
 
 .modern-table {
   width: 100%;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -527,20 +592,27 @@ export default {
 }
 
 .modern-table th {
-  background: #f8f9fa;
-  color: #374151;
+  background: var(--bg-tertiary); /* Ganti dari #f8f9fa */
+  color: var(--text-primary); /* Ganti dari #374151 */
   font-weight: 600;
   padding: 15px 12px;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Tambahkan hover effect untuk table row */
+.modern-table tbody tr:hover {
+  background: var(--bg-tertiary) !important;
 }
 
 .modern-table td {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
   padding: 15px 12px;
   border-bottom: 1px solid #f3f4f6;
   font-size: 0.9rem;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .modern-table tr:hover {
@@ -563,12 +635,13 @@ export default {
 }
 
 .row-number {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   padding: 5px 10px;
   border-radius: 15px;
   font-weight: 600;
   font-size: 0.8rem;
+  border: 1px solid var(--border-color);
 }
 
 /* Info karyawan */
@@ -583,16 +656,16 @@ export default {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .employee-icon {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .employee-education {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.8rem;
 }
 
@@ -604,7 +677,7 @@ export default {
 }
 
 .field-icon {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.8rem;
 }
 
@@ -612,7 +685,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 /* Salary info */
@@ -631,7 +704,7 @@ export default {
 }
 
 .base-salary {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.8rem;
 }
 
@@ -643,7 +716,7 @@ export default {
 }
 
 .training-count, .doc-count {
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .no-docs {
@@ -705,7 +778,7 @@ export default {
   gap: 10px;
   margin-top: 20px;
   padding: 20px;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -713,8 +786,8 @@ export default {
 .pagination button {
   padding: 8px 12px;
   border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   border-radius: 5px;
   cursor: pointer;
   font-weight: 500;
@@ -733,7 +806,7 @@ export default {
 }
 
 .pagination-info {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin: 0 10px;
 }
@@ -744,7 +817,7 @@ export default {
   justify-content: center;
   align-items: center;
   padding: 60px;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -772,7 +845,7 @@ export default {
 .empty-state {
   text-align: center;
   padding: 60px;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -784,13 +857,13 @@ export default {
 }
 
 .empty-state h3 {
-  color: #374151;
+  color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 1.2rem;
 }
 
 .empty-state p {
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 20px;
 }
 

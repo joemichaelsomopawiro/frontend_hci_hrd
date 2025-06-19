@@ -243,7 +243,7 @@ export default {
 }
 
 .otp-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   width: 100%;

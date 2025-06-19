@@ -497,7 +497,7 @@ export default {
 }
 
 .profile-header p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 1rem;
 }
 
@@ -508,7 +508,7 @@ export default {
 }
 
 .profile-card, .security-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -558,7 +558,7 @@ export default {
 }
 
 .change-avatar-btn, .delete-avatar-btn {
-  background: #f8fafc;
+  background: var(--bg-tertiary);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.5rem 1rem;
@@ -568,7 +568,7 @@ export default {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .change-avatar-btn:hover:not(:disabled) {
@@ -604,7 +604,7 @@ export default {
 
 .info-group label {
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   font-size: 0.875rem;
 }
 
@@ -613,7 +613,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  background: #f8fafc;
+  background: var(--bg-tertiary);
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
@@ -684,7 +684,141 @@ export default {
 
 .cancel-btn {
   background: #f3f4f6;
-  color: #374151;
+  color: var(--text-primary);
+  border: 1px solid #d1d5db;
+}
+
+.cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.security-card h3 {
+  margin-bottom: 1.5rem;
+  color: #1e3a8a;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Perbaiki security item */
+.security-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: var(--bg-tertiary); /* Ganti dari #f8fafc */
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.security-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary); /* Ganti dari #374151 */
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.security-info p {
+  margin: 0;
+  color: var(--text-secondary); /* Ganti dari #64748b */
+  font-size: 0.875rem;
+}
+
+/* Perbaiki form input */
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Perbaiki info field */
+.info-field span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.edit-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.edit-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.save-btn, .cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.save-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: var(--text-primary);
   border: 1px solid #d1d5db;
 }
 
@@ -714,21 +848,21 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--bg-tertiary);
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
 
 .security-info h4 {
   margin: 0 0 0.25rem 0;
-  color: #374151;
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 600;
 }
 
 .security-info p {
   margin: 0;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
@@ -766,7 +900,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 0;
   max-width: 500px;
@@ -800,7 +934,7 @@ export default {
 }
 
 .close-btn:hover {
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .password-form {
@@ -815,7 +949,7 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   font-size: 0.875rem;
 }
 

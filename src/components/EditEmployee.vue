@@ -631,7 +631,7 @@ export default {
 }
 
 .page-header {
-  background: white;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--gray-200);
   padding: 1.5rem 2rem;
   box-shadow: var(--shadow-sm);
@@ -688,7 +688,7 @@ export default {
 }
 
 .employee-form {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -806,7 +806,7 @@ export default {
 }
 
 .section-header {
-  background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
   padding: 1.5rem;
   border-bottom: 1px solid var(--gray-200);
   position: relative;
@@ -897,7 +897,7 @@ export default {
   border-radius: 12px;
   font-size: 0.875rem;
   transition: all 0.3s ease;
-  background: white;
+  background: var(--bg-secondary);
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -1061,6 +1061,32 @@ export default {
   border-top: 1px solid var(--gray-200);
 }
 
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:hover i {
+  color: var(--text-primary) !important;
+}
+
 .btn-warning {
   background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
   color: white;
@@ -1082,6 +1108,42 @@ export default {
   box-shadow: var(--shadow-lg);
 }
 
+.btn-icon {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.btn-icon:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.btn-icon.view:hover {
+  background: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.btn-icon.edit:hover {
+  background: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+.btn-icon.delete:hover {
+  background: var(--error-color);
+  border-color: var(--error-color);
+}
+
 /* Loading Overlay */
 .loading-overlay {
   position: fixed;
@@ -1094,7 +1156,7 @@ export default {
 }
 
 .loading-overlay .loading-spinner {
-  background: white;
+  background: var(--bg-secondary);
   padding: 3rem;
   border-radius: 16px;
   text-align: center;

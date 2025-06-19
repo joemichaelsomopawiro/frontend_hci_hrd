@@ -17,7 +17,7 @@ const verifyOtp = (otp) => {
 };
 </script>
 <style scoped>
-.auth-form { max-width: 350px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+.auth-form { max-width: 350px; margin: auto; background: var(--bg-secondary); padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
 .otp-input { width: 40px; height: 40px; margin: 0 5px; text-align: center; font-size: 20px; }
 .error { color: red; margin-top: 10px; }
 </style>

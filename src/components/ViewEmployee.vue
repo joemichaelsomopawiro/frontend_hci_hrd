@@ -582,7 +582,7 @@ export default {
 }
 
 .page-header {
-  background: white;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--gray-200);
   padding: 1.5rem 2rem;
   box-shadow: var(--shadow-sm);
@@ -762,7 +762,7 @@ export default {
 
 /* Detail Sections */
 .detail-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   box-shadow: var(--shadow);
   margin-bottom: 2rem;
@@ -776,7 +776,7 @@ export default {
 }
 
 .section-header {
-  background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
   padding: 1.5rem;
   border-bottom: 1px solid var(--gray-200);
   position: relative;
@@ -899,7 +899,7 @@ export default {
 }
 
 .document-card:hover {
-  background: white;
+  background: var(--bg-secondary);
   border-color: var(--primary-color);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
@@ -915,7 +915,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   font-size: 1.5rem;
@@ -1033,7 +1033,7 @@ export default {
 }
 
 .timeline-content:hover {
-  background: white;
+  background: var(--bg-secondary);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -1064,7 +1064,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
+  background: var(--bg-secondary);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   border: 1px solid var(--gray-200);
@@ -1106,7 +1106,7 @@ export default {
 }
 
 .training-card:hover, .benefit-card:hover {
-  background: white;
+  background: var(--bg-secondary);
   border-color: var(--warning-color);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
@@ -1150,7 +1150,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
+  background: var(--bg-secondary);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   border: 1px solid var(--gray-200);
@@ -1170,7 +1170,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
+  background: var(--bg-secondary);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   border: 1px solid var(--gray-200);

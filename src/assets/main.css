@@ -1,5 +1,6 @@
 /* Hope Channel Indonesia - Enterprise HR System Styles */
 :root {
+  /* Light Mode Colors */
   --primary-color: #2563eb;
   --primary-dark: #1e3a8a;
   --secondary-color: #f59e0b;
@@ -18,6 +19,16 @@
   --gray-800: #1f2937;
   --gray-900: #111827;
   --white: #ffffff;
+  
+  /* Theme Variables */
+  --bg-primary: var(--gray-50);
+  --bg-secondary: var(--white);
+  --bg-tertiary: #f8fafc;
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-muted: var(--gray-500);
+  --border-color: var(--gray-200);
+  --border-light: #f1f1f1;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -25,17 +36,86 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
+/* Dark Mode Variables */
+.dark-mode {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --border-light: #475569;
+  --gray-50: #0f172a;
+  --gray-100: #1e293b;
+  --gray-200: #334155;
+  --gray-300: #475569;
+  --gray-400: #64748b;
+  --gray-500: #94a3b8;
+  --gray-600: #cbd5e1;
+  --gray-700: #e2e8f0;
+  --gray-800: #f1f5f9;
+  --gray-900: #f8fafc;
+  --white: #1e293b;
+}
+
+/* Global Styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--gray-50);
-  color: var(--gray-900);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Card Styles */
+.card, .stat-card, .page-header, .quick-actions-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Form Styles */
+.form-input, .form-select, .form-textarea {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  background-color: var(--bg-secondary);
+  border-color: var(--primary-color);
+}
+
+/* Theme Toggle Button Styles */
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--gray-100);
+  color: var(--text-primary);
+}
+
+.dark-mode .theme-toggle-btn:hover {
+  background-color: var(--gray-700);
 }
 
 /* Header Styles */
@@ -117,7 +197,7 @@ body {
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
@@ -162,11 +242,11 @@ body {
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 0.25rem;
-  color: var(--gray-900);
+  color: var(--text-primary);
 }
 
 .stat-content p {
-  color: var(--gray-600);
+  color: var(--text-secondary);
   font-weight: 500;
   margin-bottom: 0.5rem;
 }
@@ -198,7 +278,7 @@ body {
 .section-header h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-primary);
 }
 
 /* Button Styles */
@@ -226,10 +306,10 @@ body {
 }
 
 .btn-secondary {
-  background: white;
-  color: var(--gray-700);
+  background: var(--bg-secondary);
+  color: var(--primary-color);
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--gray-300);
+  border: 2px solid var(--primary-color);
   border-radius: 8px;
   font-weight: 600;
   text-decoration: none;
@@ -241,14 +321,14 @@ body {
 }
 
 .btn-secondary:hover {
-  background: var(--gray-50);
-  border-color: var(--gray-400);
+  background: var(--primary-color);
+  color: var(--bg-secondary);
   text-decoration: none;
 }
 
 /* Table Styles */
 .table-section {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -256,7 +336,7 @@ body {
 
 .table-header {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -277,10 +357,12 @@ body {
 
 .search-input, .filter-select {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.875rem;
   transition: border-color 0.2s;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .search-input:focus, .filter-select:focus {
@@ -303,29 +385,29 @@ body {
 }
 
 .modern-table th {
-  background: var(--gray-50);
+  background: var(--gray-100);
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: var(--gray-700);
-  border-bottom: 1px solid var(--gray-200);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
 }
 
 .modern-table td {
   padding: 1rem;
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--border-color);
   vertical-align: top;
 }
 
 .table-row:hover {
-  background: var(--gray-50);
+  background: var(--gray-100);
 }
 
 .employee-info strong {
   display: block;
   margin-bottom: 0.25rem;
-  color: var(--gray-900);
+  color: var(--text-primary);
 }
 
 .employee-info small {
@@ -346,7 +428,7 @@ body {
 .salary-info strong {
   display: block;
   margin-bottom: 0.25rem;
-  color: var(--gray-900);
+  color: var(--text-primary);
 }
 
 .salary-info small {
@@ -375,8 +457,8 @@ body {
   position: absolute;
   top: 100%;
   left: 0;
-  background: white;
-  border: 1px solid var(--gray-200);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   box-shadow: var(--shadow-lg);
   padding: 0.5rem;
@@ -392,7 +474,7 @@ body {
 .doc-link {
   display: block;
   padding: 0.25rem 0.5rem;
-  color: var(--gray-700);
+  color: var(--text-secondary);
   text-decoration: none;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -485,8 +567,8 @@ body {
 .back-btn {
   width: 44px;
   height: 44px;
-  border: 2px solid var(--gray-300);
-  background: white;
+  border: 2px solid var(--border-color);
+  background: var(--bg-secondary);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -494,7 +576,7 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1.1rem;
-  color: var(--gray-600);
+  color: var(--text-secondary);
   position: relative;
   overflow: hidden;
 }
@@ -598,7 +680,7 @@ body {
 
 .empty-state h3 {
   margin-bottom: 0.5rem;
-  color: var(--gray-700);
+  color: var(--text-secondary);
 }
 
 .empty-state p {
@@ -618,8 +700,8 @@ body {
 .pagination-btn {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--gray-300);
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -640,7 +722,7 @@ body {
 
 .pagination-info {
   font-size: 0.875rem;
-  color: var(--gray-600);
+  color: var(--text-secondary);
 }
 
 /* Form Styles */
@@ -650,8 +732,8 @@ body {
 }
 
 .page-header {
-  background: white;
-  border-bottom: 1px solid var(--gray-200);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
   padding: 1.5rem 2rem;
 }
 
@@ -667,10 +749,11 @@ body {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--text-primary);
 }
 
 .page-title p {
-  color: var(--gray-500);
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
@@ -681,14 +764,14 @@ body {
 }
 
 .employee-form {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;
 }
 
 .form-section {
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .form-section:last-child {
@@ -696,9 +779,9 @@ body {
 }
 
 .section-header {
-  background: var(--gray-50);
+  background: var(--gray-100);
   padding: 1.5rem;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -707,7 +790,7 @@ body {
 .section-header h2 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -749,7 +832,7 @@ body {
 .form-group label {
     font-size: 0.9rem;
     font-weight: 600; /* Make labels slightly bolder */
-    color: var(--gray-800);
+    color: var(--text-primary);
     margin-bottom: 0.5rem; /* More space between label and input */
     display: block; /* Ensure label takes full width */
 }
@@ -768,11 +851,11 @@ body {
 .form-textarea {
     padding: 0.85rem 1rem; /* Slightly more vertical padding */
     border-radius: 8px; /* Slightly larger border-radius for softer look */
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--border-color);
     transition: all 0.2s ease-in-out; /* Smooth transitions */
     font-size: 0.95rem; /* Slightly larger font size */
-    color: var(--gray-900);
-    background-color: var(--white);
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
 }
 
 .form-input:focus,
@@ -786,7 +869,7 @@ body {
 .input-group {
     display: flex;
     align-items: center;
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease-in-out;
@@ -800,8 +883,8 @@ body {
 .input-prefix {
     background-color: var(--gray-100);
     padding: 0.85rem 1rem;
-    border-right: 1px solid var(--gray-300);
-    color: var(--gray-600);
+    border-right: 1px solid var(--border-color);
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 0.95rem;
     line-height: 1; /* Ensure alignment with input text */
@@ -831,8 +914,8 @@ body {
 }
 
 .btn-secondary {
-    border-color: var(--gray-400); /* Slightly stronger border */
-    color: var(--gray-700);
+    border-color: var(--border-color); /* Slightly stronger border */
+    color: var(--text-primary);
     box-shadow: var(--shadow-sm); /* Add a small shadow */
 }
 
@@ -845,9 +928,9 @@ body {
 
 /* File Upload Area */
 .file-upload-area {
-    border: 2px dashed var(--gray-300);
+    border: 2px dashed var(--border-color);
     border-radius: 12px; /* Consistent with form */
-    background-color: var(--gray-50);
+    background-color: var(--gray-100);
     padding: 2.5rem; /* More generous padding */
     text-align: center;
     cursor: pointer;
@@ -866,7 +949,7 @@ body {
 }
 
 .file-upload-area .upload-content p {
-    color: var(--gray-600);
+    color: var(--text-secondary);
     font-weight: 500;
     margin-bottom: 0.25rem;
 }
@@ -879,7 +962,7 @@ body {
 
 .file-list {
     margin-top: 1.5rem;
-    border-top: 1px solid var(--gray-200); /* Subtle line for list separation */
+    border-top: 1px solid var(--border-color); /* Subtle line for list separation */
     padding-top: 1.5rem;
 }
 
@@ -888,10 +971,10 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 1rem;
-    background-color: var(--gray-50);
+    background-color: var(--gray-100);
     border-radius: 8px;
     margin-bottom: 0.75rem; /* Space between file items */
-    border: 1px solid var(--gray-200);
+    border: 1px solid var(--border-color);
 }
 
 .file-item .file-info {
@@ -907,7 +990,7 @@ body {
 
 .file-item .file-info span {
     font-weight: 500;
-    color: var(--gray-800);
+    color: var(--text-primary);
 }
 
 .file-item .file-info small {
@@ -932,8 +1015,8 @@ body {
 
 /* History Item Styling */
 .history-item {
-    background-color: var(--gray-50);
-    border: 1px solid var(--gray-200);
+    background-color: var(--gray-100);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 1.5rem;
     margin-bottom: 1.5rem; /* Space between history items */
@@ -976,7 +1059,7 @@ body {
 }
 
 .loading-spinner p {
-    color: var(--gray-700);
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
