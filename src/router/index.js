@@ -11,8 +11,11 @@ import DashboardCuti from '../components/DashboardCuti.vue'
 import LeaveDashboard from '../components/LeaveDashboard.vue'
 import InputJatahCuti from '../components/InputJatahCuti.vue'
 import PenerimaanPermohonanCuti from '../components/PenerimaanPermohonanCuti.vue'
+import ManagerApproveLeave from '../components/ManagerApproveLeave.vue'
 import Profile from '../components/Profile.vue'
 import Settings from '../components/Settings.vue'
+import EmployeeDashboard from '../components/EmployeeDashboard.vue'
+import EmployeeRequestLeave from '../components/EmployeeRequestLeave.vue'
 
 // Auth Components
 import Login from '../components/auth/Login.vue'
@@ -117,11 +120,7 @@ const routes = [
         name: 'InputJatahCuti',
         component: InputJatahCuti
       },
-      {
-        path: 'cuti/permohonan',
-        name: 'PenerimaanPermohonanCuti',
-        component: PenerimaanPermohonanCuti
-      },
+      {        path: 'cuti/permohonan',        name: 'PenerimaanPermohonanCuti',        component: PenerimaanPermohonanCuti      },      {        path: 'cuti/bawahan',        name: 'CutiBawahan',        component: ManagerApproveLeave      },
       // USER PROFILE & SETTINGS
       {
         path: 'profile',
@@ -132,6 +131,24 @@ const routes = [
         path: 'settings',
         name: 'Settings',
         component: Settings
+      },
+      // EMPLOYEE DASHBOARD
+      {
+        path: 'employee-dashboard',
+        name: 'EmployeeDashboard',
+        component: EmployeeDashboard
+      },
+      // EMPLOYEE LEAVE REQUEST
+      {
+        path: 'employee/request-leave',
+        name: 'EmployeeRequestLeave',
+        component: EmployeeRequestLeave
+      },
+      // MANAGER APPROVE LEAVE
+      {
+        path: 'manager/approve-leave',
+        name: 'ManagerApproveLeave',
+        component: PenerimaanPermohonanCuti
       }
     ]
   }

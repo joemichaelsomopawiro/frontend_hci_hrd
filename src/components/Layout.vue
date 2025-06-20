@@ -31,8 +31,9 @@
 
       <nav class="sidebar-nav">
         <ul class="nav-list">
+          <!-- Dashboard - Available for all roles -->
           <li class="nav-item">
-            <router-link to="/" class="nav-link" @click="closeMobileMenu">
+            <router-link :to="getDashboardRoute()" class="nav-link" @click="closeMobileMenu">
               <div class="nav-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
@@ -41,47 +42,99 @@
               <span class="nav-text">Dashboard</span>
             </router-link>
           </li>
-          <li class="nav-item has-submenu">
-            <a href="#" class="nav-link" @click.prevent="toggleSubmenu('dataPegawai')">
-              <div class="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-              <span class="nav-text">Data Pegawai</span>
-              <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.dataPegawai }">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                </svg>
-              </div>
-            </a>
-            <ul class="submenu" :class="{ 'submenu-open': submenuOpen.dataPegawai }">
-              <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
-              <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai</router-link></li>
-            </ul>
-          </li>
-          <li class="nav-item has-submenu">
-            <a href="#" class="nav-link" @click.prevent="toggleSubmenu('manajemenCuti')">
-              <div class="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                </svg>
-              </div>
-              <span class="nav-text">Manajemen Cuti</span>
-              <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.manajemenCuti }">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                </svg>
-              </div>
-            </a>
-            <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
-              <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeMobileMenu">Input Jatah Cuti</router-link></li>
-              <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
-              <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi: Masuk, Izin, Sakit, Cuti, Lembur</router-link></li>
-              <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeMobileMenu">Rekapitulasi Jam Kerja</router-link></li>
-              <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
-            </ul>
-          </li>
+          
+          <!-- HRD Menu - Full Access -->
+          <template v-if="isHRD">
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link" @click.prevent="toggleSubmenu('dataPegawai')">
+                <div class="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+                <span class="nav-text">Data Pegawai</span>
+                <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.dataPegawai }">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                  </svg>
+                </div>
+              </a>
+              <ul class="submenu" :class="{ 'submenu-open': submenuOpen.dataPegawai }">
+                <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
+                <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai</router-link></li>
+              </ul>
+            </li>
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link" @click.prevent="toggleSubmenu('manajemenCuti')">
+                <div class="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                  </svg>
+                </div>
+                <span class="nav-text">Manajemen Cuti</span>
+                <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.manajemenCuti }">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                  </svg>
+                </div>
+              </a>
+              <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
+                <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeMobileMenu">Input Jatah Cuti</router-link></li>
+                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Cuti Bawahan</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
+                <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeMobileMenu">Rekapitulasi Jam Kerja</router-link></li>
+                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
+              </ul>
+            </li>
+          </template>
+          
+          <!-- Manager Menu - Approve Cuti + Paket Pegawai -->
+          <template v-else-if="isManager">
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link" @click.prevent="toggleSubmenu('manajemenCuti')">
+                <div class="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                  </svg>
+                </div>
+                <span class="nav-text">Manajemen Cuti</span>
+                <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.manajemenCuti }">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                  </svg>
+                </div>
+              </a>
+              <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
+                <li><router-link to="/manager/approve-leave" class="submenu-link" @click="closeMobileMenu">Approve Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
+                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
+              </ul>
+            </li>
+          </template>
+          
+          <!-- Employee Menu - Paket Pegawai Only -->
+          <template v-else-if="isEmployee">
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link" @click.prevent="toggleSubmenu('paketPegawai')">
+                <div class="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                  </svg>
+                </div>
+                <span class="nav-text">Paket Pegawai</span>
+                <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.paketPegawai }">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                  </svg>
+                </div>
+              </a>
+              <ul class="submenu" :class="{ 'submenu-open': submenuOpen.paketPegawai }">
+                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeMobileMenu">Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Tampilan Absensi</router-link></li>
+              </ul>
+            </li>
+          </template>
         </ul>
       </nav>
 
@@ -220,7 +273,8 @@ export default {
       isDarkMode: false,
       submenuOpen: {
         dataPegawai: false,
-        manajemenCuti: false
+        manajemenCuti: false,
+        paketPegawai: false
       }
     }
   },
@@ -294,6 +348,20 @@ export default {
         console.warn('Error parsing user data:', error)
         return null
       }
+    },
+    isHRD() {
+      return this.userRole === 'HR Manager' || this.userRole === 'HR' || this.userRole === 'HRD'
+    },
+    isManager() {
+      return ['Program Manager', 'Distribution Manager'].includes(this.userRole)
+    },
+    isEmployee() {
+      const employeeRoles = [
+        'Employee', 'Finance', 'General Affairs', 'Office Assistant',
+        'Producer', 'Creative', 'Production', 'Editor',
+        'Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'
+      ]
+      return employeeRoles.includes(this.userRole)
     }
   },
   methods: {
@@ -326,6 +394,16 @@ export default {
         await authService.logout()
         this.$router.push('/login')
       }
+    },
+    getDashboardRoute() {
+      if (this.isHRD) {
+        return '/dashboard-cuti'
+      } else if (this.isManager) {
+        return '/'
+      } else if (this.isEmployee) {
+        return '/employee-dashboard'
+      }
+      return '/'
     },
     toggleDarkMode() {
       this.isDarkMode = !this.isDarkMode

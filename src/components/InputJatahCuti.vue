@@ -167,6 +167,7 @@
 
 <script>
 import axios from 'axios'
+import authService from '../services/authService'
 export default {
   name: 'InputJatahCuti',
   data() {
@@ -224,21 +225,92 @@ export default {
       }
     },
     async saveQuota() {
-      this.isSubmitting = true
+      console.log('=== SAVE QUOTA START ===');
+      
+      // Validate form data before submission
+      if (!this.validateForm()) {
+        console.log('Form validation failed');
+        return;
+      }
+      
+      // Validate employee_id and year
+      const employeeId = parseInt(this.form.employee_id);
+      const year = parseInt(this.form.year);
+      
+      if (!employeeId || employeeId <= 0) {
+        this.showNotificationMessage('Employee ID harus valid', 'error');
+        return;
+      }
+      
+      if (!year || year < 2020 || year > 2030) {
+        this.showNotificationMessage('Tahun harus antara 2020-2030', 'error');
+        return;
+      }
+      
+      this.isSubmitting = true;
+      
+      // Create formData in the main scope so it's accessible in catch block
+      const formData = {
+        employee_id: employeeId,
+        year: year,
+        annual_leave_quota: parseInt(this.form.annual_leave_quota) || 0,
+        sick_leave_quota: parseInt(this.form.sick_leave_quota) || 0,
+        emergency_leave_quota: parseInt(this.form.emergency_leave_quota) || 0
+      };
+      
+      console.log('Form data to be sent:', formData);
+      
       try {
+        let response;
+        
         if (this.editingQuota) {
-          await axios.put(`${this.apiUrl}/api/leave-quotas/${this.editingQuota.id}`, this.form)
-          this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success')
+          console.log('Updating existing quota with ID:', this.editingQuota.id);
+          response = await authService.apiClient.put(`/api/leave-quotas/${this.editingQuota.id}`, formData);
+          console.log('Update response:', response.data);
+          this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success');
         } else {
-          await axios.post(`${this.apiUrl}/api/leave-quotas`, this.form)
-          this.showNotificationMessage('Jatah cuti berhasil ditambahkan', 'success')
+          console.log('Creating new quota');
+          response = await authService.apiClient.post('/api/leave-quotas', formData);
+          console.log('Create response:', response.data);
+          this.showNotificationMessage('Jatah cuti berhasil ditambahkan', 'success');
         }
-        this.closeModal()
-        this.loadQuotas()
+        
+        this.closeModal();
+        this.loadQuotas();
       } catch (error) {
-        this.showNotificationMessage(error.response?.data?.message || 'Gagal menyimpan jatah cuti', 'error')
+        console.error('=== SAVE QUOTA ERROR ===');
+        console.error('Error details:', error);
+        console.error('Form data that failed:', formData);
+        
+        if (error.response) {
+          console.error('Error response status:', error.response.status);
+          console.error('Error response data:', error.response.data);
+          
+          if (error.response.status === 422) {
+            const validationErrors = error.response.data.errors || {};
+            console.error('Validation errors:', validationErrors);
+            
+            // Display specific validation errors
+            const errorMessages = [];
+            for (const [field, messages] of Object.entries(validationErrors)) {
+              errorMessages.push(`${field}: ${messages.join(', ')}`);
+            }
+            
+            if (errorMessages.length > 0) {
+              this.showNotificationMessage(`Validation errors: ${errorMessages.join('; ')}`, 'error');
+            } else {
+              this.showNotificationMessage(error.response.data.message || 'Data tidak valid', 'error');
+            }
+          } else {
+            this.showNotificationMessage(error.response.data?.message || 'Gagal menyimpan jatah cuti', 'error');
+          }
+        } else {
+          console.error('Network or other error:', error.message);
+          this.showNotificationMessage('Terjadi kesalahan jaringan', 'error');
+        }
       } finally {
-        this.isSubmitting = false
+        this.isSubmitting = false;
+        console.log('=== SAVE QUOTA END ===');
       }
     },
     async deleteQuota(id) {
