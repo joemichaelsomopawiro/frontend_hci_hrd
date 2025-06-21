@@ -69,7 +69,23 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Jabatan Saat Ini *</label>
-              <input v-model="form.jabatan_saat_ini" type="text" required class="form-input" />
+              <select v-model="form.jabatan_saat_ini" required class="form-select">
+                <option value="">Pilih Jabatan</option>
+                <!-- HR Manager Subordinates -->
+                <option value="Finance">Finance</option>
+                <option value="General Affairs">General Affairs</option>
+                <option value="Office Assistant">Office Assistant</option>
+                <!-- Program Manager Subordinates -->
+                <option value="Producer">Producer</option>
+                <option value="Creative">Creative</option>
+                <option value="Production">Production</option>
+                <option value="Editor">Editor</option>
+                <!-- Distribution Manager Subordinates -->
+                <option value="Social Media">Social Media</option>
+                <option value="Promotion">Promotion</option>
+                <option value="Graphic Design">Graphic Design</option>
+                <option value="Hopeline Care">Hopeline Care</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Tanggal Mulai Kerja *</label>
@@ -107,47 +123,7 @@
                 <input v-model="form.bonus" type="number" class="form-input" />
               </div>
             </div>
-            <div class="form-group">
-              <label>Department *</label>
-              <select v-model="form.department" required class="form-select">
-                <option value="">Pilih Department</option>
-                <option value="HR">Human Resources</option>
-                <option value="Program">Program</option>
-                <option value="Distribution">Distribution</option>
-                <option value="Finance">Finance</option>
-                <option value="IT">Information Technology</option>
-                <option value="Marketing">Marketing</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Role *</label>
-              <select v-model="form.role" required class="form-select" @change="updateManagerOptions">
-                <option value="">Pilih Role</option>
-                <option value="HR Manager">HR Manager</option>
-                <option value="Program Manager">Program Manager</option>
-                <option value="Distribution Manager">Distribution Manager</option>
-                <option value="Employee">Employee</option>
-              </select>
-            </div>
-            <div class="form-group" v-if="form.role === 'Employee'">
-              <label>Manager *</label>
-              <select v-model="form.manager_id" required class="form-select">
-                <option value="">Pilih Manager</option>
-                <option v-for="manager in availableManagers" :key="manager.id" :value="manager.id">
-                  {{ manager.nama_lengkap }} ({{ manager.role }})
-                </option>
-              </select>
-            </div>
-            <div class="form-group" v-if="form.role === 'Employee'">
-              <label>Manager Type *</label>
-              <select v-model="form.manager_type" required class="form-select">
-                <option value="">Pilih Manager Type</option>
-                <option value="direct">Direct Manager</option>
-                <option value="hr">HR Manager</option>
-                <option value="program">Program Manager</option>
-                <option value="distribution">Distribution Manager</option>
-              </select>
-            </div>
+
           </div>
         </div>
 
@@ -357,10 +333,7 @@ export default {
         npwp: '',
         nomor_kontrak: '',
         tanggal_kontrak_berakhir: '',
-        department: '',
-        role: '',
-        manager_id: '',
-        manager_type: '',
+
       },
       documents: [],
       employmentHistories: [],
@@ -371,8 +344,7 @@ export default {
       notificationType: 'success',
       isSubmitting: false,
       apiUrl: 'http://localhost:8000',
-      availableManagers: [],
-      allEmployees: [],
+      allEmployees: []
     };
   },
   methods: {
@@ -380,14 +352,8 @@ export default {
       const requiredFields = [
         'nama_lengkap', 'nik', 'tanggal_lahir', 'jenis_kelamin',
         'alamat', 'status_pernikahan', 'jabatan_saat_ini',
-        'tanggal_mulai_kerja', 'tingkat_pendidikan', 'gaji_pokok',
-        'department', 'role'
+        'tanggal_mulai_kerja', 'tingkat_pendidikan', 'gaji_pokok'
       ];
-      
-      // Add manager_id and manager_type validation for employees
-      if (this.form.role === 'Employee') {
-        requiredFields.push('manager_id', 'manager_type');
-      }
       for (let field of requiredFields) {
         if (!this.form[field] || this.form[field].toString().trim() === '') {
           this.showNotificationMessage(`Field ${field} harus diisi`, 'error');
@@ -398,6 +364,25 @@ export default {
         this.showNotificationMessage('NIK harus 16 digit', 'error');
         return false;
       }
+      
+      // Validate jabatan_saat_ini
+      const validPositions = [
+        'Finance', 'General Affairs', 'Office Assistant',
+        'Producer', 'Creative', 'Production', 'Editor',
+        'Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'
+      ];
+      if (!validPositions.includes(this.form.jabatan_saat_ini)) {
+        this.showNotificationMessage('Pilih jabatan yang valid', 'error');
+        return false;
+      }
+      
+      // Check for duplicate NIK
+      const existingEmployee = this.allEmployees.find(emp => emp.nik === this.form.nik);
+      if (existingEmployee) {
+        this.showNotificationMessage('NIK sudah terdaftar. Gunakan NIK yang berbeda.', 'error');
+        return false;
+      }
+      
       if (isNaN(this.form.gaji_pokok) || this.form.gaji_pokok <= 0) {
         this.showNotificationMessage('Gaji pokok harus berupa angka positif', 'error');
         return false;
@@ -497,14 +482,27 @@ export default {
       this.isSubmitting = true;
       try {
         const formData = new FormData();
+        
+        // Always send required fields, even if empty
+        const requiredFields = [
+          'nama_lengkap', 'nik', 'tanggal_lahir', 'jenis_kelamin',
+          'alamat', 'status_pernikahan', 'jabatan_saat_ini',
+          'tanggal_mulai_kerja', 'tingkat_pendidikan', 'gaji_pokok'
+        ];
+        
         Object.keys(this.form).forEach((key) => {
-          if (this.form[key] !== null && this.form[key] !== undefined && this.form[key] !== '') {
-            formData.append(key, this.form[key]);
+          const value = this.form[key];
+          // Always append required fields, append optional fields only if they have values
+          if (requiredFields.includes(key) || (value !== null && value !== undefined && value !== '')) {
+            formData.append(key, value || '');
           }
         });
         if (this.documents && this.documents.length > 0) {
           this.documents.forEach((file, index) => {
-            formData.append(`documents[${index}]`, file);
+            // Only append valid file objects
+            if (file instanceof File && file.size > 0) {
+              formData.append(`documents[${index}]`, file);
+            }
           });
         }
         if (this.employmentHistories && this.employmentHistories.length > 0) {
@@ -537,6 +535,12 @@ export default {
           });
         }
         // this.debugRequest(formData); // Optional debug
+        // Log form data being sent for debugging
+        console.log('Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}:`, value);
+        }
+        
         await axios.post(`${this.apiUrl}/api/employees`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -550,15 +554,35 @@ export default {
           this.$router.push('/');
         }, 2000);
       } catch (error) {
+        console.error('Error submitting form:', error);
         let errorMessage = 'Gagal menyimpan data karyawan.';
+        
         if (error.response?.status === 500) {
           errorMessage = 'Server error. Periksa koneksi dan coba lagi.';
         } else if (error.response?.status === 422) {
-          errorMessage = 'Data tidak valid. Periksa form dan coba lagi.';
+          // Show specific validation errors
+          if (error.response?.data?.errors) {
+            const errors = error.response.data.errors;
+            const errorList = Object.keys(errors).map(key => {
+              return `${key}: ${errors[key].join(', ')}`;
+            }).join('\n');
+            errorMessage = `Validasi gagal:\n${errorList}`;
+          } else if (error.response?.data?.message) {
+            errorMessage = `Validasi gagal: ${error.response.data.message}`;
+          } else {
+            errorMessage = 'Data tidak valid. Periksa form dan coba lagi.';
+          }
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
+        
         this.showNotificationMessage(errorMessage, 'error');
+        
+        // Log the full error for debugging
+        if (error.response?.data) {
+          console.log('Backend response:', error.response.data);
+          console.log('Validation errors detail:', error.response.data.errors);
+        }
       } finally {
         this.isSubmitting = false;
       }
@@ -572,10 +596,20 @@ export default {
         this.showNotification = false;
       }, 5000);
     },
+
+    async loadEmployees() {
+      try {
+        const response = await axios.get(`${this.apiUrl}/api/employees`);
+        this.allEmployees = response.data.data || response.data || [];
+      } catch (error) {
+        console.error('Error loading employees:', error);
+        // Don't show error to user as this is background validation
+      }
+    },
   },
   
   mounted() {
-    this.loadManagers();
+    this.loadEmployees();
   },
 };
 </script>

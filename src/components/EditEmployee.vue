@@ -174,15 +174,25 @@
             <div class="form-grid">
               <div class="form-group">
                 <label>Jabatan Saat Ini *</label>
-                <div class="input-wrapper">
+                <div class="select-wrapper">
                   <i class="fas fa-user-tie input-icon"></i>
-                  <input 
-                    v-model="form.jabatan_saat_ini" 
-                    type="text" 
-                    required 
-                    class="form-input"
-                    placeholder="Posisi/Jabatan"
-                  />
+                  <select v-model="form.jabatan_saat_ini" required class="form-select">
+                    <option value="">Pilih Jabatan</option>
+                    <!-- HR Manager Subordinates -->
+                    <option value="Finance">Finance</option>
+                    <option value="General Affairs">General Affairs</option>
+                    <option value="Office Assistant">Office Assistant</option>
+                    <!-- Program Manager Subordinates -->
+                    <option value="Producer">Producer</option>
+                    <option value="Creative">Creative</option>
+                    <option value="Production">Production</option>
+                    <option value="Editor">Editor</option>
+                    <!-- Distribution Manager Subordinates -->
+                    <option value="Social Media">Social Media</option>
+                    <option value="Promotion">Promotion</option>
+                    <option value="Graphic Design">Graphic Design</option>
+                    <option value="Hopeline Care">Hopeline Care</option>
+                  </select>
                 </div>
               </div>
               
@@ -279,62 +289,7 @@
                 </div>
               </div>
               
-              <div class="form-group">
-                <label>Department *</label>
-                <div class="select-wrapper">
-                  <i class="fas fa-building input-icon"></i>
-                  <select v-model="form.department" required class="form-select">
-                    <option value="">Pilih Department</option>
-                    <option value="HR">Human Resources</option>
-                    <option value="Program">Program</option>
-                    <option value="Distribution">Distribution</option>
-                    <option value="Finance">Finance</option>
-                    <option value="IT">Information Technology</option>
-                    <option value="Marketing">Marketing</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Role *</label>
-                <div class="select-wrapper">
-                  <i class="fas fa-user-tag input-icon"></i>
-                  <select v-model="form.role" required class="form-select" @change="updateManagerOptions">
-                    <option value="">Pilih Role</option>
-                    <option value="HR Manager">HR Manager</option>
-                    <option value="Program Manager">Program Manager</option>
-                    <option value="Distribution Manager">Distribution Manager</option>
-                    <option value="Employee">Employee</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div class="form-group" v-if="form.role === 'Employee'">
-                <label>Manager *</label>
-                <div class="select-wrapper">
-                  <i class="fas fa-user-tie input-icon"></i>
-                  <select v-model="form.manager_id" required class="form-select">
-                    <option value="">Pilih Manager</option>
-                    <option v-for="manager in availableManagers" :key="manager.id" :value="manager.id">
-                      {{ manager.nama_lengkap }} ({{ manager.role }})
-                    </option>
-                  </select>
-                </div>
-              </div>
-              
-              <div class="form-group" v-if="form.role === 'Employee'">
-                <label>Manager Type *</label>
-                <div class="select-wrapper">
-                  <i class="fas fa-sitemap input-icon"></i>
-                  <select v-model="form.manager_type" required class="form-select">
-                    <option value="">Pilih Manager Type</option>
-                    <option value="direct">Direct Manager</option>
-                    <option value="hr">HR Manager</option>
-                    <option value="program">Program Manager</option>
-                    <option value="distribution">Distribution Manager</option>
-                  </select>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -492,10 +447,7 @@ export default {
         npwp: '',
         nomor_kontrak: '',
         tanggal_kontrak_berakhir: '',
-        department: '',
-        role: '',
-        manager_id: '',
-        manager_type: '',
+
       },
       originalForm: {},
       loading: true,
@@ -504,13 +456,11 @@ export default {
       notificationMessage: '',
       notificationType: 'success',
       apiUrl: 'http://localhost:8000',
-      availableManagers: [],
-      allEmployees: [],
+      allEmployees: []
     };
   },
   mounted() {
     this.fetchEmployee();
-    this.loadManagers();
   },
   methods: {
     async fetchEmployee() {
@@ -603,14 +553,8 @@ export default {
       const requiredFields = [
         'nama_lengkap', 'nik', 'tanggal_lahir', 'jenis_kelamin', 
         'alamat', 'status_pernikahan', 'jabatan_saat_ini', 
-        'tanggal_mulai_kerja', 'tingkat_pendidikan', 'gaji_pokok',
-        'department', 'role'
+        'tanggal_mulai_kerja', 'tingkat_pendidikan', 'gaji_pokok'
       ];
-      
-      // Add manager_id and manager_type validation for employees
-      if (this.form.role === 'Employee') {
-        requiredFields.push('manager_id', 'manager_type');
-      }
       
       for (let field of requiredFields) {
         if (!this.form[field] || this.form[field].toString().trim() === '') {

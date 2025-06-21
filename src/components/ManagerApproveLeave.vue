@@ -9,6 +9,32 @@
           <div v-if="userRole" class="manager-role-info">
             <i class="fas fa-user-shield"></i>
             <span>Anda login sebagai: <strong>{{ userRole }}</strong></span>
+            <div class="approval-level-badge">
+              <i class="fas fa-layer-group"></i>
+              {{ approvalLevelText }}
+            </div>
+          </div>
+          
+          <!-- Workflow Information -->
+          <div v-if="currentManagerConfig" class="workflow-info">
+            <div class="workflow-card">
+              <h4><i class="fas fa-users"></i> Tim yang Dikelola:</h4>
+              <div class="subordinates-list">
+                <span v-for="role in managedSubordinates" :key="role" class="subordinate-tag">
+                  {{ role }}
+                </span>
+              </div>
+            </div>
+            
+            <div v-if="nextApproverRole" class="workflow-card">
+              <h4><i class="fas fa-arrow-right"></i> Approval Selanjutnya:</h4>
+              <span class="next-approver">{{ nextApproverRole }}</span>
+            </div>
+            
+            <div v-if="canViewAllApprovedRequests" class="workflow-card privilege">
+              <h4><i class="fas fa-eye"></i> Privilege Khusus:</h4>
+              <span class="privilege-text">Dapat melihat semua data cuti yang sudah diapprove</span>
+            </div>
           </div>
         </div>
         <div class="header-actions">
@@ -33,6 +59,8 @@
           <option value="emergency">Cuti Darurat</option>
           <option value="maternity">Cuti Melahirkan</option>
           <option value="paternity">Cuti Ayah</option>
+          <option value="marriage">Cuti Menikah</option>
+          <option value="bereavement">Cuti Duka</option>
         </select>
         <button @click="loadRequests" class="btn-secondary">
           <i class="fas fa-sync"></i>
@@ -91,15 +119,15 @@
               <td>
                 <div class="action-buttons">
                   <button 
-                    v-if="request.status === 'pending'" 
+                    v-if="request.status === 'pending' || (isHRManager && request.status === 'approved_by_manager')" 
                     @click="approveRequest(request)" 
                     class="btn-icon approve" 
-                    title="Setujui"
+                    :title="getApprovalButtonTitle(request)"
                   >
                     <i class="fas fa-check"></i>
                   </button>
                   <button 
-                    v-if="request.status === 'pending'" 
+                    v-if="request.status === 'pending' || (isHRManager && request.status === 'approved_by_manager')" 
                     @click="rejectRequest(request)" 
                     class="btn-icon reject" 
                     title="Tolak"
@@ -127,8 +155,25 @@
     <div v-if="showApprovalModal" class="modal-overlay" @click="closeApprovalModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>{{ approvalAction === 'approve' ? 'Setujui' : 'Tolak' }} Permohonan Cuti</h3>
-          <button @click="closeApprovalModal" class="close-btn">×</button>
+          <h3>{{ getModalTitle() }}</h3>
+          <button @click="closeApprovalModal" class="close-btn">&times;</button>
+          <div v-if="approvalAction === 'approve'" class="workflow-indicator">
+            <div class="workflow-step">
+              <i class="fas fa-user-check"></i>
+              <span>{{ userRole }}</span>
+            </div>
+            <div v-if="nextApproverRole" class="workflow-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div v-if="nextApproverRole" class="workflow-step next">
+              <i class="fas fa-user-clock"></i>
+              <span>{{ nextApproverRole }}</span>
+            </div>
+            <div v-else class="workflow-step final">
+              <i class="fas fa-check-circle"></i>
+              <span>Final Approval</span>
+            </div>
+          </div>
         </div>
         <div class="modal-body">
           <div class="request-details">
@@ -229,12 +274,67 @@ export default {
       },
       apiUrl: 'http://localhost:8000',
       userRole: '',
-      userName: ''
+      userName: '',
+      // Workflow configuration
+      workflowConfig: {
+        'Distribution Manager': {
+          subordinates: ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'],
+          nextApprover: 'HR Manager'
+        },
+        'Program Manager': {
+          subordinates: ['Producer', 'Creative', 'Production', 'Editor'],
+          nextApprover: 'HR Manager'
+        },
+        'HR Manager': {
+          subordinates: ['Finance', 'General Affairs', 'Office Assistant'],
+          nextApprover: null, // Final approver
+          canViewAll: true // Can view all approved requests
+        }
+      }
     }
   },
   computed: {
     pendingRequestsCount() {
       return this.requests.filter(req => req.status === 'pending').length
+    },
+    
+    currentManagerConfig() {
+      return this.workflowConfig[this.userRole] || null
+    },
+    
+    isDistributionManager() {
+      return this.userRole === 'Distribution Manager'
+    },
+    
+    isProgramManager() {
+      return this.userRole === 'Program Manager'
+    },
+    
+    isHRManager() {
+      return this.userRole === 'HR Manager'
+    },
+    
+    canViewAllApprovedRequests() {
+      return this.currentManagerConfig?.canViewAll || false
+    },
+    
+    managedSubordinates() {
+      return this.currentManagerConfig?.subordinates || []
+    },
+    
+    nextApproverRole() {
+      return this.currentManagerConfig?.nextApprover
+    },
+    
+    approvalLevelText() {
+      if (this.isHRManager) {
+        return 'Final Approval (HR Manager)'
+      } else if (this.isDistributionManager) {
+        return 'First Level Approval (Distribution Manager)'
+      } else if (this.isProgramManager) {
+        return 'First Level Approval (Program Manager)'
+      }
+      return 'Manager Approval'
     }
   },
   mounted() {
@@ -260,15 +360,35 @@ export default {
         if (this.filters.status) params.append('status', this.filters.status)
         if (this.filters.leave_type) params.append('leave_type', this.filters.leave_type)
         
-        // Filter by manager - only show requests for employees under this manager
-        params.append('for_manager', 'true')
-        
-        // Add manager role to ensure proper filtering
+        // Add manager role and workflow information
         const userStr = localStorage.getItem('user')
         if (userStr) {
           const user = JSON.parse(userStr)
           const managerRole = user.role || user.position || ''
           params.append('manager_role', managerRole)
+          
+          // Add workflow-specific parameters
+          if (this.isHRManager) {
+            // HR Manager can see:
+            // 1. Direct subordinates (Finance, General Affairs, Office Assistant) - pending
+            // 2. Requests forwarded from other managers - approved_by_manager status
+            // 3. All approved requests if canViewAll is true
+            params.append('workflow_type', 'hr_manager')
+            if (this.canViewAllApprovedRequests) {
+              params.append('include_all_approved', 'true')
+            }
+          } else if (this.isDistributionManager) {
+            // Distribution Manager sees requests from: Social Media, Promotion, Graphic Design, Hopeline Care
+            params.append('workflow_type', 'distribution_manager')
+            params.append('subordinate_roles', this.managedSubordinates.join(','))
+          } else if (this.isProgramManager) {
+            // Program Manager sees requests from: Producer, Creative, Production, Editor
+            params.append('workflow_type', 'program_manager')
+            params.append('subordinate_roles', this.managedSubordinates.join(','))
+          } else {
+            // Default manager behavior
+            params.append('for_manager', 'true')
+          }
         }
         
         const token = localStorage.getItem('token')
@@ -286,10 +406,48 @@ export default {
     async submitApproval() {
       this.isSubmitting = true
       try {
-        const endpoint = this.approvalAction === 'approve' ? 'manager-approve' : 'manager-reject'
-        await axios.post(`${this.apiUrl}/api/leave-requests/${this.selectedRequest.id}/${endpoint}`, this.approvalForm)
+        let endpoint, requestData, message
         
-        const message = this.approvalAction === 'approve' ? 'Permohonan cuti disetujui' : 'Permohonan cuti ditolak'
+        if (this.approvalAction === 'reject') {
+          // Rejection logic - same for all managers
+          endpoint = 'manager-reject'
+          requestData = {
+            rejection_reason: this.approvalForm.rejection_reason,
+            manager_notes: this.approvalForm.manager_notes,
+            manager_role: this.userRole
+          }
+          message = 'Permohonan cuti ditolak'
+        } else {
+          // Approval logic - depends on manager level
+          requestData = {
+            manager_notes: this.approvalForm.manager_notes,
+            manager_role: this.userRole,
+            next_approver: this.nextApproverRole
+          }
+          
+          if (this.isHRManager) {
+            // HR Manager - Final approval
+            endpoint = 'hr-final-approve'
+            message = 'Permohonan cuti disetujui secara final oleh HR'
+          } else if (this.isDistributionManager || this.isProgramManager) {
+            // Distribution/Program Manager - First level approval, forward to HR
+            endpoint = 'manager-approve-forward'
+            message = `Permohonan cuti disetujui dan diteruskan ke ${this.nextApproverRole}`
+          } else {
+            // Default manager approval
+            endpoint = 'manager-approve'
+            message = 'Permohonan cuti disetujui'
+          }
+        }
+        
+        const token = localStorage.getItem('token')
+        await axios.post(`${this.apiUrl}/api/leave-requests/${this.selectedRequest.id}/${endpoint}`, requestData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
         this.showNotificationMessage(message, 'success')
         this.closeApprovalModal()
         this.loadRequests()
@@ -332,16 +490,22 @@ export default {
         sick: 'Cuti Sakit',
         emergency: 'Cuti Darurat',
         maternity: 'Cuti Melahirkan',
-        paternity: 'Cuti Ayah'
+        paternity: 'Cuti Ayah',
+        marriage: 'Cuti Menikah',
+        bereavement: 'Cuti Duka'
       }
       return types[type] || type
     },
     getStatusText(status) {
       const statuses = {
         pending: 'Menunggu Persetujuan',
-        approved_by_manager: 'Disetujui Manager',
-        approved: 'Disetujui HRD',
-        rejected: 'Ditolak'
+        approved_by_manager: 'Disetujui Manager - Menunggu HR',
+        approved_by_distribution: 'Disetujui Distribution Manager - Menunggu HR',
+        approved_by_program: 'Disetujui Program Manager - Menunggu HR',
+        approved: 'Disetujui Final (HR)',
+        rejected: 'Ditolak',
+        rejected_by_manager: 'Ditolak oleh Manager',
+        rejected_by_hr: 'Ditolak oleh HR'
       }
       return statuses[status] || status
     },
@@ -358,6 +522,39 @@ export default {
       if (!date) return 'N/A'
       return new Date(date).toLocaleDateString('id-ID')
     },
+    getApprovalButtonTitle(request) {
+      if (this.isHRManager) {
+        if (request.status === 'approved_by_manager') {
+          return 'Final Approval (HR)'
+        }
+        return 'Setujui sebagai HR Manager'
+      } else if (this.isDistributionManager) {
+        return 'Setujui dan teruskan ke HR Manager'
+      } else if (this.isProgramManager) {
+        return 'Setujui dan teruskan ke HR Manager'
+      }
+      return 'Setujui'
+    },
+    
+    getModalTitle() {
+      if (this.approvalAction === 'reject') {
+        return 'Tolak Permohonan Cuti'
+      }
+      
+      if (this.isHRManager) {
+        if (this.selectedRequest?.status === 'approved_by_manager') {
+          return 'Final Approval - HR Manager'
+        }
+        return 'Setujui Permohonan Cuti - HR Manager'
+      } else if (this.isDistributionManager) {
+        return 'Setujui & Teruskan ke HR - Distribution Manager'
+      } else if (this.isProgramManager) {
+        return 'Setujui & Teruskan ke HR - Program Manager'
+      }
+      
+      return 'Setujui Permohonan Cuti'
+    },
+    
     showNotificationMessage(message, type) {
       this.notificationMessage = message
       this.notificationType = type
@@ -783,6 +980,151 @@ export default {
   --border-color: #e5e7eb;
   --gray-50: #f9fafb;
   --gray-400: #9ca3af;
+}
+
+/* Workflow Information Styles */
+.approval-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.workflow-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  border: 1px solid #e1e8ed;
+}
+
+.workflow-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-left: 4px solid var(--primary-color);
+}
+
+.workflow-card.privilege {
+  border-left-color: var(--warning-color);
+  background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
+}
+
+.workflow-card h4 {
+  margin: 0 0 0.75rem 0;
+  color: var(--secondary-color);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subordinates-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.subordinate-tag {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.next-approver {
+  background: var(--success-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.privilege-text {
+  color: var(--warning-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Modal Workflow Indicator */
+.workflow-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.workflow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-width: 120px;
+}
+
+.workflow-step.next {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 2px solid var(--warning-color);
+}
+
+.workflow-step.final {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 2px solid var(--success-color);
+}
+
+.workflow-step i {
+  font-size: 1.2rem;
+  color: var(--primary-color);
+}
+
+.workflow-step.next i {
+  color: var(--warning-color);
+}
+
+.workflow-step.final i {
+  color: var(--success-color);
+}
+
+.workflow-step span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.workflow-arrow {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 @media (max-width: 768px) {

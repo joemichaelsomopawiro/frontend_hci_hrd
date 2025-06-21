@@ -112,6 +112,66 @@
             <div class="progress-text">{{ quotaStats.emergency_used || 0 }} hari terpakai ({{ quotaStats.emergency_usage_percentage || 0 }}%)</div>
           </div>
         </div>
+        
+        <div class="quota-card">
+          <div class="card-header">
+            <h3>Total Jatah Cuti Melahirkan</h3>
+            <i class="fas fa-baby"></i>
+          </div>
+          <div class="card-content">
+            <div class="big-number">{{ quotaStats.total_maternity_quota || 0 }}</div>
+            <div class="card-subtitle">Hari untuk semua karyawan</div>
+            <div class="progress-bar">
+              <div class="progress-fill maternity" :style="{width: quotaStats.maternity_usage_percentage + '%'}"></div>
+            </div>
+            <div class="progress-text">{{ quotaStats.maternity_used || 0 }} hari terpakai ({{ quotaStats.maternity_usage_percentage || 0 }}%)</div>
+          </div>
+        </div>
+        
+        <div class="quota-card">
+          <div class="card-header">
+            <h3>Total Jatah Cuti Ayah</h3>
+            <i class="fas fa-male"></i>
+          </div>
+          <div class="card-content">
+            <div class="big-number">{{ quotaStats.total_paternity_quota || 0 }}</div>
+            <div class="card-subtitle">Hari untuk semua karyawan</div>
+            <div class="progress-bar">
+              <div class="progress-fill paternity" :style="{width: quotaStats.paternity_usage_percentage + '%'}"></div>
+            </div>
+            <div class="progress-text">{{ quotaStats.paternity_used || 0 }} hari terpakai ({{ quotaStats.paternity_usage_percentage || 0 }}%)</div>
+          </div>
+        </div>
+        
+        <div class="quota-card">
+          <div class="card-header">
+            <h3>Total Jatah Cuti Menikah</h3>
+            <i class="fas fa-heart"></i>
+          </div>
+          <div class="card-content">
+            <div class="big-number">{{ quotaStats.total_marriage_quota || 0 }}</div>
+            <div class="card-subtitle">Hari untuk semua karyawan</div>
+            <div class="progress-bar">
+              <div class="progress-fill marriage" :style="{width: quotaStats.marriage_usage_percentage + '%'}"></div>
+            </div>
+            <div class="progress-text">{{ quotaStats.marriage_used || 0 }} hari terpakai ({{ quotaStats.marriage_usage_percentage || 0 }}%)</div>
+          </div>
+        </div>
+        
+        <div class="quota-card">
+          <div class="card-header">
+            <h3>Total Jatah Cuti Duka</h3>
+            <i class="fas fa-cross"></i>
+          </div>
+          <div class="card-content">
+            <div class="big-number">{{ quotaStats.total_bereavement_quota || 0 }}</div>
+            <div class="card-subtitle">Hari untuk semua karyawan</div>
+            <div class="progress-bar">
+              <div class="progress-fill bereavement" :style="{width: quotaStats.bereavement_usage_percentage + '%'}"></div>
+            </div>
+            <div class="progress-text">{{ quotaStats.bereavement_used || 0 }} hari terpakai ({{ quotaStats.bereavement_usage_percentage || 0 }}%)</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -580,6 +640,22 @@ export default {
 
 .progress-fill.emergency {
   background: var(--danger-color);
+}
+
+.progress-fill.maternity {
+  background: #ec4899;
+}
+
+.progress-fill.paternity {
+  background: #3b82f6;
+}
+
+.progress-fill.marriage {
+  background: #f59e0b;
+}
+
+.progress-fill.bereavement {
+  background: #6b7280;
 }
 
 .progress-text {

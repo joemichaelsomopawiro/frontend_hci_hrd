@@ -5,12 +5,8 @@
       <div class="header-content">
         <div class="page-title">
           <h1>Input Jatah Cuti</h1>
-          <p>Kelola dan atur jatah cuti karyawan per tahun</p>
+          <p>Kelola dan atur jatah cuti karyawan per tahun (Jatah otomatis dibuat saat menambah pegawai baru)</p>
         </div>
-        <button @click="showModal = true" class="btn-primary">
-          <i class="fas fa-plus"></i>
-          Tambah Jatah Cuti
-        </button>
       </div>
     </div>
 
@@ -43,6 +39,10 @@
               <th>Cuti Tahunan</th>
               <th>Cuti Sakit</th>
               <th>Cuti Darurat</th>
+              <th>Cuti Melahirkan</th>
+              <th>Cuti Ayah</th>
+              <th>Cuti Nikah</th>
+              <th>Cuti Duka</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -84,6 +84,50 @@
                     <div 
                       class="quota-progress emergency" 
                       :style="{ width: getQuotaPercentage(quota.emergency_leave_used, quota.emergency_leave_quota) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.maternity_leave_used || 0 }}/{{ quota.maternity_leave_quota || 0 }}</span>
+                  <div class="quota-bar">
+                    <div 
+                      class="quota-progress maternity" 
+                      :style="{ width: getQuotaPercentage(quota.maternity_leave_used || 0, quota.maternity_leave_quota || 0) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.paternity_leave_used || 0 }}/{{ quota.paternity_leave_quota || 0 }}</span>
+                  <div class="quota-bar">
+                    <div 
+                      class="quota-progress paternity" 
+                      :style="{ width: getQuotaPercentage(quota.paternity_leave_used || 0, quota.paternity_leave_quota || 0) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.marriage_leave_used || 0 }}/{{ quota.marriage_leave_quota || 0 }}</span>
+                  <div class="quota-bar">
+                    <div 
+                      class="quota-progress marriage" 
+                      :style="{ width: getQuotaPercentage(quota.marriage_leave_used || 0, quota.marriage_leave_quota || 0) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="quota-display">
+                  <span class="quota-text">{{ quota.bereavement_leave_used || 0 }}/{{ quota.bereavement_leave_quota || 0 }}</span>
+                  <div class="quota-bar">
+                    <div 
+                      class="quota-progress bereavement" 
+                      :style="{ width: getQuotaPercentage(quota.bereavement_leave_used || 0, quota.bereavement_leave_quota || 0) + '%' }"
                     ></div>
                   </div>
                 </div>
@@ -143,9 +187,29 @@
               <input type="number" v-model="form.sick_leave_quota" class="form-input" min="0" required />
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jatah Cuti Darurat *</label>
+              <input type="number" v-model="form.emergency_leave_quota" class="form-input" min="0" required />
+            </div>
+            <div class="form-group">
+              <label>Jatah Cuti Melahirkan</label>
+              <input type="number" v-model="form.maternity_leave_quota" class="form-input" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jatah Cuti Ayah</label>
+              <input type="number" v-model="form.paternity_leave_quota" class="form-input" min="0" />
+            </div>
+            <div class="form-group">
+              <label>Jatah Cuti Nikah</label>
+              <input type="number" v-model="form.marriage_leave_quota" class="form-input" min="0" />
+            </div>
+          </div>
           <div class="form-group">
-            <label>Jatah Cuti Darurat *</label>
-            <input type="number" v-model="form.emergency_leave_quota" class="form-input" min="0" required />
+            <label>Jatah Cuti Duka</label>
+            <input type="number" v-model="form.bereavement_leave_quota" class="form-input" min="0" />
           </div>
         </div>
         <div class="modal-footer">
@@ -189,7 +253,11 @@ export default {
         year: new Date().getFullYear(),
         annual_leave_quota: 12,
         sick_leave_quota: 12,
-        emergency_leave_quota: 2
+        emergency_leave_quota: 3,
+        maternity_leave_quota: 90,
+        paternity_leave_quota: 7,
+        marriage_leave_quota: 3,
+        bereavement_leave_quota: 3
       },
       apiUrl: 'http://localhost:8000'
     }
@@ -255,7 +323,11 @@ export default {
         year: year,
         annual_leave_quota: parseInt(this.form.annual_leave_quota) || 0,
         sick_leave_quota: parseInt(this.form.sick_leave_quota) || 0,
-        emergency_leave_quota: parseInt(this.form.emergency_leave_quota) || 0
+        emergency_leave_quota: parseInt(this.form.emergency_leave_quota) || 0,
+        maternity_leave_quota: parseInt(this.form.maternity_leave_quota) || 0,
+        paternity_leave_quota: parseInt(this.form.paternity_leave_quota) || 0,
+        marriage_leave_quota: parseInt(this.form.marriage_leave_quota) || 0,
+        bereavement_leave_quota: parseInt(this.form.bereavement_leave_quota) || 0
       };
       
       console.log('Form data to be sent:', formData);
@@ -269,10 +341,8 @@ export default {
           console.log('Update response:', response.data);
           this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success');
         } else {
-          console.log('Creating new quota');
-          response = await authService.apiClient.post('/api/leave-quotas', formData);
-          console.log('Create response:', response.data);
-          this.showNotificationMessage('Jatah cuti berhasil ditambahkan', 'success');
+          this.showNotificationMessage('Tidak dapat menambah jatah cuti secara manual. Jatah otomatis dibuat saat menambah pegawai baru.', 'error');
+          return;
         }
         
         this.closeModal();
@@ -330,7 +400,11 @@ export default {
         year: quota.year,
         annual_leave_quota: quota.annual_leave_quota,
         sick_leave_quota: quota.sick_leave_quota,
-        emergency_leave_quota: quota.emergency_leave_quota
+        emergency_leave_quota: quota.emergency_leave_quota,
+        maternity_leave_quota: quota.maternity_leave_quota || 90,
+        paternity_leave_quota: quota.paternity_leave_quota || 7,
+        marriage_leave_quota: quota.marriage_leave_quota || 3,
+        bereavement_leave_quota: quota.bereavement_leave_quota || 3
       }
       this.showModal = true
     },
@@ -342,7 +416,11 @@ export default {
         year: new Date().getFullYear(),
         annual_leave_quota: 12,
         sick_leave_quota: 12,
-        emergency_leave_quota: 2
+        emergency_leave_quota: 3,
+        maternity_leave_quota: 90,
+        paternity_leave_quota: 7,
+        marriage_leave_quota: 3,
+        bereavement_leave_quota: 3
       }
     },
     getQuotaPercentage(used, total) {
@@ -645,6 +723,22 @@ export default {
 
 .quota-progress.emergency {
   background: #ef4444;
+}
+
+.quota-progress.maternity {
+  background: #ec4899;
+}
+
+.quota-progress.paternity {
+  background: #3b82f6;
+}
+
+.quota-progress.marriage {
+  background: #10b981;
+}
+
+.quota-progress.bereavement {
+  background: #6b7280;
 }
 
 /* Responsive untuk mobile */
