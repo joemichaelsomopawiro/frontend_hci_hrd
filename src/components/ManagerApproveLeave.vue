@@ -38,7 +38,25 @@
           </div>
         </div>
         <div class="header-actions">
-          <span class="pending-count">{{ pendingRequestsCount }} permohonan menunggu persetujuan</span>
+          <!-- Updated stats section -->
+          <div class="stats-container">
+            <div class="stat-item pending">
+              <span class="stat-number">{{ pendingRequestsCount }}</span>
+              <span class="stat-label">Menunggu Approval</span>
+            </div>
+            <div class="stat-item approved">
+              <span class="stat-number">{{ approvedRequestsCount }}</span>
+              <span class="stat-label">Disetujui</span>
+            </div>
+            <div class="stat-item rejected">
+              <span class="stat-number">{{ rejectedRequestsCount }}</span>
+              <span class="stat-label">Ditolak</span>
+            </div>
+            <div class="stat-item total">
+              <span class="stat-number">{{ totalRequestsCount }}</span>
+              <span class="stat-label">Total Permohonan</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -69,8 +87,15 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <h3>Memuat data permohonan cuti...</h3>
+      <p>Mohon tunggu sebentar</p>
+    </div>
+
     <!-- Requests Table -->
-    <div class="table-section">
+    <div v-else class="table-section">
       <div class="table-container" v-if="requests.length">
         <table class="modern-table">
           <thead>
@@ -144,10 +169,23 @@
         </table>
       </div>
       
+      <!-- Enhanced Empty State -->
       <div v-else class="empty-state">
-        <i class="fas fa-inbox"></i>
-        <h3>Belum ada permohonan cuti</h3>
-        <p>Permohonan cuti dari tim Anda akan muncul di sini</p>
+        <div class="empty-icon">
+          <i class="fas fa-inbox"></i>
+        </div>
+        <h3>{{ getEmptyStateTitle() }}</h3>
+        <p>{{ getEmptyStateMessage() }}</p>
+        <div class="empty-actions">
+          <button @click="clearFiltersAndReload" class="btn-secondary">
+            <i class="fas fa-filter"></i>
+            Tampilkan Semua Data
+          </button>
+          <button @click="loadRequests" class="btn-primary">
+            <i class="fas fa-sync"></i>
+            Refresh Data
+          </button>
+        </div>
       </div>
     </div>
 
@@ -256,6 +294,7 @@ export default {
   data() {
     return {
       requests: [],
+      isLoading: false,
       showApprovalModal: false,
       showDetailModal: false,
       selectedRequest: null,
@@ -265,7 +304,7 @@ export default {
       notificationMessage: '',
       notificationType: 'success',
       filters: {
-        status: 'pending', // Default filter untuk yang menunggu persetujuan
+        status: '', // Changed from 'pending' to '' to show all by default
         leave_type: ''
       },
       approvalForm: {
@@ -295,7 +334,19 @@ export default {
   },
   computed: {
     pendingRequestsCount() {
-      return this.requests.filter(req => req.status === 'pending').length
+      return this.requests.filter(req => req.overall_status === 'pending').length
+    },
+    
+    approvedRequestsCount() {
+      return this.requests.filter(req => req.overall_status === 'approved').length
+    },
+    
+    rejectedRequestsCount() {
+      return this.requests.filter(req => req.overall_status === 'rejected').length
+    },
+    
+    totalRequestsCount() {
+      return this.requests.length
     },
     
     currentManagerConfig() {
@@ -355,6 +406,7 @@ export default {
       }
     },
     async loadRequests() {
+      this.isLoading = true
       try {
         const params = new URLSearchParams()
         if (this.filters.status) params.append('status', this.filters.status)
@@ -398,10 +450,43 @@ export default {
           }
         })
         this.requests = response.data.data || []
+        
+        console.log('Loaded requests:', this.requests.length)
+        console.log('Requests data:', this.requests)
+        
       } catch (error) {
         console.error('Error loading requests:', error)
-        this.showNotificationMessage('Gagal memuat data permohonan cuti', 'error')
+        this.showNotificationMessage('Gagal memuat data permohonan cuti. Silakan coba lagi.', 'error')
+        this.requests = [] // Ensure requests is empty on error
+      } finally {
+        this.isLoading = false
       }
+    },
+    
+    getEmptyStateTitle() {
+      if (this.filters.status === 'pending') {
+        return 'Tidak Ada Permohonan Menunggu Approval'
+      } else if (this.filters.status === 'approved') {
+        return 'Tidak Ada Permohonan yang Disetujui'
+      } else if (this.filters.status === 'rejected') {
+        return 'Tidak Ada Permohonan yang Ditolak'
+      } else if (this.filters.leave_type) {
+        return `Tidak Ada Permohonan ${this.getLeaveTypeText(this.filters.leave_type)}`
+      }
+      return 'Tidak Ada Data Permohonan Cuti'
+    },
+    
+    getEmptyStateMessage() {
+      if (this.filters.status || this.filters.leave_type) {
+        return 'Tidak ada data yang sesuai dengan filter yang dipilih. Coba ubah filter atau tampilkan semua data.'
+      }
+      return 'Belum ada permohonan cuti dari tim yang Anda kelola. Data akan muncul di sini ketika ada permohonan baru.'
+    },
+    
+    clearFiltersAndReload() {
+      this.filters.status = ''
+      this.filters.leave_type = ''
+      this.loadRequests()
     },
     async submitApproval() {
       // Validasi sebelum submit
@@ -665,13 +750,51 @@ export default {
   font-size: 1.1rem;
 }
 
-.pending-count {
-  background: var(--warning-color);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
+/* Enhanced Stats Container */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 4px solid;
+}
+
+.stat-item.pending {
+  border-left-color: var(--warning-color);
+}
+
+.stat-item.approved {
+  border-left-color: var(--success-color);
+}
+
+.stat-item.rejected {
+  border-left-color: var(--danger-color);
+}
+
+.stat-item.total {
+  border-left-color: var(--info-color);
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 .filters-section {
@@ -841,16 +964,51 @@ export default {
   color: white;
 }
 
-.empty-state {
+/* Loading State */
+.loading-state {
   text-align: center;
   padding: 3rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
   color: var(--text-secondary);
 }
 
-.empty-state i {
-  font-size: 3rem;
+.loading-state i {
+  font-size: 2rem;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  color: var(--primary-color);
+}
+
+/* Enhanced Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  margin-bottom: 1.5rem;
+}
+
+.empty-icon i {
+  font-size: 4rem;
+  opacity: 0.3;
+  color: var(--text-secondary);
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .modal-overlay {
@@ -1171,6 +1329,10 @@ export default {
     padding: 1rem;
   }
   
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   .filter-group {
     flex-direction: column;
     align-items: stretch;
@@ -1191,6 +1353,15 @@ export default {
   
   .action-buttons {
     flex-direction: column;
+  }
+  
+  .empty-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .empty-actions button {
+    min-width: 200px;
   }
 }
 </style>

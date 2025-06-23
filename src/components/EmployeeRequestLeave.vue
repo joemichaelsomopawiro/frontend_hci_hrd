@@ -654,6 +654,31 @@ export default {
       return 'Status Tidak Dikenal'
     },
 
+    getStatusText(request) {
+      const status = request.overall_status || request.status
+      
+      // Check for final approval
+      if (status === 'approved') {
+        console.log('Status matched: approved')
+        return 'Disetujui'
+      }
+      
+      // Check for rejection status
+      if (status === 'rejected') {
+        console.log('Status matched: rejected')
+        return 'Ditolak'
+      }
+      
+      // Check for pending status
+      if (status === 'pending') {
+        console.log('Status matched: pending')
+        return 'Menunggu Persetujuan Manager'
+      }
+      
+      console.log('No status matched, returning default')
+      return 'Status Tidak Dikenal'
+    },
+
     formatDate(dateString) {
       if (!dateString) return '-'
       const date = new Date(dateString)

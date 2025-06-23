@@ -37,77 +37,196 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card pending"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-content"><h3>{{ statistics.pending }}</h3><p>Menunggu Approval</p></div></div>
-      <div class="stat-card approved"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-content"><h3>{{ statistics.approved }}</h3><p>Disetujui</p></div></div>
-      <div class="stat-card rejected"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div class="stat-content"><h3>{{ statistics.rejected }}</h3><p>Ditolak</p></div></div>
-      <div class="stat-card total"><div class="stat-icon"><i class="fas fa-calendar-alt"></i></div><div class="stat-content"><h3>{{ statistics.total }}</h3><p>Total Permohonan</p></div></div>
+      <div class="stat-card pending">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-content">
+          <h3>{{ statistics.pending }}</h3>
+          <p>Menunggu Approval</p>
+        </div>
+      </div>
+      <div class="stat-card approved">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-content">
+          <h3>{{ statistics.approved }}</h3>
+          <p>Disetujui</p>
+        </div>
+      </div>
+      <div class="stat-card rejected">
+        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+        <div class="stat-content">
+          <h3>{{ statistics.rejected }}</h3>
+          <p>Ditolak</p>
+        </div>
+      </div>
+      <div class="stat-card total">
+        <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+        <div class="stat-content">
+          <h3>{{ statistics.total }}</h3>
+          <p>Total Permohonan</p>
+        </div>
+      </div>
     </div>
 
-    <div v-if="loading" class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Memuat data...</p></div>
+    <div v-if="loading" class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Memuat data...</p>
+    </div>
 
     <div v-else class="requests-section">
       <div class="section-header">
         <h2>Daftar Permohonan Cuti</h2>
-        <div class="header-actions"><span class="total-count">{{ requests.length }} permohonan ditampilkan</span></div>
+        <div class="header-actions">
+          <span class="total-count">{{ requests.length }} permohonan ditampilkan</span>
+        </div>
       </div>
-      <div v-if="requests.length === 0" class="empty-state"><i class="fas fa-inbox"></i><h3>Tidak Ada Permohonan</h3><p>Belum ada data yang cocok dengan filter Anda.</p></div>
+      
+      <div v-if="requests.length === 0" class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>{{ getEmptyStateTitle() }}</h3>
+        <p>{{ getEmptyStateMessage() }}</p>
+        <div class="empty-actions">
+          <button @click="clearFiltersAndReload" class="btn btn-secondary">
+            <i class="fas fa-filter"></i>
+            Tampilkan Semua Data
+          </button>
+          <button @click="refreshData" class="btn btn-primary">
+            <i class="fas fa-sync"></i>
+            Refresh Data
+          </button>
+        </div>
+      </div>
+      
       <div v-else class="requests-grid">
-        <div v-for="request in requests" :key="request.id" class="request-card" :class="`status-${request.status}`">
+        <div v-for="request in requests" :key="request.id" class="request-card" :class="`status-${request.overall_status || request.status}`">
           <div class="request-header">
             <div class="employee-info">
-              <div class="employee-avatar"><div class="avatar-placeholder">{{ getInitials(request.employee?.nama_lengkap) }}</div></div>
+              <div class="employee-avatar">
+                <div class="avatar-placeholder">{{ getInitials(request.employee?.nama_lengkap) }}</div>
+              </div>
               <div class="employee-details">
                 <h3>{{ request.employee?.nama_lengkap }}</h3>
                 <p>{{ request.employee?.jabatan_saat_ini }}</p>
               </div>
             </div>
-            <div class="request-status"><span class="status-badge" :class="`status-${request.overall_status}`">{{ getStatusLabel(request.overall_status) }}</span></div>
+            <div class="request-status">
+              <span class="status-badge" :class="`status-${request.overall_status || request.status}`">
+                {{ getStatusLabel(request.overall_status || request.status) }}
+              </span>
+            </div>
           </div>
+          
           <div class="request-details">
             <div class="detail-row">
-              <div class="detail-item"><i class="fas fa-calendar-alt"></i><div><label>Jenis Cuti:</label><span>{{ getLeaveTypeLabel(request.leave_type) }}</span></div></div>
-              <div class="detail-item"><i class="fas fa-clock"></i><div><label>Durasi:</label><span>{{ request.total_days }} hari</span></div></div>
+              <div class="detail-item">
+                <i class="fas fa-calendar-alt"></i>
+                <div>
+                  <label>Jenis Cuti:</label>
+                  <span>{{ getLeaveTypeLabel(request.leave_type) }}</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-clock"></i>
+                <div>
+                  <label>Durasi:</label>
+                  <span>{{ request.total_days }} hari</span>
+                </div>
+              </div>
             </div>
             <div class="detail-row">
-              <div class="detail-item"><i class="fas fa-calendar"></i><div><label>Tanggal:</label><span>{{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}</span></div></div>
-              <div class="detail-item"><i class="fas fa-user-clock"></i><div><label>Diajukan:</label><span>{{ formatDateTime(request.created_at) }}</span></div></div>
+              <div class="detail-item">
+                <i class="fas fa-calendar"></i>
+                <div>
+                  <label>Tanggal:</label>
+                  <span>{{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-user-clock"></i>
+                <div>
+                  <label>Diajukan:</label>
+                  <span>{{ formatDateTime(request.created_at) }}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="request-reason"><label><i class="fas fa-comment"></i> Alasan:</label><p>{{ request.reason }}</p></div>
+          
+          <div class="request-reason">
+            <label><i class="fas fa-comment"></i> Alasan:</label>
+            <p>{{ request.reason }}</p>
+          </div>
           
           <div v-if="request.approver" class="approval-history">
             <h4><i class="fas fa-history"></i> Riwayat Proses</h4>
             <div class="approval-item">
-              <div class="approver-info"><i class="fas fa-user-check"></i><span>{{ request.approver?.nama_lengkap }} ({{request.approver.user.role}})</span></div>
-              <div class="approval-status"><span class="badge" :class="`badge-${request.overall_status}`">{{ getStatusLabel(request.overall_status) }}</span><small>{{ formatDateTime(request.approved_at) }}</small></div>
+              <div class="approver-info">
+                <i class="fas fa-user-check"></i>
+                <span>{{ request.approver?.nama_lengkap }} ({{ request.approver?.user?.role }})</span>
+              </div>
+              <div class="approval-status">
+                <span class="badge" :class="`badge-${request.overall_status || request.status}`">
+                  {{ getStatusLabel(request.overall_status || request.status) }}
+                </span>
+                <small>{{ formatDateTime(request.approved_at) }}</small>
+              </div>
             </div>
-             <p v-if="request.notes" class="approval-notes"><b>Catatan:</b> {{request.notes}}</p>
-             <p v-if="request.rejection_reason" class="approval-notes"><b>Alasan Ditolak:</b> {{request.rejection_reason}}</p>
+            <p v-if="request.notes" class="approval-notes">
+              <b>Catatan:</b> {{ request.notes }}
+            </p>
+            <p v-if="request.rejection_reason" class="approval-notes">
+              <b>Alasan Ditolak:</b> {{ request.rejection_reason }}
+            </p>
           </div>
 
-          <div v-if="request.status === 'pending'" class="request-actions">
-            <button @click="openApprovalModal(request, 'approve')" class="btn btn-success" :disabled="processing"><i class="fas fa-check"></i>Setujui</button>
-            <button @click="openApprovalModal(request, 'reject')" class="btn btn-danger" :disabled="processing"><i class="fas fa-times"></i>Tolak</button>
+          <div v-if="(request.overall_status === 'pending' || request.status === 'pending')" class="request-actions">
+            <button @click="openApprovalModal(request, 'approve')" class="btn btn-success" :disabled="processing">
+              <i class="fas fa-check"></i>Setujui
+            </button>
+            <button @click="openApprovalModal(request, 'reject')" class="btn btn-danger" :disabled="processing">
+              <i class="fas fa-times"></i>Tolak
+            </button>
           </div>
         </div>
       </div>
     </div>
     
     <div v-if="showApprovalModal" class="modal-overlay" @click="closeModal">
-        <div class="modal-content" @click.stop>
-            <div class="modal-header"><h3>{{ modalAction === 'approve' ? 'Setujui' : 'Tolak' }} Permohonan Cuti</h3><button @click="closeModal" class="close-btn"><i class="fas fa-times"></i></button></div>
-            <div class="modal-body">
-                <div class="employee-summary"><h4>{{ selectedRequest?.employee?.nama_lengkap }}</h4><p>{{ getLeaveTypeLabel(selectedRequest?.leave_type) }} - {{ selectedRequest?.total_days }} hari</p><p>{{ formatDate(selectedRequest?.start_date) }} - {{ formatDate(selectedRequest?.end_date) }}</p></div>
-                <div class="form-group"><label>{{ modalAction === 'approve' ? 'Catatan Persetujuan (Opsional):' : 'Alasan Penolakan (Wajib):' }}</label><textarea v-model="approvalNotes" class="form-textarea" rows="4" :placeholder="modalAction === 'approve' ? 'Tambahkan catatan...' : 'Jelaskan alasan penolakan...'" :required="modalAction === 'reject'"></textarea></div>
-            </div>
-            <div class="modal-footer">
-                <button @click="closeModal" class="btn btn-secondary">Batal</button>
-                <button @click="confirmAction" class="btn" :class="modalAction === 'approve' ? 'btn-success' : 'btn-danger'" :disabled="processing || (modalAction === 'reject' && !approvalNotes.trim())">
-                    <i v-if="processing" class="fas fa-spinner fa-spin"></i>
-                    {{ processing ? 'Memproses...' : (modalAction === 'approve' ? 'Setujui' : 'Tolak') }}
-                </button>
-            </div>
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>{{ modalAction === 'approve' ? 'Setujui' : 'Tolak' }} Permohonan Cuti</h3>
+          <button @click="closeModal" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+        <div class="modal-body">
+          <div class="employee-summary">
+            <h4>{{ selectedRequest?.employee?.nama_lengkap }}</h4>
+            <p>{{ getLeaveTypeLabel(selectedRequest?.leave_type) }} - {{ selectedRequest?.total_days }} hari</p>
+            <p>{{ formatDate(selectedRequest?.start_date) }} - {{ formatDate(selectedRequest?.end_date) }}</p>
+          </div>
+          <div class="form-group">
+            <label>{{ modalAction === 'approve' ? 'Catatan Persetujuan (Opsional):' : 'Alasan Penolakan (Wajib):' }}</label>
+            <textarea 
+              v-model="approvalNotes" 
+              class="form-textarea" 
+              rows="4" 
+              :placeholder="modalAction === 'approve' ? 'Tambahkan catatan...' : 'Jelaskan alasan penolakan...'" 
+              :required="modalAction === 'reject'"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeModal" class="btn btn-secondary">Batal</button>
+          <button 
+            @click="confirmAction" 
+            class="btn" 
+            :class="modalAction === 'approve' ? 'btn-success' : 'btn-danger'" 
+            :disabled="processing || (modalAction === 'reject' && !approvalNotes.trim())"
+          >
+            <i v-if="processing" class="fas fa-spinner fa-spin"></i>
+            {{ processing ? 'Memproses...' : (modalAction === 'approve' ? 'Setujui' : 'Tolak') }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -124,7 +243,7 @@ export default {
       processing: false,
       requests: [], // Hanya untuk daftar yang ditampilkan
       allRequests: [], // Untuk menyimpan semua data dan menghitung statistik
-      selectedStatus: 'pending',
+      selectedStatus: '',
       selectedLeaveType: '',
       showApprovalModal: false,
       selectedRequest: null,
@@ -139,21 +258,22 @@ export default {
   },
   methods: {
     // Fungsi baru untuk memuat SEMUA data yang relevan untuk manager/HR
-    // Ini akan digunakan untuk menghitung statistik yang akurat
     async fetchAllDataForStats() {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${this.apiUrl}/api/leave-requests`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                this.allRequests = response.data.data || [];
-                this.calculateStatistics();
-            }
-        } catch (error) {
-            console.error("Error fetching all data for stats:", error);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${this.apiUrl}/api/leave-requests`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          this.allRequests = response.data.data || [];
+          this.calculateStatistics();
         }
+      } catch (error) {
+        console.error("Error fetching all data for stats:", error);
+        this.statistics = { pending: 0, approved: 0, rejected: 0, total: 0 };
+      }
     },
+    
     // Fungsi ini sekarang hanya memfilter data yang sudah ada atau memuat ulang jika perlu
     async loadRequests() {
       this.loading = true;
@@ -163,9 +283,9 @@ export default {
         
         // Backend Anda menggunakan `for_approval` untuk status pending
         if (this.selectedStatus === 'pending') {
-            params.append('for_approval', 'true');
+          params.append('for_approval', 'true');
         } else if (this.selectedStatus) {
-            params.append('status', this.selectedStatus);
+          params.append('status', this.selectedStatus);
         }
 
         if (this.selectedLeaveType) {
@@ -178,78 +298,147 @@ export default {
         
         if (response.data.success) {
           this.requests = response.data.data || [];
+        } else {
+          this.requests = [];
         }
       } catch (error) {
+        console.error('Error loading requests:', error);
+        this.requests = [];
         alert('Gagal memuat data permohonan.');
       } finally {
         this.loading = false;
       }
     },
+    
     async refreshData() {
       await this.fetchAllDataForStats();
       await this.loadRequests();
     },
+    
     calculateStatistics() {
-        const data = this.allRequests;
-        this.statistics = {
-            pending: data.filter(r => r.status === 'pending').length,
-            approved: data.filter(r => r.status === 'approved').length,
-            rejected: data.filter(r => r.status === 'rejected').length,
-            total: data.length,
-        };
+      const data = this.allRequests;
+      this.statistics = {
+        pending: data.filter(r => (r.overall_status === 'pending' || r.status === 'pending')).length,
+        approved: data.filter(r => (r.overall_status === 'approved' || r.status === 'approved')).length,
+        rejected: data.filter(r => (r.overall_status === 'rejected' || r.status === 'rejected')).length,
+        total: data.length,
+      };
     },
+
+    getEmptyStateTitle() {
+      if (this.selectedStatus === 'pending') {
+        return 'Tidak Ada Permohonan Menunggu Approval';
+      } else if (this.selectedStatus === 'approved') {
+        return 'Tidak Ada Permohonan yang Disetujui';
+      } else if (this.selectedStatus === 'rejected') {
+        return 'Tidak Ada Permohonan yang Ditolak';
+      } else if (this.selectedLeaveType) {
+        return `Tidak Ada Permohonan ${this.getLeaveTypeLabel(this.selectedLeaveType)}`;
+      }
+      return 'Tidak Ada Data Permohonan Cuti';
+    },
+    
+    getEmptyStateMessage() {
+      if (this.selectedStatus || this.selectedLeaveType) {
+        return 'Tidak ada data yang sesuai dengan filter yang dipilih. Coba ubah filter atau tampilkan semua data.';
+      }
+      return 'Belum ada permohonan cuti yang perlu diproses. Data akan muncul di sini ketika ada permohonan baru.';
+    },
+    
+    clearFiltersAndReload() {
+      this.selectedStatus = '';
+      this.selectedLeaveType = '';
+      this.loadRequests();
+    },
+    
     async confirmAction() {
       if (this.modalAction === 'reject' && !this.approvalNotes.trim()) {
         alert('Alasan penolakan wajib diisi.');
         return;
       }
+      
       this.processing = true;
       try {
         const token = localStorage.getItem('token');
         const requestId = this.selectedRequest.id;
         
         const endpoint = `/api/leave-requests/${requestId}/${this.modalAction}`;
-        const payload = this.modalAction === 'approve' ? { notes: this.approvalNotes } : { rejection_reason: this.approvalNotes };
+        const payload = this.modalAction === 'approve' 
+          ? { notes: this.approvalNotes } 
+          : { rejection_reason: this.approvalNotes };
 
-        await axios.put(this.apiUrl + endpoint, payload, { headers: { 'Authorization': `Bearer ${token}` } });
+        await axios.put(this.apiUrl + endpoint, payload, { 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
         
         alert(`Permohonan berhasil ${this.modalAction === 'approve' ? 'disetujui' : 'ditolak'}.`);
         this.closeModal();
         await this.refreshData(); // Panggil refreshData untuk update statistik dan daftar
       } catch (error) {
+        console.error('Error processing action:', error);
         alert(error.response?.data?.message || 'Gagal memproses aksi.');
       } finally {
         this.processing = false;
       }
     },
+    
     openApprovalModal(request, action) {
       this.selectedRequest = request;
       this.modalAction = action;
       this.approvalNotes = '';
       this.showApprovalModal = true;
     },
+    
     closeModal() {
       this.showApprovalModal = false;
+      this.selectedRequest = null;
+      this.modalAction = '';
+      this.approvalNotes = '';
     },
+    
     getInitials(name) {
       if (!name) return '??';
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     },
+    
     getStatusLabel(status) {
-      const statuses = { 'pending': 'Menunggu', 'approved': 'Disetujui', 'rejected': 'Ditolak' };
+      const statuses = { 
+        'pending': 'Menunggu', 
+        'approved': 'Disetujui', 
+        'rejected': 'Ditolak' 
+      };
       return statuses[status] || status;
     },
+    
     getLeaveTypeLabel(type) {
-      const types = { 'annual': 'Cuti Tahunan', 'sick': 'Cuti Sakit', 'emergency': 'Cuti Darurat', 'maternity': 'Cuti Melahirkan', 'paternity': 'Cuti Ayah' };
+      const types = { 
+        'annual': 'Cuti Tahunan', 
+        'sick': 'Cuti Sakit', 
+        'emergency': 'Cuti Darurat', 
+        'maternity': 'Cuti Melahirkan', 
+        'paternity': 'Cuti Ayah' 
+      };
       return types[type] || type;
     },
+    
     formatDate(dateString) {
       if (!dateString) return '-';
-      return new Date(dateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      return new Date(dateString).toLocaleDateString('id-ID', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      });
     },
+    
     formatDateTime(dateString) {
       if (!dateString) return '-';
-      return new Date(dateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return new Date(dateString).toLocaleDateString('id-ID', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
     },
   }
 };

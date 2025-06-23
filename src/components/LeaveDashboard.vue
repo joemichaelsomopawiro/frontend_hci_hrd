@@ -180,6 +180,7 @@
       <div class="section-header">
         <h2>Kelola Permohonan Cuti</h2>
         <div class="header-actions">
+          // Update filter options untuk konsistensi
           <select v-model="requestFilter" @change="fetchLeaveRequests" class="filter-select">
             <option value="all">Semua Status</option>
             <option value="pending">Menunggu Persetujuan</option>

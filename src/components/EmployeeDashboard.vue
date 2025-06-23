@@ -313,25 +313,32 @@ export default {
           },
           params: { 
             employee_id: this.userId,
-            include_details: true, // Request detailed approval information
-            include_approver: true // Ensure approver data is fetched
+            include_details: true,
+            include_approver: true
           }
         })
         
         const requests = response.data.data || response.data
         this.recentRequests = requests.slice(0, 5)
         
-        // Calculate stats with more detailed status
+        // Fixed stats calculation using overall_status consistently
         this.leaveStats.pending = requests.filter(r => 
-          r.status === 'pending' || r.status.includes('approved_by')
+          r.overall_status === 'pending' || r.status === 'pending'
         ).length
-        this.leaveStats.approved = requests.filter(r => r.status === 'approved').length
-        this.leaveStats.rejected = requests.filter(r => r.status.includes('rejected')).length
+        this.leaveStats.approved = requests.filter(r => 
+          r.overall_status === 'approved' || r.status === 'approved'
+        ).length
+        this.leaveStats.rejected = requests.filter(r => 
+          r.overall_status === 'rejected' || r.status === 'rejected'
+        ).length
+        
+        console.log('Leave stats calculated:', this.leaveStats)
         
       } catch (error) {
         console.error('Error loading leave data:', error)
-        // Set default empty data if API fails
         this.recentRequests = []
+        // Reset stats on error
+        this.leaveStats = { pending: 0, approved: 0, rejected: 0 }
       }
     },
 
@@ -381,8 +388,8 @@ export default {
     getStatusLabel(status) {
       const labels = {
         'approved': 'Disetujui',
-        'rejected': 'Ditolak',
-        'pending': 'Menunggu Persetujuan',
+        'rejected': 'Ditolak', 
+        'pending': 'Menunggu Persetujuan'
       };
       return labels[status] || 'Dalam Proses';
     },
