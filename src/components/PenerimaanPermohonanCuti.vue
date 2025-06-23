@@ -61,7 +61,7 @@
                 <p>{{ request.employee?.jabatan_saat_ini }}</p>
               </div>
             </div>
-            <div class="request-status"><span class="status-badge" :class="`status-${request.status}`">{{ getStatusLabel(request.status) }}</span></div>
+            <div class="request-status"><span class="status-badge" :class="`status-${request.overall_status}`">{{ getStatusLabel(request.overall_status) }}</span></div>
           </div>
           <div class="request-details">
             <div class="detail-row">
@@ -79,7 +79,7 @@
             <h4><i class="fas fa-history"></i> Riwayat Proses</h4>
             <div class="approval-item">
               <div class="approver-info"><i class="fas fa-user-check"></i><span>{{ request.approver?.nama_lengkap }} ({{request.approver.user.role}})</span></div>
-              <div class="approval-status"><span class="badge" :class="`badge-${request.status}`">{{ getStatusLabel(request.status) }}</span><small>{{ formatDateTime(request.approved_at) }}</small></div>
+              <div class="approval-status"><span class="badge" :class="`badge-${request.overall_status}`">{{ getStatusLabel(request.overall_status) }}</span><small>{{ formatDateTime(request.approved_at) }}</small></div>
             </div>
              <p v-if="request.notes" class="approval-notes"><b>Catatan:</b> {{request.notes}}</p>
              <p v-if="request.rejection_reason" class="approval-notes"><b>Alasan Ditolak:</b> {{request.rejection_reason}}</p>
@@ -442,15 +442,9 @@ export default {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.request-card.status-pending_manager,
 .request-card.status-pending {
   border-color: #f59e0b;
   background: #fffbeb;
-}
-
-.request-card.status-pending_hr {
-  border-color: #3b82f6;
-  background: #eff6ff;
 }
 
 .request-card.status-approved {
@@ -522,15 +516,9 @@ export default {
   text-transform: uppercase;
 }
 
-.status-badge.status-pending_manager,
 .status-badge.status-pending {
   background: #fbbf24;
   color: #92400e;
-}
-
-.status-badge.status-pending_hr {
-  background: #60a5fa;
-  color: #1e40af;
 }
 
 .status-badge.status-approved {

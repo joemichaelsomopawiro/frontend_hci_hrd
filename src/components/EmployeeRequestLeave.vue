@@ -154,10 +154,7 @@
           <select v-model="statusFilter" @change="fetchMyLeaveRequests" class="filter-select">
             <option value="">Semua Status</option>
             <option value="pending">Menunggu Persetujuan</option>
-            <option value="pending_manager">Menunggu Manager</option>
-            <option value="pending_hr">Menunggu HR</option>
-            <option value="approved_by_manager">Disetujui Manager</option>
-            <option value="approved">Disetujui Final</option>
+            <option value="approved">Disetujui</option>
             <option value="rejected">Ditolak</option>
           </select>
         </div>
@@ -168,7 +165,7 @@
           v-for="request in myLeaveRequests" 
           :key="request.id" 
           class="request-card"
-          :class="`status-${request.overall_status || request.status}`"
+          :class="`status-${request.overall_status}`"
         >
           <div class="request-header">
             <div class="request-type">
@@ -176,8 +173,8 @@
               <span>{{ getLeaveTypeLabel(request.leave_type) }}</span>
             </div>
             <div class="request-status">
-              <span class="status-badge" :class="`status-${request.overall_status || request.status}`">
-                {{ getStatusLabel(request.overall_status || request.status) }}
+              <span class="status-badge" :class="`status-${request.overall_status}`">
+                {{ getStatusLabel(request.overall_status) }}
               </span>
             </div>
           </div>
@@ -256,7 +253,7 @@
           
           <div class="request-footer">
             <small>Diajukan: {{ formatDateTime(request.created_at) }}</small>
-            <div v-if="(request.overall_status || request.status) === 'pending'" class="request-actions">
+            <div v-if="request.overall_status === 'pending'" class="request-actions">
               <button 
                 @click="cancelRequest(request.id)" 
                 class="btn btn-sm btn-danger"
@@ -538,8 +535,6 @@ export default {
               id: request.id,
               status: request.status,
               overall_status: request.overall_status,
-              manager_status: request.manager_status,
-              hr_status: request.hr_status,
               manager_notes: request.manager_notes,
               hr_notes: request.hr_notes,
               distribution_manager_notes: request.distribution_manager_notes,
@@ -621,152 +616,42 @@ export default {
     getStatusLabel(status) {
       const statuses = {
         'pending': 'Menunggu Persetujuan',
-        'pending_manager': 'Menunggu Manager',
-        'pending_distribution_manager': 'Menunggu Distribution Manager',
-        'pending_program_manager': 'Menunggu Program Manager',
-        'approved_by_manager': 'Disetujui Manager - Menunggu HR',
-        'approved_by_distribution_manager': 'Disetujui Distribution Manager - Menunggu HR',
-        'approved_by_program_manager': 'Disetujui Program Manager - Menunggu HR',
-        'pending_hr': 'Menunggu HR Manager',
-        'approved': 'Disetujui (Final)',
-        'final_approved': 'Disetujui (Final)',
-        'rejected': 'Ditolak',
-        'rejected_by_manager': 'Ditolak oleh Manager',
-        'rejected_by_distribution_manager': 'Ditolak oleh Distribution Manager',
-        'rejected_by_program_manager': 'Ditolak oleh Program Manager',
-        'rejected_by_hr': 'Ditolak oleh HR Manager'
+        'approved': 'Disetujui',
+        'rejected': 'Ditolak'
       }
       return statuses[status] || status
     },
 
     getApproverInfo(request) {
-      const status = request.overall_status || request.status
+      const status = request.overall_status
       
       // Debug: Log the status processing
       console.log('getApproverInfo called with:', {
         requestId: request.id,
         status: status,
-        overall_status: request.overall_status,
-        original_status: request.status,
-        userRole: this.userRole,
-        manager_status: request.manager_status,
-        hr_status: request.hr_status,
-        hasDistributionNotes: !!request.distribution_manager_notes,
-        hasProgramNotes: !!request.program_manager_notes,
-        hasManagerNotes: !!request.manager_notes
+        overall_status: request.overall_status
       })
       
-      // Determine which manager should approve based on user role
-      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
-      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
-      const hrDirectRoles = ['Finance', 'General Affairs', 'Office Assistant']
-      
-      // Check for final approval first
-      if (status === 'approved' || status === 'final_approved') {
-        console.log('Status matched: final approved')
-        return 'Disetujui (Final)'
+      // Check for final approval
+      if (status === 'approved') {
+        console.log('Status matched: approved')
+        return 'Disetujui'
       }
       
-      // Check for rejection statuses
-      if (status === 'rejected' || status.includes('rejected_by')) {
+      // Check for rejection status
+      if (status === 'rejected') {
         console.log('Status matched: rejected')
-        if (status === 'rejected_by_distribution_manager') {
-          return 'Ditolak oleh Distribution Manager'
-        } else if (status === 'rejected_by_program_manager') {
-          return 'Ditolak oleh Program Manager'
-        } else if (status === 'rejected_by_hr') {
-          return 'Ditolak oleh HR Manager'
-        }
         return 'Ditolak'
       }
       
-      // PRIORITY: Check for manager notes to determine if already approved
-      // This is the most reliable way to detect manager approval
-      if (request.distribution_manager_notes && request.distribution_manager_notes.trim() !== '') {
-        console.log('Found distribution manager notes - approved by Distribution Manager')
-        return 'Disetujui Distribution Manager - Menunggu HR'
-      }
-      
-      if (request.program_manager_notes && request.program_manager_notes.trim() !== '') {
-        console.log('Found program manager notes - approved by Program Manager')
-        return 'Disetujui Program Manager - Menunggu HR'
-      }
-      
-      // Check for manager-approved statuses (waiting for HR)
-      if (status === 'approved_by_distribution_manager') {
-        console.log('Status matched: approved_by_distribution_manager')
-        return 'Disetujui Distribution Manager - Menunggu HR'
-      }
-      if (status === 'approved_by_program_manager') {
-        console.log('Status matched: approved_by_program_manager')
-        return 'Disetujui Program Manager - Menunggu HR'
-      }
-      if (status === 'approved_by_manager') {
-        console.log('Status matched: approved_by_manager')
-        return 'Disetujui Manager - Menunggu HR'
-      }
-      
-      // Check if manager has approved but waiting for HR (using individual status fields)
-      if (request.manager_status === 'approved' && request.hr_status === 'pending') {
-        console.log('Status matched: manager approved, hr pending')
-        // Determine which manager approved based on user role
-        if (programRoles.includes(this.userRole)) {
-          return 'Disetujui Program Manager - Menunggu HR'
-        } else if (distributionRoles.includes(this.userRole)) {
-          return 'Disetujui Distribution Manager - Menunggu HR'
-        }
-        return 'Disetujui Manager - Menunggu HR'
-      }
-      
-      // Check for overall_status indicating manager approval
-      if (status === 'pending_hr' || request.overall_status === 'pending_hr') {
-        console.log('Status matched: pending_hr (overall or direct)')
-        // Check which manager approved based on notes or user role
-        if (distributionRoles.includes(this.userRole)) {
-          return 'Disetujui Distribution Manager - Menunggu HR'
-        } else if (programRoles.includes(this.userRole)) {
-          return 'Disetujui Program Manager - Menunggu HR'
-        }
-        return 'Menunggu HR Manager (Final Approval)'
-      }
-      
-      // Check if there are manager notes but status is still pending
-      if (request.manager_notes && request.manager_notes.trim() !== '' && (status === 'pending' || status === 'pending_manager')) {
-        console.log('Found manager notes with pending status - likely approved by manager')
-        if (distributionRoles.includes(this.userRole)) {
-          return 'Disetujui Distribution Manager - Menunggu HR'
-        } else if (programRoles.includes(this.userRole)) {
-          return 'Disetujui Program Manager - Menunggu HR'
-        }
-        return 'Disetujui Manager - Menunggu HR'
-      }
-      
-      // Check for specific manager pending statuses
-      if (status === 'pending_distribution_manager') {
-        console.log('Status matched: pending_distribution_manager')
-        return 'Menunggu Distribution Manager'
-      }
-      if (status === 'pending_program_manager') {
-        console.log('Status matched: pending_program_manager')
-        return 'Menunggu Program Manager'
-      }
-      
-      // Check for general pending statuses
-      if (status === 'pending' || status === 'pending_manager') {
-        console.log('Status matched: pending/pending_manager, userRole:', this.userRole)
-        // Determine specific manager based on user role
-        if (programRoles.includes(this.userRole)) {
-          return 'Menunggu Program Manager'
-        } else if (distributionRoles.includes(this.userRole)) {
-          return 'Menunggu Distribution Manager'
-        } else if (hrDirectRoles.includes(this.userRole)) {
-          return 'Menunggu HR Manager'
-        }
-        return 'Menunggu Manager'
+      // Check for pending status
+      if (status === 'pending') {
+        console.log('Status matched: pending')
+        return 'Menunggu Persetujuan Manager'
       }
       
       console.log('No status matched, returning default')
-      return 'Menunggu Persetujuan'
+      return 'Status Tidak Dikenal'
     },
 
     formatDate(dateString) {
@@ -826,7 +711,7 @@ export default {
         return {
           name: 'Distribution Manager',
           role: 'Distribution Manager',
-          date: request.manager_approved_at || request.updated_at
+          date: request.approved_at || request.updated_at
         }
       }
       
@@ -834,41 +719,44 @@ export default {
         return {
           name: 'Program Manager', 
           role: 'Program Manager',
-          date: request.manager_approved_at || request.updated_at
+          date: request.approved_at || request.updated_at
         }
       }
       
-      // Check by status
+      // Check by status and notes for approved requests
       const status = request.overall_status || request.status
-      if (status === 'approved_by_distribution_manager' || status.includes('distribution')) {
-        return {
-          name: 'Distribution Manager',
-          role: 'Distribution Manager', 
-          date: request.manager_approved_at || request.updated_at
+      if (status === 'approved') {
+        // Determine manager type based on notes or user role
+        if (request.distribution_manager_notes) {
+          return {
+            name: 'Distribution Manager',
+            role: 'Distribution Manager', 
+            date: request.approved_at || request.updated_at
+          }
+        }
+        
+        if (request.program_manager_notes) {
+          return {
+            name: 'Program Manager',
+            role: 'Program Manager',
+            date: request.approved_at || request.updated_at
+          }
         }
       }
       
-      if (status === 'approved_by_program_manager' || status.includes('program')) {
-        return {
-          name: 'Program Manager',
-          role: 'Program Manager',
-          date: request.manager_approved_at || request.updated_at
-        }
-      }
-      
-      // Check by user role and manager status
-      if (request.manager_status === 'approved' || status === 'approved_by_manager') {
+      // Check by overall status for approved requests
+      if (status === 'approved') {
         if (distributionRoles.includes(this.userRole)) {
           return {
             name: 'Distribution Manager',
             role: 'Distribution Manager',
-            date: request.manager_approved_at || request.updated_at
+            date: request.approved_at || request.updated_at
           }
         } else if (programRoles.includes(this.userRole)) {
           return {
             name: 'Program Manager', 
             role: 'Program Manager',
-            date: request.manager_approved_at || request.updated_at
+            date: request.approved_at || request.updated_at
           }
         }
       }
@@ -879,26 +767,26 @@ export default {
     getHRApprovalInfo(request) {
       const status = request.overall_status || request.status
       
-      if (status === 'approved' || status === 'final_approved') {
+      if (status === 'approved') {
         return {
           name: 'HR Manager',
           status: 'approved',
           statusLabel: 'Disetujui',
-          date: request.hr_approved_at || request.approved_at || request.updated_at
+          date: request.approved_at || request.updated_at
         }
       }
       
-      if (status === 'rejected_by_hr' || (status === 'rejected' && request.hr_notes)) {
+      if (status === 'rejected') {
         return {
           name: 'HR Manager',
           status: 'rejected', 
           statusLabel: 'Ditolak',
-          date: request.hr_approved_at || request.updated_at
+          date: request.approved_at || request.updated_at
         }
       }
       
-      // If manager approved but waiting for HR
-      if (this.getManagerApprovalInfo(request) && (status === 'pending_hr' || request.hr_status === 'pending')) {
+      // If request is still pending
+      if (status === 'pending') {
         return {
           name: 'HR Manager',
           status: 'pending',
@@ -1229,16 +1117,12 @@ export default {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.request-card.status-pending,
-.request-card.status-pending_manager {
+.request-card.status-pending {
   border-color: #f59e0b;
   background: #fffbeb;
 }
 
-.request-card.status-pending_hr {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
+
 
 .request-card.status-approved {
   border-color: #10b981;
@@ -1273,16 +1157,12 @@ export default {
   text-transform: uppercase;
 }
 
-.status-badge.status-pending,
-.status-badge.status-pending_manager {
+.status-badge.status-pending {
   background: #fbbf24;
   color: #92400e;
 }
 
-.status-badge.status-pending_hr {
-  background: #60a5fa;
-  color: #1e40af;
-}
+
 
 .status-badge.status-approved {
   background: #34d399;

@@ -173,11 +173,11 @@
                 </div>
               </div>
 
-              <div v-if="request.approver" class="history-item" :class="getStatusClass(request.status)">
-                <i class="fas" :class="getStatusIcon(request.status)"></i>
+              <div v-if="request.approver" class="history-item" :class="getStatusClass(request.overall_status)">
+                <i class="fas" :class="getStatusIcon(request.overall_status)"></i>
                 <div class="history-details">
                   <span class="history-title">Diproses oleh {{ request.approver.nama_lengkap || request.approver.name }} ({{ request.approver.user.role }})</span>
-                  <span class="history-status">{{ getStatusLabel(request.status) }}</span>
+                  <span class="history-status">{{ getStatusLabel(request.overall_status) }}</span>
                   <span v-if="request.notes" class="history-notes">Catatan: {{ request.notes }}</span>
                   <span v-if="request.rejection_reason" class="history-notes">Alasan Ditolak: {{ request.rejection_reason }}</span>
                   <span class="history-date">{{ formatDateTime(request.approved_at || request.rejected_at || request.updated_at) }}</span>
@@ -382,10 +382,6 @@ export default {
       const labels = {
         'approved': 'Disetujui',
         'rejected': 'Ditolak',
-        'approved_by_manager': 'Disetujui oleh Manager',
-        'approved_by_hr': 'Disetujui oleh HR',
-        'rejected_by_manager': 'Ditolak oleh Manager',
-        'rejected_by_hr': 'Ditolak oleh HR',
         'pending': 'Menunggu Persetujuan',
       };
       return labels[status] || 'Dalam Proses';
@@ -406,15 +402,13 @@ export default {
     
     getStatusClass(status) {
       if (status === 'approved') return 'approved';
-      if (status && status.includes('rejected')) return 'rejected';
-      if (status && status.includes('approved_by')) return 'approved-pending';
+      if (status === 'rejected') return 'rejected';
       return 'pending';
     },
 
     getStatusIcon(status) {
       if (status === 'approved') return 'fa-check-circle';
-      if (status && status.includes('rejected')) return 'fa-times-circle';
-      if (status && status.includes('approved_by')) return 'fa-check';
+      if (status === 'rejected') return 'fa-times-circle';
       return 'fa-clock';
     },
     
@@ -486,11 +480,11 @@ export default {
   color: #3498db; /* Blue for submitted */
 }
 
-.history-item.approved i, .history-item.approved_by_manager i, .history-item.approved_by_hr i {
+.history-item.approved i {
   color: #2ecc71; /* Green for approved */
 }
 
-.history-item.rejected i, .history-item.rejected_by_manager i, .history-item.rejected_by_hr i {
+.history-item.rejected i {
   color: #e74c3c; /* Red for rejected */
 }
 

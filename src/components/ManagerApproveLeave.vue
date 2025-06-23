@@ -49,7 +49,7 @@
         <select v-model="filters.status" @change="loadRequests" class="filter-select">
           <option value="">Semua Status</option>
           <option value="pending">Menunggu Persetujuan</option>
-          <option value="approved_by_manager">Disetujui</option>
+          <option value="approved">Disetujui</option>
           <option value="rejected">Ditolak</option>
         </select>
         <select v-model="filters.leave_type" @change="loadRequests" class="filter-select">
@@ -112,22 +112,22 @@
                 <div class="reason-text">{{ request.reason }}</div>
               </td>
               <td>
-                <span class="status-badge" :class="getStatusClass(request.status)">
-                  {{ getStatusText(request.status) }}
+                <span class="status-badge" :class="getStatusClass(request.overall_status)">
+                  {{ getStatusText(request.overall_status) }}
                 </span>
               </td>
               <td>
                 <div class="action-buttons">
                   <button 
-                    v-if="request.status === 'pending' || (isHRManager && request.status === 'approved_by_manager')" 
+                    v-if="canApproveRequest(request)" 
                     @click="approveRequest(request)" 
                     class="btn-icon approve" 
-                    :title="getApprovalButtonTitle(request)"
+                    title="Setujui"
                   >
                     <i class="fas fa-check"></i>
                   </button>
                   <button 
-                    v-if="request.status === 'pending' || (isHRManager && request.status === 'approved_by_manager')" 
+                    v-if="canApproveRequest(request)" 
                     @click="rejectRequest(request)" 
                     class="btn-icon reject" 
                     title="Tolak"
@@ -229,8 +229,8 @@
           
           <div class="detail-section">
             <h4>Status Persetujuan</h4>
-            <p><strong>Status:</strong> {{ getStatusText(selectedRequest?.status) }}</p>
-            <p v-if="selectedRequest?.manager_approved_at"><strong>Tanggal Persetujuan:</strong> {{ formatDate(selectedRequest?.manager_approved_at) }}</p>
+            <p><strong>Status:</strong> {{ getStatusText(selectedRequest?.overall_status) }}</p>
+            <p v-if="selectedRequest?.approved_at"><strong>Tanggal Persetujuan:</strong> {{ formatDate(selectedRequest?.approved_at) }}</p>
             <p v-if="selectedRequest?.rejection_reason"><strong>Alasan Penolakan:</strong> {{ selectedRequest?.rejection_reason }}</p>
           </div>
         </div>
@@ -279,11 +279,11 @@ export default {
       workflowConfig: {
         'Distribution Manager': {
           subordinates: ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'],
-          nextApprover: 'HR Manager'
+          nextApprover: null // Tidak ada next approver, langsung final
         },
         'Program Manager': {
           subordinates: ['Producer', 'Creative', 'Production', 'Editor'],
-          nextApprover: 'HR Manager'
+          nextApprover: null // Tidak ada next approver, langsung final
         },
         'HR Manager': {
           subordinates: ['Finance', 'General Affairs', 'Office Assistant'],
@@ -328,11 +328,11 @@ export default {
     
     approvalLevelText() {
       if (this.isHRManager) {
-        return 'Final Approval (HR Manager)'
+        return 'Approval (HR Manager)'
       } else if (this.isDistributionManager) {
-        return 'First Level Approval (Distribution Manager)'
+        return 'Approval (Distribution Manager)'
       } else if (this.isProgramManager) {
-        return 'First Level Approval (Program Manager)'
+        return 'Approval (Program Manager)'
       }
       return 'Manager Approval'
     }
@@ -371,7 +371,7 @@ export default {
           if (this.isHRManager) {
             // HR Manager can see:
             // 1. Direct subordinates (Finance, General Affairs, Office Assistant) - pending
-            // 2. Requests forwarded from other managers - approved_by_manager status
+            // 2. Requests that can be approved by this manager
             // 3. All approved requests if canViewAll is true
             params.append('workflow_type', 'hr_manager')
             if (this.canViewAllApprovedRequests) {
@@ -404,9 +404,21 @@ export default {
       }
     },
     async submitApproval() {
+      // Validasi sebelum submit
+      if (this.approvalAction === 'reject' && !this.approvalForm.rejection_reason?.trim()) {
+        this.showNotificationMessage('Alasan penolakan harus diisi', 'error')
+        return
+      }
+      
       this.isSubmitting = true
+      
+      // Define requestData outside the try block so it's accessible in catch
+      let endpoint, requestData, message
+      
       try {
-        let endpoint, requestData, message
+        // Get user info
+        const userStr = localStorage.getItem('user')
+        const user = userStr ? JSON.parse(userStr) : null
         
         if (this.approvalAction === 'reject') {
           // Rejection logic
@@ -414,7 +426,8 @@ export default {
           requestData = {
             rejection_reason: this.approvalForm.rejection_reason,
             manager_notes: this.approvalForm.manager_notes,
-            manager_role: this.userRole
+            manager_role: user?.role || user?.position,
+            manager_id: user?.id
           };
           message = 'Permohonan cuti ditolak';
         } else {
@@ -422,16 +435,10 @@ export default {
           endpoint = 'approve';
           requestData = {
             manager_notes: this.approvalForm.manager_notes,
-            manager_role: this.userRole,
-            next_approver: this.nextApproverRole
+            manager_role: user?.role || user?.position,
+            manager_id: user?.id
           };
           message = 'Permohonan cuti disetujui';
-
-          if (this.isHRManager) {
-            message = 'Permohonan cuti disetujui secara final oleh HR';
-          } else if (this.isDistributionManager || this.isProgramManager) {
-            message = `Permohonan cuti disetujui dan diteruskan ke ${this.nextApproverRole}`;
-          }
         }
 
         const token = localStorage.getItem('token');
@@ -445,10 +452,28 @@ export default {
         this.showNotificationMessage(message, 'success');
         this.closeApprovalModal();
         this.loadRequests();
-        this.$emitter.emit('request-updated'); // Emit event
+        this.$emitter.emit('request-updated');
       } catch (error) {
         console.error('Error processing approval:', error)
-        this.showNotificationMessage(error.response?.data?.message || 'Gagal memproses permohonan', 'error')
+        console.error('Error response data:', error.response?.data)
+        console.error('Request data sent:', requestData) // Now this will work
+        
+        let errorMessage = 'Gagal memproses permohonan'
+        
+        if (error.response?.status === 400) {
+          if (error.response?.data?.message) {
+            errorMessage = error.response.data.message
+          } else if (error.response?.data?.errors) {
+            const validationErrors = Object.values(error.response.data.errors).flat()
+            errorMessage = validationErrors.join(', ')
+          } else {
+            errorMessage = 'Permohonan sudah diproses sebelumnya atau data tidak valid'
+          }
+        } else if (error.response?.status === 403) {
+          errorMessage = 'Anda tidak memiliki akses untuk memproses permohonan ini'
+        }
+        
+        this.showNotificationMessage(errorMessage, 'error')
       } finally {
         this.isSubmitting = false
       }
@@ -494,20 +519,14 @@ export default {
     getStatusText(status) {
       const statuses = {
         pending: 'Menunggu Persetujuan',
-        approved_by_manager: 'Disetujui Manager - Menunggu HR',
-        approved_by_distribution: 'Disetujui Distribution Manager - Menunggu HR',
-        approved_by_program: 'Disetujui Program Manager - Menunggu HR',
-        approved: 'Disetujui Final (HR)',
-        rejected: 'Ditolak',
-        rejected_by_manager: 'Ditolak oleh Manager',
-        rejected_by_hr: 'Ditolak oleh HR'
+        approved: 'Disetujui',
+        rejected: 'Ditolak'
       }
       return statuses[status] || status
     },
     getStatusClass(status) {
       const classes = {
         pending: 'pending',
-        approved_by_manager: 'approved',
         approved: 'approved',
         rejected: 'rejected'
       }
@@ -517,18 +536,46 @@ export default {
       if (!date) return 'N/A'
       return new Date(date).toLocaleDateString('id-ID')
     },
-    getApprovalButtonTitle(request) {
-      if (this.isHRManager) {
-        if (request.status === 'approved_by_manager') {
-          return 'Final Approval (HR)'
-        }
-        return 'Setujui sebagai HR Manager'
-      } else if (this.isDistributionManager) {
-        return 'Setujui dan teruskan ke HR Manager'
-      } else if (this.isProgramManager) {
-        return 'Setujui dan teruskan ke HR Manager'
+    canApproveRequest(request) {
+      // Only allow approval if status is pending and user is not the requester
+      if (request.overall_status !== 'pending') {
+        return false
       }
-      return 'Setujui'
+      
+      // Get current user info
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const currentUser = JSON.parse(userStr)
+        // Don't allow users to approve their own requests
+        if (request.employee_id === currentUser.id) {
+          return false
+        }
+      }
+      
+      // Check if user has authority to approve this employee
+      return this.canApproveEmployee(request.employee)
+    },
+    
+    canApproveEmployee(employee) {
+      // HR Manager can approve Finance, General Affairs, Office Assistant
+      if (this.isHRManager) {
+        const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
+        return hrRoles.includes(employee.jabatan_saat_ini || employee.role)
+      }
+      
+      // Program Manager can approve Producer, Creative, Production, Editor
+      if (this.isProgramManager) {
+        const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
+        return programRoles.includes(employee.jabatan_saat_ini || employee.role)
+      }
+      
+      // Distribution Manager can approve Social Media, Promotion, Graphic Design, Hopeline Care
+      if (this.isDistributionManager) {
+        const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
+        return distributionRoles.includes(employee.jabatan_saat_ini || employee.role)
+      }
+      
+      return false
     },
     
     getModalTitle() {
@@ -537,14 +584,11 @@ export default {
       }
       
       if (this.isHRManager) {
-        if (this.selectedRequest?.status === 'approved_by_manager') {
-          return 'Final Approval - HR Manager'
-        }
         return 'Setujui Permohonan Cuti - HR Manager'
       } else if (this.isDistributionManager) {
-        return 'Setujui & Teruskan ke HR - Distribution Manager'
+        return 'Setujui Permohonan Cuti - Distribution Manager'
       } else if (this.isProgramManager) {
-        return 'Setujui & Teruskan ke HR - Program Manager'
+        return 'Setujui Permohonan Cuti - Program Manager'
       }
       
       return 'Setujui Permohonan Cuti'

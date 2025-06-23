@@ -106,6 +106,7 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Cuti Bawahan</router-link></li>
                 <li><router-link to="/manager/approve-leave" class="submenu-link" @click="closeMobileMenu">Approve Permohonan Cuti</router-link></li>
                 <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
                 <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
