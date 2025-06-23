@@ -231,7 +231,7 @@
 
 <script>
 import axios from 'axios'
-import authService from '../services/authService'
+import authService, { apiClient } from '../services/authService'
 export default {
   name: 'InputJatahCuti',
   data() {
@@ -359,7 +359,7 @@ export default {
 
       try {
         if (this.editingQuota) {
-          await authService.apiClient.put(`/api/leave-quotas/${this.editingQuota.id}`, formData);
+          await apiClient.put(`/leave-quotas/${this.editingQuota.id}`, formData);
           this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success');
         } else {
             // This part of the logic seems to prevent adding new quotas manually.
