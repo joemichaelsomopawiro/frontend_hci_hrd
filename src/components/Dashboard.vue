@@ -1,7 +1,6 @@
 <template>
   <div class="dashboard-container">
     <div class="dashboard-content">
-      <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">
@@ -45,7 +44,6 @@
         </div>
       </div>
 
-      <!-- Action Section -->
       <div class="action-section">
         <div class="section-header">
           <h2>Manajemen Karyawan</h2>
@@ -60,7 +58,6 @@
             </router-link>
           </div>
         </div>
-        <!-- Quick Actions Card -->
         <div class="quick-actions-card">
           <h3>Aksi Cepat</h3>
           <div class="quick-actions-grid">
@@ -104,7 +101,7 @@
         </div>
       </div>
 
-      <!-- Notification -->
+      <MyLeaveQuotas />
       <div v-if="showNotification" class="notification" :class="notificationType">
         <i :class="notificationType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
         {{ notificationMessage }}
@@ -115,9 +112,15 @@
 
 <script>
 import axios from 'axios';
+// 1. IMPORT KOMPONEN BARU
+import MyLeaveQuotas from '@/components/MyLeaveQuotas.vue';
 
 export default {
   name: 'Dashboard',
+  // 2. DAFTARKAN KOMPONEN BARU
+  components: {
+    MyLeaveQuotas,
+  },
   data() {
     return {
       employees: [],

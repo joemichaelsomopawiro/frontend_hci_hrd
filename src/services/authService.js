@@ -27,12 +27,11 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor untuk handle error
+// Response interceptor untuk handle error 401 (Unauthorized)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired atau invalid - hanya redirect jika bukan di halaman login
       const currentPath = window.location.pathname
       if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/forgot-password') {
         localStorage.removeItem('token')
@@ -53,18 +52,11 @@ class AuthService {
         password
       })
       
-      // Backend mengembalikan nested structure: response.data.data
       const { user, token } = response.data.data
       
-      // Simpan token dan user data dari response login
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       
-      // Debug log untuk memastikan data tersimpan
-      console.log('Login successful - User data:', user)
-      console.log('Login successful - Token:', token)
-      
-      // Trigger storage event untuk update UI
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'user',
         newValue: JSON.stringify(user)
@@ -83,60 +75,31 @@ class AuthService {
   // Kirim OTP untuk registrasi
   async sendRegistrationOTP(phone) {
     try {
-      const response = await apiClient.post('/auth/send-register-otp', {
-        phone
-      })
-      
-      return {
-        success: true,
-        data: response.data
-      }
+      const response = await apiClient.post('/auth/send-register-otp', { phone })
+      return { success: true, data: response.data }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal mengirim OTP'
-      }
+      throw error;
     }
   }
   
   // Verifikasi OTP untuk registrasi
   async verifyRegistrationOTP(phone, otp_code) {
     try {
-      const response = await apiClient.post('/auth/verify-otp', {
-        phone,
-        otp_code
-      })
-      
-      return {
-        success: true,
-        data: response.data
-      }
+      const response = await apiClient.post('/auth/verify-otp', { phone, otp_code })
+      return { success: true, data: response.data }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Verifikasi OTP gagal'
-      }
+        throw error;
     }
   }
   
   // Kirim ulang OTP untuk registrasi
   async resendRegistrationOTP(phone) {
-    try {
-      const response = await apiClient.post('/auth/resend-otp', {
-        phone,
-        type: 'register'
-      })
-      
-      return {
-        success: true,
-        data: response.data
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal mengirim ulang OTP'
-      }
-    }
+     try {
+       const response = await apiClient.post('/auth/resend-otp', { phone, type: 'register' })
+       return { success: true, data: response.data }
+     } catch (error) {
+        throw error;
+     }
   }
   
   // Registrasi user baru
@@ -147,79 +110,45 @@ class AuthService {
         name: userData.fullName,
         email: userData.email,
         password: userData.password,
-        password_confirmation: userData.password
+        otp_token: userData.otpToken
       })
       
-      // Backend mengembalikan nested structure: response.data.data
       const { user, token } = response.data.data
       
-      // Simpan token dan user data
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       
-      // Debug log untuk memastikan data tersimpan
-      console.log('Register successful - User data:', user)
-      console.log('Register successful - Token:', token)
-      
-      // Trigger storage event untuk update UI
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'user',
         newValue: JSON.stringify(user)
       }))
       
-      return {
-        success: true,
-        data: { token, user }
-      }
+      return { success: true, data: { token, user } }
     } catch (error) {
-      // For validation errors (422), throw the error to be handled by the component
       if (error.response?.status === 422) {
         throw error;
       }
-      
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Registrasi gagal'
-      }
+      return { success: false, message: error.response?.data?.message || 'Registrasi gagal' }
     }
   }
   
   // Kirim OTP untuk reset password
   async sendResetPasswordOTP(phone) {
     try {
-      const response = await apiClient.post('/auth/send-forgot-password-otp', {
-        phone
-      })
-      
-      return {
-        success: true,
-        data: response.data
-      }
+      const response = await apiClient.post('/auth/send-forgot-password-otp', { phone })
+      return { success: true, data: response.data }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal mengirim OTP reset password'
-      }
+      return { success: false, message: error.response?.data?.message || 'Gagal mengirim OTP reset password' }
     }
   }
   
   // Kirim ulang OTP untuk reset password
   async resendResetPasswordOTP(phone) {
     try {
-      const response = await apiClient.post('/auth/resend-otp', {
-        phone,
-        type: 'forgot_password'
-      })
-      
-      return {
-        success: true,
-        data: response.data
-      }
+      const response = await apiClient.post('/auth/resend-otp', { phone, type: 'forgot_password' })
+      return { success: true, data: response.data }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal mengirim ulang OTP reset password'
-      }
+      return { success: false, message: error.response?.data?.message || 'Gagal mengirim ulang OTP reset password' }
     }
   }
   
@@ -232,16 +161,9 @@ class AuthService {
         password,
         password_confirmation
       })
-      
-      return {
-        success: true,
-        data: response.data
-      }
+      return { success: true, data: response.data }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Reset password gagal'
-      }
+      return { success: false, message: error.response?.data?.message || 'Reset password gagal' }
     }
   }
   
@@ -263,7 +185,7 @@ class AuthService {
     return !!token
   }
   
-  // Get current user
+  // Get current user from localStorage
   getCurrentUser() {
     const userStr = localStorage.getItem('user')
     try {
@@ -274,7 +196,7 @@ class AuthService {
     }
   }
   
-  // Get token
+  // Get token from localStorage
   getToken() {
     return localStorage.getItem('token')
   }
@@ -283,15 +205,9 @@ class AuthService {
   async fetchUserProfile() {
     try {
       const response = await apiClient.get('/auth/me')
-      return {
-        success: true,
-        data: response.data.data
-      }
+      return { success: true, data: response.data.data }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal mengambil data user'
-      }
+      return { success: false, message: error.response?.data?.message || 'Gagal mengambil data user' }
     }
   }
 
@@ -307,75 +223,56 @@ class AuthService {
         }
       })
       
-      // Update user data di localStorage dengan foto profil baru
       const currentUser = this.getCurrentUser()
       if (currentUser && response.data.data?.profile_picture_url) {
         currentUser.profile_picture = response.data.data.profile_picture_url
         localStorage.setItem('user', JSON.stringify(currentUser))
         
-        // Trigger storage event
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'user',
           newValue: JSON.stringify(currentUser)
         }))
       }
       
-      return {
-        success: true,
-        data: currentUser
-      }
+      return { success: true, data: currentUser }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal mengunggah foto profil'
-      }
+      return { success: false, message: error.response?.data?.message || 'Gagal mengunggah foto profil' }
     }
   }
 
   // Delete profile picture
   async deleteProfilePicture() {
     try {
-      const response = await apiClient.delete('/auth/delete-profile-picture')
+      await apiClient.delete('/auth/delete-profile-picture')
       
-      // Update user data di localStorage
       const currentUser = this.getCurrentUser()
       if (currentUser) {
         currentUser.profile_picture = null
         localStorage.setItem('user', JSON.stringify(currentUser))
         
-        // Trigger storage event
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'user',
           newValue: JSON.stringify(currentUser)
         }))
       }
       
-      return {
-        success: true,
-        data: currentUser
-      }
+      return { success: true, data: currentUser }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Gagal menghapus foto profil'
-      }
+      return { success: false, message: error.response?.data?.message || 'Gagal menghapus foto profil' }
     }
   }
 
-  // Refresh user data in localStorage
+  // Refresh user data in localStorage by fetching from API
   async refreshUserData() {
     try {
       const result = await this.fetchUserProfile()
       if (result.success) {
         localStorage.setItem('user', JSON.stringify(result.data))
         
-        // Trigger storage event untuk update UI
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'user',
           newValue: JSON.stringify(result.data)
         }))
-        
-        return result
       }
       return result
     } catch (error) {
@@ -383,13 +280,18 @@ class AuthService {
       return { success: false, message: 'Failed to refresh user data' }
     }
   }
+
+  // Check if employee name exists
+  async checkEmployee(data) {
+    try {
+      const response = await apiClient.post('/auth/check-employee', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error checking employee in authService:', error);
+      throw error;
+    }
+  }
 }
 
-// Export instance
 export default new AuthService()
-
-// Export class untuk testing
-export { AuthService }
-
-// Export axios instance untuk digunakan di service lain
 export { apiClient }

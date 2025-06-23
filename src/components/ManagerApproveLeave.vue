@@ -409,48 +409,43 @@ export default {
         let endpoint, requestData, message
         
         if (this.approvalAction === 'reject') {
-          // Rejection logic - same for all managers
-          endpoint = 'manager-reject'
+          // Rejection logic
+          endpoint = 'reject';
           requestData = {
             rejection_reason: this.approvalForm.rejection_reason,
             manager_notes: this.approvalForm.manager_notes,
             manager_role: this.userRole
-          }
-          message = 'Permohonan cuti ditolak'
+          };
+          message = 'Permohonan cuti ditolak';
         } else {
-          // Approval logic - depends on manager level
+          // Approval logic
+          endpoint = 'approve';
           requestData = {
             manager_notes: this.approvalForm.manager_notes,
             manager_role: this.userRole,
             next_approver: this.nextApproverRole
-          }
-          
+          };
+          message = 'Permohonan cuti disetujui';
+
           if (this.isHRManager) {
-            // HR Manager - Final approval
-            endpoint = 'hr-final-approve'
-            message = 'Permohonan cuti disetujui secara final oleh HR'
+            message = 'Permohonan cuti disetujui secara final oleh HR';
           } else if (this.isDistributionManager || this.isProgramManager) {
-            // Distribution/Program Manager - First level approval, forward to HR
-            endpoint = 'manager-approve-forward'
-            message = `Permohonan cuti disetujui dan diteruskan ke ${this.nextApproverRole}`
-          } else {
-            // Default manager approval
-            endpoint = 'manager-approve'
-            message = 'Permohonan cuti disetujui'
+            message = `Permohonan cuti disetujui dan diteruskan ke ${this.nextApproverRole}`;
           }
         }
-        
-        const token = localStorage.getItem('token')
-        await axios.post(`${this.apiUrl}/api/leave-requests/${this.selectedRequest.id}/${endpoint}`, requestData, {
+
+        const token = localStorage.getItem('token');
+        await axios.put(`${this.apiUrl}/api/leave-requests/${this.selectedRequest.id}/${endpoint}`, requestData, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         })
         
-        this.showNotificationMessage(message, 'success')
-        this.closeApprovalModal()
-        this.loadRequests()
+        this.showNotificationMessage(message, 'success');
+        this.closeApprovalModal();
+        this.loadRequests();
+        this.$emitter.emit('request-updated'); // Emit event
       } catch (error) {
         console.error('Error processing approval:', error)
         this.showNotificationMessage(error.response?.data?.message || 'Gagal memproses permohonan', 'error')

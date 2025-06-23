@@ -292,35 +292,62 @@ export default {
         this.showNotificationMessage('Gagal memuat data jatah cuti', 'error')
       }
     },
+    validateForm() {
+      // Validate required fields
+      if (!this.form.employee_id || this.form.employee_id === '') {
+        this.showNotificationMessage('Karyawan harus dipilih', 'error');
+        return false;
+      }
+
+      if (!this.form.year || this.form.year === '') {
+        this.showNotificationMessage('Tahun harus dipilih', 'error');
+        return false;
+      }
+
+      // Validate quota values
+      const quotaFields = [
+        'annual_leave_quota',
+        'sick_leave_quota',
+        'emergency_leave_quota'
+      ];
+
+      for (let field of quotaFields) {
+        const value = parseInt(this.form[field]);
+        if (isNaN(value) || value < 0) {
+          this.showNotificationMessage(`${field.replace(/_/g, ' ')} harus berupa angka positif`, 'error');
+          return false;
+        }
+      }
+
+      // Validate optional quota fields
+      const optionalFields = [
+        'maternity_leave_quota',
+        'paternity_leave_quota',
+        'marriage_leave_quota',
+        'bereavement_leave_quota'
+      ];
+
+      for (let field of optionalFields) {
+        const value = parseInt(this.form[field]);
+        if (this.form[field] !== '' && (isNaN(value) || value < 0)) {
+          this.showNotificationMessage(`${field.replace(/_/g, ' ')} harus berupa angka positif`, 'error');
+          return false;
+        }
+      }
+
+      return true;
+    },
+
     async saveQuota() {
-      console.log('=== SAVE QUOTA START ===');
-      
-      // Validate form data before submission
       if (!this.validateForm()) {
-        console.log('Form validation failed');
         return;
       }
-      
-      // Validate employee_id and year
-      const employeeId = parseInt(this.form.employee_id);
-      const year = parseInt(this.form.year);
-      
-      if (!employeeId || employeeId <= 0) {
-        this.showNotificationMessage('Employee ID harus valid', 'error');
-        return;
-      }
-      
-      if (!year || year < 2020 || year > 2030) {
-        this.showNotificationMessage('Tahun harus antara 2020-2030', 'error');
-        return;
-      }
-      
+
       this.isSubmitting = true;
-      
-      // Create formData in the main scope so it's accessible in catch block
+
       const formData = {
-        employee_id: employeeId,
-        year: year,
+        employee_id: parseInt(this.form.employee_id),
+        year: parseInt(this.form.year),
         annual_leave_quota: parseInt(this.form.annual_leave_quota) || 0,
         sick_leave_quota: parseInt(this.form.sick_leave_quota) || 0,
         emergency_leave_quota: parseInt(this.form.emergency_leave_quota) || 0,
@@ -329,58 +356,30 @@ export default {
         marriage_leave_quota: parseInt(this.form.marriage_leave_quota) || 0,
         bereavement_leave_quota: parseInt(this.form.bereavement_leave_quota) || 0
       };
-      
-      console.log('Form data to be sent:', formData);
-      
+
       try {
-        let response;
-        
         if (this.editingQuota) {
-          console.log('Updating existing quota with ID:', this.editingQuota.id);
-          response = await authService.apiClient.put(`/api/leave-quotas/${this.editingQuota.id}`, formData);
-          console.log('Update response:', response.data);
+          await authService.apiClient.put(`/api/leave-quotas/${this.editingQuota.id}`, formData);
           this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success');
         } else {
-          this.showNotificationMessage('Tidak dapat menambah jatah cuti secara manual. Jatah otomatis dibuat saat menambah pegawai baru.', 'error');
-          return;
+            // This part of the logic seems to prevent adding new quotas manually.
+            // If this is intended, it's fine. Otherwise, this is where the create logic would go.
+           this.showNotificationMessage('Tidak dapat menambah jatah cuti secara manual. Jatah otomatis dibuat saat menambah pegawai baru.', 'error');
+           this.isSubmitting = false;
+           return;
         }
-        
+
         this.closeModal();
         this.loadQuotas();
       } catch (error) {
-        console.error('=== SAVE QUOTA ERROR ===');
-        console.error('Error details:', error);
-        console.error('Form data that failed:', formData);
-        
-        if (error.response) {
-          console.error('Error response status:', error.response.status);
-          console.error('Error response data:', error.response.data);
-          
-          if (error.response.status === 422) {
-            const validationErrors = error.response.data.errors || {};
-            console.error('Validation errors:', validationErrors);
-            
-            // Display specific validation errors
-            const errorMessages = [];
-            for (const [field, messages] of Object.entries(validationErrors)) {
-              errorMessages.push(`${field}: ${messages.join(', ')}`);
-            }
-            
-            if (errorMessages.length > 0) {
-              this.showNotificationMessage(`Validation errors: ${errorMessages.join('; ')}`, 'error');
-            } else {
-              this.showNotificationMessage(error.response.data.message || 'Data tidak valid', 'error');
-            }
-          } else {
-            this.showNotificationMessage(error.response.data?.message || 'Gagal menyimpan jatah cuti', 'error');
-          }
+        if (error.response && error.response.data) {
+            const message = error.response.data.message || 'Gagal menyimpan jatah cuti';
+            this.showNotificationMessage(message, 'error');
         } else {
-          console.error('Network or other error:', error.message);
-          this.showNotificationMessage('Terjadi kesalahan jaringan', 'error');
+            this.showNotificationMessage('Terjadi kesalahan jaringan', 'error');
         }
       } finally {
         this.isSubmitting = false;
-        console.log('=== SAVE QUOTA END ===');
       }
     },
     async deleteQuota(id) {

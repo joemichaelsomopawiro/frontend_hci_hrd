@@ -161,50 +161,35 @@
             </div>
           </div>
           
-          <!-- Approval Progress Tracker -->
-          <div class="approval-tracker">
-            <div class="approval-step" :class="{ 'completed': isStepCompleted(request, 'submitted'), 'active': isStepActive(request, 'submitted') }">
-              <div class="step-icon">
+          <!-- Approval History -->
+          <div class="approval-history-container">
+            <h4>Riwayat Proses</h4>
+            <div class="approval-history">
+              <div class="history-item submitted">
                 <i class="fas fa-paper-plane"></i>
+                <div class="history-details">
+                  <span class="history-title">Permohonan Diajukan</span>
+                  <span class="history-date">{{ formatDateTime(request.created_at) }}</span>
+                </div>
               </div>
-              <div class="step-content">
-                <h4>Permohonan Diajukan</h4>
-                <p>{{ formatDate(request.created_at) }}</p>
+
+              <div v-if="request.approver" class="history-item" :class="getStatusClass(request.status)">
+                <i class="fas" :class="getStatusIcon(request.status)"></i>
+                <div class="history-details">
+                  <span class="history-title">Diproses oleh {{ request.approver.nama_lengkap || request.approver.name }} ({{ request.approver.user.role }})</span>
+                  <span class="history-status">{{ getStatusLabel(request.status) }}</span>
+                  <span v-if="request.notes" class="history-notes">Catatan: {{ request.notes }}</span>
+                  <span v-if="request.rejection_reason" class="history-notes">Alasan Ditolak: {{ request.rejection_reason }}</span>
+                  <span class="history-date">{{ formatDateTime(request.approved_at || request.rejected_at || request.updated_at) }}</span>
+                </div>
               </div>
-            </div>
-            
-            <div class="approval-step" :class="{ 'completed': isStepCompleted(request, 'manager'), 'active': isStepActive(request, 'manager'), 'rejected': isStepRejected(request, 'manager') }">
-              <div class="step-icon">
-                <i class="fas fa-user-tie"></i>
-              </div>
-              <div class="step-content">
-                <h4>{{ getManagerApprovalText(request) }}</h4>
-                <p v-if="request.manager_approved_at || request.status.includes('approved_by')">{{ request.manager_approved_at ? formatDate(request.manager_approved_at) : 'Disetujui' }}</p>
-                <p v-else-if="request.status === 'pending'" class="pending-text">Menunggu persetujuan...</p>
-                <p v-if="request.manager_notes" class="approval-notes">{{ request.manager_notes }}</p>
-                <p v-if="request.rejection_reason" class="rejection-reason">{{ request.rejection_reason }}</p>
-              </div>
-            </div>
-            
-            <div v-if="needsHRApproval(request)" class="approval-step" :class="{ 'completed': isStepCompleted(request, 'hr'), 'active': isStepActive(request, 'hr'), 'rejected': isStepRejected(request, 'hr') }">
-              <div class="step-icon">
-                <i class="fas fa-user-shield"></i>
-              </div>
-              <div class="step-content">
-                <h4>Persetujuan HR Manager</h4>
-                <p v-if="request.hr_approved_at">{{ formatDate(request.hr_approved_at) }}</p>
-                <p v-else-if="request.status.includes('approved_by') && !request.status.includes('rejected')" class="pending-text">Menunggu persetujuan HR...</p>
-                <p v-if="request.hr_notes" class="approval-notes">{{ request.hr_notes }}</p>
-              </div>
-            </div>
-            
-            <div class="approval-step" :class="{ 'completed': request.status === 'approved', 'rejected': request.status === 'rejected' || request.status === 'rejected_by_manager' || request.status === 'rejected_by_hr' }">
-              <div class="step-icon">
-                <i :class="request.status === 'approved' ? 'fas fa-check-circle' : request.status.includes('rejected') ? 'fas fa-times-circle' : 'fas fa-clock'"></i>
-              </div>
-              <div class="step-content">
-                <h4>{{ getFinalStatusText(request.status) }}</h4>
-                <p v-if="request.final_approved_at">{{ formatDate(request.final_approved_at) }}</p>
+
+              <div v-else-if="request.status === 'pending'" class="history-item pending">
+                  <i class="fas fa-clock"></i>
+                  <div class="history-details">
+                      <span class="history-title">Menunggu Persetujuan</span>
+                      <span class="history-status">Menunggu tindakan dari atasan</span>
+                  </div>
               </div>
             </div>
           </div>
@@ -277,9 +262,13 @@ export default {
     }
   },
   async mounted() {
-    await this.loadUserData()
-    await this.loadLeaveData()
-    await this.loadManagerInfo()
+    await this.loadUserData();
+    await this.loadLeaveData();
+    await this.loadManagerInfo();
+    this.$emitter.on('request-updated', this.loadLeaveData); // Listen for event
+  },
+  beforeUnmount() {
+    this.$emitter.off('request-updated', this.loadLeaveData); // Clean up listener
   },
   methods: {
     async loadUserData() {
@@ -324,7 +313,8 @@ export default {
           },
           params: { 
             employee_id: this.userId,
-            include_details: true // Request detailed approval information
+            include_details: true, // Request detailed approval information
+            include_approver: true // Ensure approver data is fetched
           }
         })
         
@@ -368,8 +358,37 @@ export default {
       }
     },
     
+    formatDateTime(dateTime) {
+      if (!dateTime) return '';
+      return new Date(dateTime).toLocaleString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
+
     formatDate(date) {
-      return new Date(date).toLocaleDateString('id-ID')
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    },
+
+    getStatusLabel(status) {
+      const labels = {
+        'approved': 'Disetujui',
+        'rejected': 'Ditolak',
+        'approved_by_manager': 'Disetujui oleh Manager',
+        'approved_by_hr': 'Disetujui oleh HR',
+        'rejected_by_manager': 'Ditolak oleh Manager',
+        'rejected_by_hr': 'Ditolak oleh HR',
+        'pending': 'Menunggu Persetujuan',
+      };
+      return labels[status] || 'Dalam Proses';
     },
     
     getLeaveTypeName(type) {
@@ -383,98 +402,20 @@ export default {
       return types[type] || type
     },
     
-    getStatusName(status) {
-      const statuses = {
-        pending: 'Menunggu Persetujuan',
-        approved: 'Disetujui',
-        rejected: 'Ditolak'
-      }
-      return statuses[status] || status
-    },
-    
-    getDetailedStatusName(status) {
-      const statuses = {
-        pending: 'Menunggu Persetujuan Manager',
-        approved_by_manager: 'Disetujui Manager - Menunggu HR',
-        approved_by_distribution: 'Disetujui Distribution Manager - Menunggu HR',
-        approved_by_program: 'Disetujui Program Manager - Menunggu HR',
-        approved: 'Disetujui Final',
-        rejected: 'Ditolak',
-        rejected_by_manager: 'Ditolak oleh Manager',
-        rejected_by_hr: 'Ditolak oleh HR'
-      }
-      return statuses[status] || status
-    },
+
     
     getStatusClass(status) {
-      if (status === 'approved') return 'approved'
-      if (status.includes('rejected')) return 'rejected'
-      if (status.includes('approved_by')) return 'approved-pending'
-      return 'pending'
+      if (status === 'approved') return 'approved';
+      if (status && status.includes('rejected')) return 'rejected';
+      if (status && status.includes('approved_by')) return 'approved-pending';
+      return 'pending';
     },
-    
-    getManagerApprovalText(request) {
-      // Determine which manager should approve based on user role
-      if (this.userRole === 'Social Media' || this.userRole === 'Promotion' || this.userRole === 'Graphic Design' || this.userRole === 'Hopeline Care') {
-        return 'Persetujuan Distribution Manager'
-      } else if (this.userRole === 'Producer' || this.userRole === 'Creative' || this.userRole === 'Production' || this.userRole === 'Editor') {
-        return 'Persetujuan Program Manager'
-      } else if (this.userRole === 'Finance' || this.userRole === 'General Affairs' || this.userRole === 'Office Assistant') {
-        return 'Persetujuan HR Manager'
-      }
-      return 'Persetujuan Manager'
-    },
-    
-    needsHRApproval(request) {
-      // HR approval needed if user is under Distribution Manager or Program Manager
-      return ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care', 'Producer', 'Creative', 'Production', 'Editor'].includes(this.userRole)
-    },
-    
-    isStepCompleted(request, step) {
-      switch (step) {
-        case 'submitted':
-          return true // Always completed if request exists
-        case 'manager':
-          return request.status !== 'pending' && !request.status.includes('rejected')
-        case 'hr':
-          return request.status === 'approved'
-        default:
-          return false
-      }
-    },
-    
-    isStepActive(request, step) {
-      switch (step) {
-        case 'submitted':
-          return request.status === 'pending'
-        case 'manager':
-          return request.status === 'pending'
-        case 'hr':
-          return request.status.includes('approved_by') && !request.status.includes('rejected')
-        default:
-          return false
-      }
-    },
-    
-    isStepRejected(request, step) {
-      switch (step) {
-        case 'manager':
-          return request.status === 'rejected_by_manager' || request.status === 'rejected'
-        case 'hr':
-          return request.status === 'rejected_by_hr'
-        default:
-          return false
-      }
-    },
-    
-    isWaitingForHR(request) {
-      return request.status.includes('approved_by')
-    },
-    
-    getFinalStatusText(status) {
-      if (status === 'approved') return 'Cuti Disetujui'
-      if (status.includes('rejected')) return 'Cuti Ditolak'
-      return 'Menunggu Proses'
+
+    getStatusIcon(status) {
+      if (status === 'approved') return 'fa-check-circle';
+      if (status && status.includes('rejected')) return 'fa-times-circle';
+      if (status && status.includes('approved_by')) return 'fa-check';
+      return 'fa-clock';
     },
     
     calculateDuration(startDate, endDate) {
@@ -505,6 +446,84 @@ export default {
 
 .dashboard-header {
   margin-bottom: 30px;
+}
+
+.approval-history-container {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.approval-history-container h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.approval-history {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.history-item i {
+  font-size: 1.5rem;
+  color: #ccc;
+}
+
+.history-item.submitted i {
+  color: #3498db; /* Blue for submitted */
+}
+
+.history-item.approved i, .history-item.approved_by_manager i, .history-item.approved_by_hr i {
+  color: #2ecc71; /* Green for approved */
+}
+
+.history-item.rejected i, .history-item.rejected_by_manager i, .history-item.rejected_by_hr i {
+  color: #e74c3c; /* Red for rejected */
+}
+
+.history-item.pending i {
+  color: #f39c12; /* Orange for pending */
+}
+
+.history-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-title {
+  font-weight: bold;
+  color: #555;
+}
+
+.history-status {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.history-notes {
+  font-size: 0.9rem;
+  color: #777;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.history-date {
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 4px;
 }
 
 .dashboard-header h1 {

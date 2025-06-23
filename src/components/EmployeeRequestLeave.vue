@@ -369,10 +369,19 @@ export default {
     }
   },
   async mounted() {
-    await this.getUserInfo()
-    await this.fetchMyLeaveRequests()
+    await this.getUserInfo();
+    await this.fetchMyLeaveRequests();
+    this.$emitter.on('request-updated', this.handleRequestUpdate);
+  },
+  beforeUnmount() {
+    this.$emitter.off('request-updated', this.handleRequestUpdate);
   },
   methods: {
+    handleRequestUpdate() {
+      console.log('Event `request-updated` received in EmployeeRequestLeave.vue');
+      this.showNotificationMessage('Status permohonan cuti telah diperbarui', 'info');
+      this.fetchMyLeaveRequests();
+    },
     async getUserInfo() {
       try {
         this.token = localStorage.getItem('token')
@@ -1472,11 +1481,21 @@ export default {
 }
 
 .notification.success {
-  background: #10b981;
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 5px solid #28a745;
 }
 
 .notification.error {
-  background: #ef4444;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 5px solid #dc3545;
+}
+
+.notification.info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-left: 5px solid #17a2b8;
 }
 
 @keyframes slideIn {
