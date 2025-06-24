@@ -1,476 +1,405 @@
 <template>
-  <div class="employee-dashboard">
-    <div class="dashboard-header">
-      <h1>Dashboard Karyawan</h1>
-      <p>Selamat datang, {{ userName }}</p>
-      <div class="employee-info">
-        <span class="role-badge">{{ userRole }}</span>
-        <div class="manager-info" v-if="managerInfo.name">
-          <i class="fas fa-user-tie"></i>
-          <span>Manager: {{ managerInfo.name }} ({{ managerInfo.type }})</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <div class="action-card" @click="$router.push('/employee/request-leave')">
-        <div class="action-icon">
-          <i class="fas fa-calendar-plus"></i>
-        </div>
-        <div class="action-content">
-          <h3>Ajukan Cuti</h3>
-          <p>Buat permohonan cuti baru</p>
-        </div>
-      </div>
-
-      <div class="action-card" @click="showLeaveHistory">
-        <div class="action-icon">
-          <i class="fas fa-calendar-check"></i>
-        </div>
-        <div class="action-content">
-          <h3>Riwayat Cuti</h3>
-          <p>Lihat status permohonan cuti</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Leave Summary -->
-    <div class="leave-summary">
-      <h2>Ringkasan Cuti</h2>
-      <div class="summary-cards">
-        <div class="summary-card">
-          <h3>{{ leaveStats.pending || 0 }}</h3>
-          <p>Menunggu Persetujuan</p>
-        </div>
-        <div class="summary-card">
-          <h3>{{ leaveStats.approved || 0 }}</h3>
-          <p>Cuti Disetujui</p>
-        </div>
-        <div class="summary-card">
-          <h3>{{ leaveStats.rejected || 0 }}</h3>
-          <p>Cuti Ditolak</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Detailed Leave Quota -->
-    <div class="leave-quota-detail">
-      <h2>Jatah Cuti Saya ({{ currentYear }})</h2>
-      <div class="quota-grid" v-if="leaveQuota.id">
-        <div class="quota-item">
-          <div class="quota-header">
-            <h4>Cuti Tahunan</h4>
-            <span class="quota-numbers">{{ leaveQuota.annual_leave_used || 0 }}/{{ leaveQuota.annual_leave_quota || 0
-              }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress annual"
-              :style="{ width: getQuotaPercentage(leaveQuota.annual_leave_used, leaveQuota.annual_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.annual_leave_quota || 0) - (leaveQuota.annual_leave_used || 0)
-            }} hari</p>
-        </div>
-
-        <div class="quota-item">
-          <div class="quota-header">
-            <h4>Cuti Sakit</h4>
-            <span class="quota-numbers">{{ leaveQuota.sick_leave_used || 0 }}/{{ leaveQuota.sick_leave_quota || 0
-              }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress sick"
-              :style="{ width: getQuotaPercentage(leaveQuota.sick_leave_used, leaveQuota.sick_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.sick_leave_quota || 0) - (leaveQuota.sick_leave_used || 0) }}
-            hari</p>
-        </div>
-
-        <div class="quota-item">
-          <div class="quota-header">
-            <h4>Cuti Darurat</h4>
-            <span class="quota-numbers">{{ leaveQuota.emergency_leave_used || 0 }}/{{ leaveQuota.emergency_leave_quota
-              || 0 }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress emergency"
-              :style="{ width: getQuotaPercentage(leaveQuota.emergency_leave_used, leaveQuota.emergency_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.emergency_leave_quota || 0) - (leaveQuota.emergency_leave_used
-            || 0) }} hari</p>
-        </div>
-
-        <div class="quota-item" v-if="leaveQuota.maternity_leave_quota > 0">
-          <div class="quota-header">
-            <h4>Cuti Melahirkan</h4>
-            <span class="quota-numbers">{{ leaveQuota.maternity_leave_used || 0 }}/{{ leaveQuota.maternity_leave_quota
-              || 0 }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress maternity"
-              :style="{ width: getQuotaPercentage(leaveQuota.maternity_leave_used, leaveQuota.maternity_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.maternity_leave_quota || 0) - (leaveQuota.maternity_leave_used
-            || 0) }} hari</p>
-        </div>
-
-        <div class="quota-item" v-if="leaveQuota.paternity_leave_quota > 0">
-          <div class="quota-header">
-            <h4>Cuti Ayah</h4>
-            <span class="quota-numbers">{{ leaveQuota.paternity_leave_used || 0 }}/{{ leaveQuota.paternity_leave_quota
-              || 0 }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress paternity"
-              :style="{ width: getQuotaPercentage(leaveQuota.paternity_leave_used, leaveQuota.paternity_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.paternity_leave_quota || 0) - (leaveQuota.paternity_leave_used
-            || 0) }} hari</p>
-        </div>
-
-        <div class="quota-item" v-if="leaveQuota.marriage_leave_quota > 0">
-          <div class="quota-header">
-            <h4>Cuti Nikah</h4>
-            <span class="quota-numbers">{{ leaveQuota.marriage_leave_used || 0 }}/{{ leaveQuota.marriage_leave_quota ||
-              0 }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress marriage"
-              :style="{ width: getQuotaPercentage(leaveQuota.marriage_leave_used, leaveQuota.marriage_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.marriage_leave_quota || 0) - (leaveQuota.marriage_leave_used
-            || 0) }} hari</p>
-        </div>
-
-        <div class="quota-item" v-if="leaveQuota.bereavement_leave_quota > 0">
-          <div class="quota-header">
-            <h4>Cuti Duka</h4>
-            <span class="quota-numbers">{{ leaveQuota.bereavement_leave_used || 0 }}/{{
-              leaveQuota.bereavement_leave_quota || 0 }}</span>
-          </div>
-          <div class="quota-bar">
-            <div class="quota-progress bereavement"
-              :style="{ width: getQuotaPercentage(leaveQuota.bereavement_leave_used, leaveQuota.bereavement_leave_quota) + '%' }">
-            </div>
-          </div>
-          <p class="quota-remaining">Sisa: {{ (leaveQuota.bereavement_leave_quota || 0) -
-            (leaveQuota.bereavement_leave_used || 0) }} hari</p>
-        </div>
-      </div>
-
-      <div v-else class="no-quota">
-        <i class="fas fa-calendar-times"></i>
-        <h3>Belum ada jatah cuti</h3>
-        <p>Hubungi HR untuk mengatur jatah cuti Anda</p>
-      </div>
-    </div>
-
-    <!-- Recent Leave Requests with Approval Tracking -->
-    <div class="recent-requests">
-      <h2>Permohonan Cuti Terbaru</h2>
-      <div class="requests-table" v-if="recentRequests.length">
-        <div v-for="request in recentRequests" :key="request.id" class="request-card">
-          <div class="request-header">
-            <div class="request-info">
-              <h3>{{ getLeaveTypeName(request.leave_type) }}</h3>
-              <p class="request-period">{{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}</p>
-              <p class="request-duration">{{ request.total_days || calculateDuration(request.start_date,
-                request.end_date) }} hari</p>
-            </div>
-            <div class="request-status">
-              <span class="status-badge" :class="getStatusClass(request.status)">
-                {{ getDetailedStatusName(request.status) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Approval History -->
-          <div class="approval-history-container">
-                        <h4>Riwayat Proses</h4>
-                        <div class="approval-history">
-                            <div class="history-item submitted">
-                                <i class="fas fa-paper-plane"></i>
-                                <div class="history-details">
-                                    <span class="history-title">Permohonan Diajukan</span>
-                                     <span class="history-date">{{ formatDateTime(request.created_at) }}</span>
-                                  </div>
-                              </div>
-
-                            <div v-if="request.approvedBy" class="history-item"
-                :class="getStatusClass(request.overall_status)">
-                                <i class="fas" :class="getStatusIcon(request.overall_status)"></i>
-                                <div class="history-details">
-                                    <span class="history-title">Diproses oleh {{ request.approvedBy.nama_lengkap }} ({{
-                    request.approvedBy.user.role }})</span>
-                                    <span class="history-status">{{ getStatusLabel(request.overall_status) }}</span>
-                                    <span v-if="request.notes" class="history-notes">Catatan: {{ request.notes }}</span>
-                                    <span v-if="request.rejection_reason" class="history-notes">Alasan Ditolak: {{
-                    request.rejection_reason }}</span>
-                                    <span class="history-date">{{ formatDateTime(request.approved_at ||
-                    request.rejected_at || request.updated_at) }}</span>
-                                  </div>
-                              </div>
-                            <div v-else-if="request.status === 'pending'" class="history-item pending">
-                                  <i class="fas fa-clock"></i>
-                                  <div class="history-details">
-                                        <span class="history-title">Menunggu Persetujuan</span>
-                                        <span class="history-status">Menunggu tindakan dari atasan</span>
-                                    </div>
-                              </div>
-                          </div>
-                      </div>
-          <!-- Request Details -->
-          <div class="request-details">
-            <div class="detail-item">
-              <strong>Alasan:</strong> {{ request.reason }}
-            </div>
-            <div v-if="request.emergency_contact && request.leave_type === 'emergency'" class="detail-item">
-              <strong>Kontak Darurat:</strong> {{ request.emergency_contact }}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="no-data">
-        <p>Belum ada permohonan cuti</p>
-      </div>
-    </div>
-  </div>
-</template>
+    <div class="employee-dashboard">
+      <div class="dashboard-header">
+        <h1>Dashboard Karyawan</h1>
+        <p>Selamat datang, {{ userName }}</p>
+        <div class="employee-info">
+          <span class="role-badge">{{ userRole }}</span>
+          <div class="manager-info" v-if="managerInfo.name">
+            <i class="fas fa-user-tie"></i>
+            <span>Manager: {{ managerInfo.name }} ({{ managerInfo.type }})</span>
+          </div>
+        </div>
+      </div>
+  
+          <div class="quick-actions">
+        <div class="action-card" @click="$router.push('/employee/request-leave')">
+          <div class="action-icon">
+            <i class="fas fa-calendar-plus"></i>
+          </div>
+          <div class="action-content">
+            <h3>Ajukan Cuti</h3>
+            <p>Buat permohonan cuti baru</p>
+          </div>
+        </div>
+        
+        <div class="action-card" @click="showLeaveHistory">
+          <div class="action-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="action-content">
+            <h3>Riwayat Cuti</h3>
+            <p>Lihat status permohonan cuti</p>
+          </div>
+        </div>
+      </div>
+  
+          <div class="leave-summary">
+        <h2>Ringkasan Cuti</h2>
+        <div class="summary-cards">
+          <div class="summary-card">
+            <h3>{{ leaveStats.pending || 0 }}</h3>
+            <p>Menunggu Persetujuan</p>
+          </div>
+          <div class="summary-card">
+            <h3>{{ leaveStats.approved || 0 }}</h3>
+            <p>Cuti Disetujui</p>
+          </div>
+          <div class="summary-card">
+            <h3>{{ leaveStats.rejected || 0 }}</h3>
+            <p>Cuti Ditolak</p>
+          </div>
+        </div>
+      </div>
+  
+          <div class="leave-quota-detail">
+        <h2>Jatah Cuti Saya ({{ currentYear }})</h2>
+        <div class="quota-grid" v-if="leaveQuota.id">
+          <div class="quota-item">
+            <div class="quota-header">
+              <h4>Cuti Tahunan</h4>
+              <span class="quota-numbers">{{ leaveQuota.annual_leave_used || 0 }}/{{ leaveQuota.annual_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress annual" :style="{ width: getQuotaPercentage(leaveQuota.annual_leave_used, leaveQuota.annual_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.annual_leave_quota || 0) - (leaveQuota.annual_leave_used || 0) }} hari</p>
+          </div>
+          <div class="quota-item">
+            <div class="quota-header">
+              <h4>Cuti Sakit</h4>
+              <span class="quota-numbers">{{ leaveQuota.sick_leave_used || 0 }}/{{ leaveQuota.sick_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress sick" :style="{ width: getQuotaPercentage(leaveQuota.sick_leave_used, leaveQuota.sick_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.sick_leave_quota || 0) - (leaveQuota.sick_leave_used || 0) }} hari</p>
+          </div>
+          <div class="quota-item">
+            <div class="quota-header">
+              <h4>Cuti Darurat</h4>
+              <span class="quota-numbers">{{ leaveQuota.emergency_leave_used || 0 }}/{{ leaveQuota.emergency_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress emergency" :style="{ width: getQuotaPercentage(leaveQuota.emergency_leave_used, leaveQuota.emergency_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.emergency_leave_quota || 0) - (leaveQuota.emergency_leave_used || 0) }} hari</p>
+          </div>
+          <div class="quota-item" v-if="leaveQuota.maternity_leave_quota > 0">
+            <div class="quota-header">
+              <h4>Cuti Melahirkan</h4>
+              <span class="quota-numbers">{{ leaveQuota.maternity_leave_used || 0 }}/{{ leaveQuota.maternity_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress maternity" :style="{ width: getQuotaPercentage(leaveQuota.maternity_leave_used, leaveQuota.maternity_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.maternity_leave_quota || 0) - (leaveQuota.maternity_leave_used || 0) }} hari</p>
+          </div>
+          <div class="quota-item" v-if="leaveQuota.paternity_leave_quota > 0">
+            <div class="quota-header">
+              <h4>Cuti Ayah</h4>
+              <span class="quota-numbers">{{ leaveQuota.paternity_leave_used || 0 }}/{{ leaveQuota.paternity_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress paternity" :style="{ width: getQuotaPercentage(leaveQuota.paternity_leave_used, leaveQuota.paternity_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.paternity_leave_quota || 0) - (leaveQuota.paternity_leave_used || 0) }} hari</p>
+          </div>
+          <div class="quota-item" v-if="leaveQuota.marriage_leave_quota > 0">
+            <div class="quota-header">
+              <h4>Cuti Nikah</h4>
+              <span class="quota-numbers">{{ leaveQuota.marriage_leave_used || 0 }}/{{ leaveQuota.marriage_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress marriage" :style="{ width: getQuotaPercentage(leaveQuota.marriage_leave_used, leaveQuota.marriage_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.marriage_leave_quota || 0) - (leaveQuota.marriage_leave_used || 0) }} hari</p>
+          </div>
+          <div class="quota-item" v-if="leaveQuota.bereavement_leave_quota > 0">
+            <div class="quota-header">
+              <h4>Cuti Duka</h4>
+              <span class="quota-numbers">{{ leaveQuota.bereavement_leave_used || 0 }}/{{ leaveQuota.bereavement_leave_quota || 0 }}</span>
+            </div>
+            <div class="quota-bar">
+              <div class="quota-progress bereavement" :style="{ width: getQuotaPercentage(leaveQuota.bereavement_leave_used, leaveQuota.bereavement_leave_quota) + '%' }"></div>
+            </div>
+            <p class="quota-remaining">Sisa: {{ (leaveQuota.bereavement_leave_quota || 0) - (leaveQuota.bereavement_leave_used || 0) }} hari</p>
+          </div>
+        </div>
+        <div v-else class="no-quota">
+          <i class="fas fa-calendar-times"></i>
+          <h3>Belum ada jatah cuti</h3>
+          <p>Hubungi HR untuk mengatur jatah cuti Anda</p>
+        </div>
+      </div>
+  
+          <div class="recent-requests">
+        <h2>Permohonan Cuti Terbaru</h2>
+        <div class="requests-table" v-if="recentRequests.length">
+          <div v-for="request in recentRequests" :key="request.id" class="request-card">
+            <div class="request-header">
+              <div class="request-info">
+                <h3>{{ getLeaveTypeName(request.leave_type) }}</h3>
+                <p class="request-period">{{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}</p>
+                <p class="request-duration">{{ request.total_days || calculateDuration(request.start_date, request.end_date) }} hari</p>
+              </div>
+              <div class="request-status">
+                <span class="status-badge" :class="getStatusClass(request.overall_status)">
+                                          {{ getDetailedStatusName(request) }}
+                </span>
+              </div>
+            </div>
+            
+                      <div class="approval-history-container">
+              <h4>Riwayat Proses</h4>
+              <div class="approval-history">
+                <div class="history-item submitted">
+                  <i class="fas fa-paper-plane"></i>
+                  <div class="history-details">
+                    <span class="history-title">Permohonan Diajukan</span>
+                    <span class="history-date">{{ formatDateTime(request.created_at) }}</span>
+                  </div>
+                </div>
+  
+                <div v-if="request.approvedBy" class="history-item" :class="getStatusClass(request.overall_status)">
+                  <i class="fas" :class="getStatusIcon(request.overall_status)"></i>
+                  <div class="history-details">
+                    <span class="history-title">Diproses oleh {{ request.approvedBy.nama_lengkap }} ({{ request.approvedBy.user.role }})</span>
+                    <span class="history-status">{{ getStatusLabel(request.overall_status) }}</span>
+                    <span v-if="request.notes" class="history-notes">Catatan: {{ request.notes }}</span>
+                    <span v-if="request.rejection_reason" class="history-notes">Alasan Ditolak: {{ request.rejection_reason }}</span>
+                    <span class="history-date">{{ formatDateTime(request.approved_at || request.rejected_at || request.updated_at) }}</span>
+                  </div>
+                </div>
+  
+                                    <div v-else-if="request.overall_status === 'pending'" class="history-item pending">
+                    <i class="fas fa-clock"></i>
+                    <div class="history-details">
+                      <span class="history-title">Menunggu Persetujuan</span>
+                      <span class="history-status">Menunggu tindakan dari {{ getManagerForRole(request.employee.jabatan_saat_ini) }}</span>
+                    </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="request-details">
+              <div class="detail-item">
+                <strong>Alasan:</strong> {{ request.reason }}
+              </div>
+              <div v-if="request.emergency_contact && request.leave_type === 'emergency'" class="detail-item">
+                <strong>Kontak Darurat:</strong> {{ request.emergency_contact }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="no-data">
+          <p>Belum ada permohonan cuti</p>
+        </div>
+      </div>
+    </div>
+  </template>
 
 <script>
 import authService from '../services/authService'
 import axios from 'axios'
 
 export default {
-  name: 'EmployeeDashboard',
-  data() {
-    return {
-      userName: '',
-      userRole: '',
-      leaveQuota: {
-        id: null,
-        remaining: 12,
-        used: 3,
-        total: 15,
-        annual_leave_quota: 0,
-        annual_leave_used: 0,
-        sick_leave_quota: 0,
-        sick_leave_used: 0,
-        emergency_leave_quota: 0,
-        emergency_leave_used: 0,
-        maternity_leave_quota: 0,
-        maternity_leave_used: 0,
-        paternity_leave_quota: 0,
-        paternity_leave_used: 0,
-        marriage_leave_quota: 0,
-        marriage_leave_used: 0,
-        bereavement_leave_quota: 0,
-        bereavement_leave_used: 0
-      },
-      leaveStats: {
-        pending: 2,
-        approved: 8,
-        rejected: 0
-      },
-      recentRequests: [],
-      showHistoryModal: false,
-      managerInfo: {
-        name: '',
-        type: ''
-      },
-      userId: null
-    }
-  },
-  computed: {
-    currentYear() {
-      return new Date().getFullYear();
-    }
-  },
-  async mounted() {
-    await this.loadUserData();
-    await this.loadLeaveData();
-    await this.loadManagerInfo();
-    this.$emitter.on('request-updated', this.loadLeaveData); // Listen for event
-  },
-  beforeUnmount() {
-    this.$emitter.off('request-updated', this.loadLeaveData); // Clean up listener
-  },
-  methods: {
-    async loadUserData() {
-      try {
-        const userStr = localStorage.getItem('user')
-        if (!userStr || userStr === 'undefined' || userStr === 'null') {
-          console.warn('No user data found in localStorage')
-          this.userName = 'Karyawan'
-          return
+  name: 'EmployeeDashboard',
+  data() {
+    return {
+      userName: '',
+      userRole: '',
+      leaveQuota: {
+        id: null,
+        remaining: 12,
+        used: 3,
+        total: 15,
+        annual_leave_quota: 0,
+        annual_leave_used: 0,
+        sick_leave_quota: 0,
+        sick_leave_used: 0,
+        emergency_leave_quota: 0,
+        emergency_leave_used: 0,
+        maternity_leave_quota: 0,
+        maternity_leave_used: 0,
+        paternity_leave_quota: 0,
+        paternity_leave_used: 0,
+        marriage_leave_quota: 0,
+        marriage_leave_used: 0,
+        bereavement_leave_quota: 0,
+        bereavement_leave_used: 0
+      },
+      leaveStats: {
+        pending: 2,
+        approved: 8,
+        rejected: 0
+      },
+      recentRequests: [],
+      showHistoryModal: false,
+      managerInfo: {
+        name: '',
+        type: ''
+      },
+      userId: null
+    }
+  },
+  computed: {
+    currentYear() {
+      return new Date().getFullYear();
+    }
+  },
+  async mounted() {
+    await this.loadUserData();
+    await this.loadLeaveData();
+    await this.loadManagerInfo();
+    this.$emitter.on('request-updated', this.loadLeaveData); // Listen for event
+  },
+  beforeUnmount() {
+    this.$emitter.off('request-updated', this.loadLeaveData); // Clean up listener
+  },
+  methods: {
+    async loadUserData() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (!userStr || userStr === 'undefined' || userStr === 'null') {
+          console.warn('No user data found in localStorage')
+          this.userName = 'Karyawan'
+          return
+        }
+        
+        const user = JSON.parse(userStr)
+        this.userName = user.nama_lengkap || user.name || user.fullName || 'Karyawan'
+        this.userId = user.id || user.user_id
+        this.userRole = user.role
+      } catch (error) {
+        console.error('Error loading user data in EmployeeDashboard:', error)
+        this.userName = 'Karyawan'
+      }
+    },
+    
+    async loadLeaveData() {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get('http://localhost:8000/api/leave-requests', {
+          headers: { 'Authorization': `Bearer ${token}` },
+          params: { employee_id: this.userId, include_approver: true }
+        })
+        
+        const requests = response.data.data || response.data
+        this.recentRequests = requests.slice(0, 5)
+        
+        this.leaveStats.pending = requests.filter(r => r.overall_status === 'pending').length
+        this.leaveStats.approved = requests.filter(r => r.overall_status === 'approved').length
+        this.leaveStats.rejected = requests.filter(r => r.overall_status === 'rejected').length
+      } catch (error) {
+        console.error('Error loading leave data:', error)
+        this.recentRequests = []
+        this.leaveStats = { pending: 0, approved: 0, rejected: 0 }
+      }
+    },
+
+    async loadManagerInfo() {
+      // Logika ini bisa disederhanakan atau diperbaiki sesuai kebutuhan
+      try {
+        const managerRole = this.getManagerForRole(this.userRole);
+        this.managerInfo.name = managerRole;
+        this.managerInfo.type = managerRole;
+      } catch (error) {
+        console.error('Error loading manager info:', error)
+      }
+    },
+    
+    formatDateTime(dateTime) {
+      if (!dateTime) return '';
+      return new Date(dateTime).toLocaleString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    },
+
+    formatDate(date) {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+    },
+
+    // ✅ METHOD BARU: Menentukan manajer yang benar berdasarkan role karyawan
+    getManagerForRole(employeeRole) {
+        if (!employeeRole) return 'Atasan'; // Fallback
+        const hierarchy = {
+            'Finance': 'HR Manager',
+            'General Affairs': 'HR Manager',
+            'Office Assistant': 'HR Manager',
+            'Producer': 'Program Manager',
+            'Creative': 'Program Manager',
+            'Production': 'Program Manager',
+            'Editor': 'Program Manager',
+            'Social Media': 'Distribution Manager',
+            'Promotion': 'Distribution Manager',
+            'Graphic Design': 'Distribution Manager',
+            'Hopeline Care': 'Distribution Manager'
+        };
+        return hierarchy[employeeRole] || 'Atasan';
+    },
+
+    // ✅ METHOD DIPERBARUI: Menggunakan helper baru untuk status pending
+    getDetailedStatusName(request) {
+        const status = request.overall_status;
+        if (status === 'pending') {
+            const employeeRole = request.employee?.jabatan_saat_ini;
+            const managerRole = this.getManagerForRole(employeeRole);
+            return `Menunggu Persetujuan ${managerRole}`;
         }
-
-        const user = JSON.parse(userStr)
-        console.log('Loading user data in EmployeeDashboard:', user)
-
-        this.userName = user.nama_lengkap || user.name || user.fullName || 'Karyawan'
-        this.userId = user.id || user.user_id
-
-        // Verify user role - accept all employee types
-        const validEmployeeRoles = [
-          'Employee', 'Finance', 'General Affairs', 'Office Assistant',
-          'Producer', 'Creative', 'Production', 'Editor',
-          'Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'
-        ]
-        if (!validEmployeeRoles.includes(user.role)) {
-          console.warn('User role mismatch in EmployeeDashboard:', user.role)
-        }
-
-        // Store user role for manager identification
-        this.userRole = user.role
-      } catch (error) {
-        console.error('Error loading user data in EmployeeDashboard:', error)
-        this.userName = 'Karyawan'
-      }
+        return this.getStatusLabel(status);
     },
 
-    async loadLeaveData() {
-      try {
-        const token = localStorage.getItem('token')
-        const response = await axios.get('http://localhost:8000/api/leave-requests', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          params: {
-            employee_id: this.userId,
-            include_details: true,
-            include_approver: true
-          }
-        })
+    getStatusLabel(status) {
+      const labels = {
+        'approved': 'Disetujui', 'rejected': 'Ditolak', 'pending': 'Menunggu Persetujuan'
+      };
+      return labels[status] || 'Dalam Proses';
+    },
+    
+    getLeaveTypeName(type) {
+      const types = {
+        annual: 'Cuti Tahunan', sick: 'Cuti Sakit', emergency: 'Cuti Darurat',
+        maternity: 'Cuti Melahirkan', paternity: 'Cuti Ayah'
+      }
+      return types[type] || type
+    },
+    
+    getStatusClass(status) {
+      if (status === 'approved') return 'approved';
+      if (status === 'rejected') return 'rejected';
+      return 'pending';
+    },
 
-        const requests = response.data.data || response.data
-        this.recentRequests = requests.slice(0, 5)
-
-        // Fixed stats calculation using overall_status consistently
-        this.leaveStats.pending = requests.filter(r =>
-          r.overall_status === 'pending' || r.status === 'pending'
-        ).length
-        this.leaveStats.approved = requests.filter(r =>
-          r.overall_status === 'approved' || r.status === 'approved'
-        ).length
-        this.leaveStats.rejected = requests.filter(r =>
-          r.overall_status === 'rejected' || r.status === 'rejected'
-        ).length
-
-        console.log('Leave stats calculated:', this.leaveStats)
-
-      } catch (error) {
-        console.error('Error loading leave data:', error)
-        this.recentRequests = []
-        // Reset stats on error
-        this.leaveStats = { pending: 0, approved: 0, rejected: 0 }
-      }
-    },
-
-    async loadManagerInfo() {
-      try {
-        // Get manager info based on employee's role and department
-        const response = await axios.get('/api/employees/manager-info', {
-          params: {
-            employee_role: this.userRole,
-            employee_id: this.userId
-          }
-        })
-
-        if (response.data) {
-          this.managerInfo.name = response.data.manager_name
-          this.managerInfo.type = response.data.manager_type
-        }
-
-      } catch (error) {
-        console.error('Error loading manager info:', error)
-        // Set default manager info if API fails
-        this.managerInfo.name = 'HR Manager'
-        this.managerInfo.type = 'HR Manager'
-      }
-    },
-
-    formatDateTime(dateTime) {
-      if (!dateTime) return '';
-      return new Date(dateTime).toLocaleString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    },
-
-    formatDate(date) {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-    },
-
-    getStatusLabel(status) {
-      const labels = {
-        'approved': 'Disetujui',
-        'rejected': 'Ditolak',
-        'pending': 'Menunggu Persetujuan'
-      };
-      return labels[status] || 'Dalam Proses';
-    },
-
-    getLeaveTypeName(type) {
-      const types = {
-        annual: 'Cuti Tahunan',
-        sick: 'Cuti Sakit',
-        emergency: 'Cuti Darurat',
-        maternity: 'Cuti Melahirkan',
-        paternity: 'Cuti Ayah'
-      }
-      return types[type] || type
-    },
-
-
-
-    getStatusClass(status) {
-      if (status === 'approved') return 'approved';
-      if (status === 'rejected') return 'rejected';
-      return 'pending';
-    },
-
-    getStatusIcon(status) {
-      if (status === 'approved') return 'fa-check-circle';
-      if (status === 'rejected') return 'fa-times-circle';
-      return 'fa-clock';
-    },
-
-    calculateDuration(startDate, endDate) {
-      if (!startDate || !endDate) return 0
-      const start = new Date(startDate)
-      const end = new Date(endDate)
-      const diffTime = Math.abs(end - start)
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-    },
-
-    showLeaveHistory() {
-      // For now, just show an alert. Later can be expanded to show modal or navigate to history page
-      alert('Fitur riwayat cuti akan segera tersedia')
-    },
-
-    getQuotaPercentage(used, total) {
-      if (!total || total === 0) return 0;
-      return Math.min((used / total) * 100, 100);
-    }
-  }
+    getStatusIcon(status) {
+      if (status === 'approved') return 'fa-check-circle';
+      if (status === 'rejected') return 'fa-times-circle';
+      return 'fa-clock';
+    },
+    
+    calculateDuration(startDate, endDate) {
+      if (!startDate || !endDate) return 0
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      const diffTime = Math.abs(end - start)
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    },
+    
+    showLeaveHistory() {
+      alert('Fitur riwayat cuti akan segera tersedia')
+    },
+    
+    getQuotaPercentage(used, total) {
+      if (!total || total === 0) return 0;
+      return Math.min((used / total) * 100, 100);
+    }
+  }
 }
 </script>
-
 <style scoped>
 .employee-dashboard {
   padding: 20px;
@@ -960,7 +889,6 @@ export default {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;

@@ -285,583 +285,398 @@
 import axios from 'axios'
 
 export default {
-  name: 'EmployeeRequestLeave',
-  data() {
-    return {
-      apiUrl: 'http://127.0.0.1:8000',
-      isSubmitting: false,
-      statusFilter: '',
-      showDebugInfo: false, // Set to true untuk debugging
-      showNotification: false,
-      notificationMessage: '',
-      notificationType: 'success',
-      leaveForm: {
-        leave_type: '',
-        start_date: '',
-        end_date: '',
-        reason: '',
-        emergency_contact: '',
-        work_handover: ''
-      },
-      myLeaveRequests: [],
-      userRole: '',
-      userDepartment: '',
-      userId: null,
-      token: null
-    }
-  },
-  computed: {
-    minDate() {
-      const today = new Date()
-      return today.toISOString().split('T')[0]
+  name: 'EmployeeRequestLeave',
+  data() {
+    return {
+      apiUrl: 'http://127.0.0.1:8000',
+      isSubmitting: false,
+      statusFilter: '',
+      showDebugInfo: false, // Set to true untuk debugging
+      showNotification: false,
+      notificationMessage: '',
+      notificationType: 'success',
+      leaveForm: {
+        leave_type: '',
+        start_date: '',
+        end_date: '',
+        reason: '',
+        emergency_contact: '',
+        work_handover: ''
+      },
+      myLeaveRequests: [],
+      userRole: '',
+      userDepartment: '',
+      userId: null,
+      token: null
+    }
+  },
+  computed: {
+    minDate() {
+      const today = new Date()
+      return today.toISOString().split('T')[0]
+    },
+    leaveDuration() {
+      if (!this.leaveForm.start_date || !this.leaveForm.end_date) return 0
+      const start = new Date(this.leaveForm.start_date)
+      const end = new Date(this.leaveForm.end_date)
+      const diffTime = Math.abs(end - start)
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    },
+    isFormValid() {
+      return this.leaveForm.leave_type && 
+             this.leaveForm.start_date && 
+             this.leaveForm.end_date && 
+             this.leaveForm.reason.trim().length > 0
+    },
+    workflowClass() {
+      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
+      if (programRoles.includes(this.userRole)) return 'workflow-program'
+      
+      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
+      if (distributionRoles.includes(this.userRole)) return 'workflow-distribution'
+      
+      const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
+      if (hrRoles.includes(this.userRole)) return 'workflow-hr'
+      
+      return 'workflow-hr'
+    },
+    workflowText() {
+      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
+      if (programRoles.includes(this.userRole)) return 'Ke Program Manager → HR'
+      
+      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
+      if (distributionRoles.includes(this.userRole)) return 'Ke Distribution Manager → HR'
+      
+      const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
+      if (hrRoles.includes(this.userRole)) return 'Ke HR Manager'
+      
+      return 'Ke HR Manager'
+    },
+    approvalManagerText() {
+      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
+      if (programRoles.includes(this.userRole)) return 'Program Manager'
+      
+      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
+      if (distributionRoles.includes(this.userRole)) return 'Distribution Manager'
+      
+      const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
+      if (hrRoles.includes(this.userRole)) return 'HR Manager'
+      
+      return 'HR Manager'
+    }
+  },
+  async mounted() {
+    await this.getUserInfo();
+    await this.fetchMyLeaveRequests();
+    this.$emitter.on('request-updated', this.handleRequestUpdate);
+  },
+  beforeUnmount() {
+    this.$emitter.off('request-updated', this.handleRequestUpdate);
+  },
+  methods: {
+    handleRequestUpdate() {
+      console.log('Event `request-updated` received in EmployeeRequestLeave.vue');
+      this.showNotificationMessage('Status permohonan cuti telah diperbarui', 'info');
+      this.fetchMyLeaveRequests();
+    },
+    async getUserInfo() {
+      try {
+        this.token = localStorage.getItem('token')
+        
+        const response = await axios.get(`${this.apiUrl}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Accept': 'application/json'
+          }
+        })
+        
+        if (response.data && response.data.data) {
+          const user = response.data.data
+          this.userRole = user.role || ''
+          this.userDepartment = user.employee?.department || ''
+          this.userId = user.id
+          
+          localStorage.setItem('user', JSON.stringify(user))
+          
+          console.log('User Info Updated:', {
+            role: this.userRole,
+            department: this.userDepartment,
+            userId: this.userId,
+            hasToken: !!this.token
+          })
+        }
+      } catch (error) {
+        console.error('Error getting user info:', error)
+        try {
+          const userStr = localStorage.getItem('user')
+          if (userStr) {
+            const user = JSON.parse(userStr)
+            this.userRole = user.role || ''
+            this.userDepartment = user.employee?.department || ''
+            this.userId = user.id
+            this.token = localStorage.getItem('token')
+          }
+        } catch (parseError) {
+          console.error('Error parsing user data:', parseError)
+          this.showNotificationMessage('Gagal memuat informasi user', 'error')
+        }
+      }
+    },
+    async submitLeaveRequest() {
+      if (!this.isFormValid) return
+
+      if (!this.token) {
+        this.showNotificationMessage('Token tidak ditemukan, silakan login ulang', 'error')
+        this.$router.push('/login')
+        return
+      }
+
+      if (!this.userRole) {
+        this.showNotificationMessage('Role user tidak ditemukan', 'error')
+        return
+      }
+
+      this.isSubmitting = true
+      
+      try {
+        console.log('Submitting leave request with data:', {
+          ...this.leaveForm,
+          userRole: this.userRole,
+          userId: this.userId
+        })
+
+        const response = await axios.post(
+          `${this.apiUrl}/api/leave-requests`,
+          {
+            leave_type: this.leaveForm.leave_type,
+            start_date: this.leaveForm.start_date,
+            end_date: this.leaveForm.end_date,
+            reason: this.leaveForm.reason,
+            emergency_contact: this.leaveForm.emergency_contact,
+            work_handover: this.leaveForm.work_handover
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          }
+        )
+        
+        if (response.data.success) {
+          this.showNotificationMessage('Permohonan cuti berhasil diajukan!', 'success')
+          this.resetForm()
+          await this.fetchMyLeaveRequests()
+        } else {
+          this.showNotificationMessage(response.data.message || 'Gagal mengajukan permohonan cuti', 'error')
+        }
+      } catch (error) {
+        let errorMessage = 'Gagal mengajukan permohonan cuti'
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        }
+        this.showNotificationMessage(errorMessage, 'error')
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+
+    async fetchMyLeaveRequests() {
+      try {
+        if (!this.token) return
+
+        const params = new URLSearchParams()
+        if (this.statusFilter) params.append('status', this.statusFilter)
+        params.append('my_requests', 'true')
+        
+        const response = await axios.get(
+          `${this.apiUrl}/api/leave-requests?${params.toString()}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Accept': 'application/json'
+            }
+          }
+        )
+        
+        if (response.data.success) {
+          this.myLeaveRequests = response.data.data || []
+        }
+      } catch (error) {
+        console.error('Error fetching leave requests:', error)
+        if (error.response?.status === 401) {
+          this.$router.push('/login')
+        }
+      }
+    },
+
+    async cancelRequest(requestId) {
+      if (!confirm('Apakah Anda yakin ingin membatalkan permohonan cuti ini?')) return
+      
+      this.isSubmitting = true
+      try {
+        const response = await axios.delete(
+          `${this.apiUrl}/api/leave-requests/${requestId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Accept': 'application/json'
+            }
+          }
+        )
+        
+        if (response.data.success) {
+          this.showNotificationMessage('Permohonan cuti berhasil dibatalkan', 'success')
+          await this.fetchMyLeaveRequests()
+        }
+      } catch (error) {
+        console.error('Error canceling leave request:', error)
+        this.showNotificationMessage('Gagal membatalkan permohonan cuti', 'error')
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+
+    resetForm() {
+      this.leaveForm = {
+        leave_type: '',
+        start_date: '',
+        end_date: '',
+        reason: '',
+        emergency_contact: '',
+        work_handover: ''
+      }
+    },
+
+    // ✅ METHOD BARU: Menentukan manajer yang benar berdasarkan role karyawan
+    getManagerForRole(employeeRole) {
+        if (!employeeRole) return 'Atasan'; // Fallback
+        const hierarchy = {
+            'Finance': 'HR Manager',
+            'General Affairs': 'HR Manager',
+            'Office Assistant': 'HR Manager',
+            'Producer': 'Program Manager',
+            'Creative': 'Program Manager',
+            'Production': 'Program Manager',
+            'Editor': 'Program Manager',
+            'Social Media': 'Distribution Manager',
+            'Promotion': 'Distribution Manager',
+            'Graphic Design': 'Distribution Manager',
+            'Hopeline Care': 'Distribution Manager'
+        };
+        return hierarchy[employeeRole] || 'Atasan';
     },
-    leaveDuration() {
-      if (!this.leaveForm.start_date || !this.leaveForm.end_date) return 0
-      const start = new Date(this.leaveForm.start_date)
-      const end = new Date(this.leaveForm.end_date)
-      const diffTime = Math.abs(end - start)
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-    },
-    isFormValid() {
-      return this.leaveForm.leave_type && 
-             this.leaveForm.start_date && 
-             this.leaveForm.end_date && 
-             this.leaveForm.reason.trim().length > 0
-    },
-    workflowClass() {
-      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
-      if (programRoles.includes(this.userRole)) return 'workflow-program'
-      
-      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
-      if (distributionRoles.includes(this.userRole)) return 'workflow-distribution'
-      
-      const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
-      if (hrRoles.includes(this.userRole)) return 'workflow-hr'
-      
-      return 'workflow-hr'
-    },
-    workflowText() {
-      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
-      if (programRoles.includes(this.userRole)) return 'Ke Program Manager → HR'
-      
-      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
-      if (distributionRoles.includes(this.userRole)) return 'Ke Distribution Manager → HR'
-      
-      const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
-      if (hrRoles.includes(this.userRole)) return 'Ke HR Manager'
-      
-      return 'Ke HR Manager'
-    },
-    approvalManagerText() {
-      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
-      if (programRoles.includes(this.userRole)) return 'Program Manager'
-      
-      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
-      if (distributionRoles.includes(this.userRole)) return 'Distribution Manager'
-      
-      const hrRoles = ['Finance', 'General Affairs', 'Office Assistant']
-      if (hrRoles.includes(this.userRole)) return 'HR Manager'
-      
-      return 'HR Manager'
-    }
-  },
-  async mounted() {
-    await this.getUserInfo();
-    await this.fetchMyLeaveRequests();
-    this.$emitter.on('request-updated', this.handleRequestUpdate);
-  },
-  beforeUnmount() {
-    this.$emitter.off('request-updated', this.handleRequestUpdate);
-  },
-  methods: {
-    handleRequestUpdate() {
-      console.log('Event `request-updated` received in EmployeeRequestLeave.vue');
-      this.showNotificationMessage('Status permohonan cuti telah diperbarui', 'info');
-      this.fetchMyLeaveRequests();
-    },
-    async getUserInfo() {
-      try {
-        this.token = localStorage.getItem('token')
+
+    // ✅ METHOD DIPERBARUI: Menggunakan helper baru untuk status pending
+    getApproverInfo(request) {
+        const status = request.overall_status;
         
-        // Get fresh user data from API
-        const response = await axios.get(`${this.apiUrl}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Accept': 'application/json'
-          }
-        })
-        
-        if (response.data && response.data.data) {
-          const user = response.data.data
-          this.userRole = user.role || ''
-          this.userDepartment = user.employee?.department || ''
-          this.userId = user.id
-          
-          // Update localStorage with fresh data
-          localStorage.setItem('user', JSON.stringify(user))
-          
-          console.log('User Info Updated:', {
-            role: this.userRole,
-            department: this.userDepartment,
-            userId: this.userId,
-            hasToken: !!this.token
-          })
+        if (status === 'approved' && request.approvedBy) {
+            return `Disetujui oleh ${request.approvedBy.nama_lengkap}`;
         }
-      } catch (error) {
-        console.error('Error getting user info:', error)
         
-        // Fallback to localStorage
-        try {
-          const userStr = localStorage.getItem('user')
-          if (userStr) {
-            const user = JSON.parse(userStr)
-            this.userRole = user.role || ''
-            this.userDepartment = user.employee?.department || ''
-            this.userId = user.id
-            this.token = localStorage.getItem('token')
-          }
-        } catch (parseError) {
-          console.error('Error parsing user data:', parseError)
-          this.showNotificationMessage('Gagal memuat informasi user', 'error')
+        if (status === 'rejected' && request.approvedBy) {
+            return `Ditolak oleh ${request.approvedBy.nama_lengkap}`;
         }
-      }
+        
+        if (status === 'pending') {
+            const employeeRole = request.employee?.jabatan_saat_ini;
+            const managerRole = this.getManagerForRole(employeeRole);
+            return `Menunggu Persetujuan ${managerRole}`;
+        }
+        
+        return 'Status Tidak Dikenal';
     },
     
-    async submitLeaveRequest() {
-      if (!this.isFormValid) return
+    getLeaveTypeLabel(type) {
+      const types = {
+        'annual': 'Cuti Tahunan', 'sick': 'Cuti Sakit', 'emergency': 'Cuti Darurat',
+        'maternity': 'Cuti Melahirkan', 'paternity': 'Cuti Ayah', 'marriage': 'Cuti Menikah',
+        'bereavement': 'Cuti Duka'
+      }
+      return types[type] || type
+    },
 
-      // Enhanced validation checks
-      if (!this.token) {
-        this.showNotificationMessage('Token tidak ditemukan, silakan login ulang', 'error')
-        this.$router.push('/login')
-        return
-      }
+    getStatusLabel(status) {
+      const statuses = {
+        'pending': 'Menunggu Persetujuan', 'approved': 'Disetujui', 'rejected': 'Ditolak'
+      }
+      return statuses[status] || status
+    },
 
-      if (!this.userRole) {
-        this.showNotificationMessage('Role user tidak ditemukan', 'error')
-        return
-      }
+    formatDate(dateString) {
+      if (!dateString) return '-'
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      })
+    },
 
-      this.isSubmitting = true
-      
-      try {
-        console.log('Submitting leave request with data:', {
-          ...this.leaveForm,
-          userRole: this.userRole,
-          userId: this.userId
-        })
+    formatDateTime(dateString) {
+      if (!dateString) return '-'
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      })
+    },
 
-        const response = await axios.post(
-          `${this.apiUrl}/api/leave-requests`,
-          {
-            leave_type: this.leaveForm.leave_type,
-            start_date: this.leaveForm.start_date,
-            end_date: this.leaveForm.end_date,
-            reason: this.leaveForm.reason,
-            emergency_contact: this.leaveForm.emergency_contact,
-            work_handover: this.leaveForm.work_handover
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${this.token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          }
-        )
-        
-        console.log('Leave request response:', response.data)
-        
-        if (response.data.success) {
-          this.showNotificationMessage('Permohonan cuti berhasil diajukan!', 'success')
-          this.resetForm()
-          await this.fetchMyLeaveRequests()
-        } else {
-          this.showNotificationMessage(response.data.message || 'Gagal mengajukan permohonan cuti', 'error')
-        }
-      } catch (error) {
-        console.error('Error submitting leave request:', error)
-        console.error('Error response:', error.response?.data)
-        
-        let errorMessage = 'Gagal mengajukan permohonan cuti'
-        
-        if (error.response?.status === 403) {
-          const responseMessage = error.response?.data?.message || ''
-          if (responseMessage.includes('Required roles: Employee')) {
-            errorMessage = `Backend mengharapkan role "Employee" tetapi Anda memiliki role "${this.userRole}". Hubungi administrator untuk memperbaiki konfigurasi role.`
-          } else {
-            errorMessage = `Akses ditolak: ${responseMessage}`
-          }
-        } else if (error.response?.status === 401) {
-          errorMessage = 'Sesi Anda telah berakhir, silakan login ulang'
-          this.$router.push('/login')
-          return
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message
-        }
-        
-        this.showNotificationMessage(errorMessage, 'error')
-      } finally {
-        this.isSubmitting = false
-      }
-    },
+    calculateDuration(startDate, endDate) {
+      if (!startDate || !endDate) return 0
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      const diffTime = Math.abs(end - start)
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    },
 
-    async fetchMyLeaveRequests() {
-      try {
-        if (!this.token) return
+    showNotificationMessage(message, type) {
+      this.notificationMessage = message
+      this.notificationType = type
+      this.showNotification = true
+      setTimeout(() => {
+        this.showNotification = false
+      }, 5000)
+    },
+    
+    hasApprovalHistory(request) {
+      return this.getManagerApprovalInfo(request) || 
+             this.getHRApprovalInfo(request) || 
+             this.getManagerNotes(request) || 
+             request.hr_notes || 
+             request.rejection_reason
+    },
 
-        const params = new URLSearchParams()
-        if (this.statusFilter) params.append('status', this.statusFilter)
-        params.append('my_requests', 'true')
-        
-        const response = await axios.get(
-          `${this.apiUrl}/api/leave-requests?${params.toString()}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${this.token}`,
-              'Accept': 'application/json'
-            }
-          }
-        )
-        
-        if (response.data.success) {
-          this.myLeaveRequests = response.data.data || []
-          // Debug: Log the received data to understand the status structure
-          console.log('Fetched leave requests:', this.myLeaveRequests)
-          this.myLeaveRequests.forEach((request, index) => {
-            console.log(`Request ${index + 1} - Full Object:`, request)
-            console.log(`Request ${index + 1} - Status Analysis:`, {
-              id: request.id,
-              status: request.status,
-              overall_status: request.overall_status,
-              manager_notes: request.manager_notes,
-              hr_notes: request.hr_notes,
-              distribution_manager_notes: request.distribution_manager_notes,
-              program_manager_notes: request.program_manager_notes,
-              userRole: this.userRole,
-              approved_by: request.approved_by,
-              rejected_by: request.rejected_by
-            })
-            
-            // Debug approval history methods
-            console.log(`Request ${index + 1} - Approval History Debug:`, {
-              hasApprovalHistory: this.hasApprovalHistory(request),
-              getManagerApprovalInfo: this.getManagerApprovalInfo(request),
-              getHRApprovalInfo: this.getHRApprovalInfo(request),
-              getManagerNotes: this.getManagerNotes(request),
-              getApproverInfo: this.getApproverInfo(request)
-            })
-          })
-        }
-      } catch (error) {
-        console.error('Error fetching leave requests:', error)
-        if (error.response?.status === 401) {
-          this.$router.push('/login')
-        }
-      }
-    },
+    getManagerApprovalInfo(request) {
+      if (request.overall_status === 'approved' && request.approvedBy) {
+         return {
+             name: request.approvedBy.nama_lengkap,
+             role: request.approvedBy.user.role,
+             date: request.approved_at || request.updated_at
+         }
+     }
+      return null
+    },
 
-    async cancelRequest(requestId) {
-      if (!confirm('Apakah Anda yakin ingin membatalkan permohonan cuti ini?')) return
-      
-      this.isSubmitting = true
-      try {
-        const response = await axios.delete(
-          `${this.apiUrl}/api/leave-requests/${requestId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${this.token}`,
-              'Accept': 'application/json'
-            }
-          }
-        )
-        
-        if (response.data.success) {
-          this.showNotificationMessage('Permohonan cuti berhasil dibatalkan', 'success')
-          await this.fetchMyLeaveRequests()
-        }
-      } catch (error) {
-        console.error('Error canceling leave request:', error)
-        this.showNotificationMessage('Gagal membatalkan permohonan cuti', 'error')
-      } finally {
-        this.isSubmitting = false
-      }
-    },
+    getHRApprovalInfo(request) {
+      return null; // Logic ini disederhanakan karena tidak ada approval bertingkat
+    },
 
-    resetForm() {
-      this.leaveForm = {
-        leave_type: '',
-        start_date: '',
-        end_date: '',
-        reason: '',
-        emergency_contact: '',
-        work_handover: ''
-      }
-    },
+    getManagerNotes(request) {
+      return request.notes || ''
+    },
 
-    getLeaveTypeLabel(type) {
-      const types = {
-        'annual': 'Cuti Tahunan',
-        'sick': 'Cuti Sakit',
-        'emergency': 'Cuti Darurat',
-        'maternity': 'Cuti Melahirkan',
-        'paternity': 'Cuti Ayah',
-        'marriage': 'Cuti Menikah',
-        'bereavement': 'Cuti Duka'
-      }
-      return types[type] || type
-    },
+    getNotesHeader(request) {
+      if (request.approvedBy) {
+        return `Catatan dari ${request.approvedBy.nama_lengkap}`
+      }
+      return 'Catatan'
+    },
 
-    getStatusLabel(status) {
-      const statuses = {
-        'pending': 'Menunggu Persetujuan',
-        'approved': 'Disetujui',
-        'rejected': 'Ditolak'
-      }
-      return statuses[status] || status
-    },
-
-    getApproverInfo(request) {
-      const status = request.overall_status
-      
-      // Debug: Log the status processing
-      console.log('getApproverInfo called with:', {
-        requestId: request.id,
-        status: status,
-        overall_status: request.overall_status
-      })
-      
-      // Check for final approval
-      if (status === 'approved') {
-        console.log('Status matched: approved')
-        return 'Disetujui'
-      }
-      
-      // Check for rejection status
-      if (status === 'rejected') {
-        console.log('Status matched: rejected')
-        return 'Ditolak'
-      }
-      
-      // Check for pending status
-      if (status === 'pending') {
-        console.log('Status matched: pending')
-        return 'Menunggu Persetujuan Manager'
-      }
-      
-      console.log('No status matched, returning default')
-      return 'Status Tidak Dikenal'
-    },
-
-    getStatusText(request) {
-      const status = request.overall_status || request.status
-      
-      // Check for final approval
-      if (status === 'approved') {
-        console.log('Status matched: approved')
-        return 'Disetujui'
-      }
-      
-      // Check for rejection status
-      if (status === 'rejected') {
-        console.log('Status matched: rejected')
-        return 'Ditolak'
-      }
-      
-      // Check for pending status
-      if (status === 'pending') {
-        console.log('Status matched: pending')
-        return 'Menunggu Persetujuan Manager'
-      }
-      
-      console.log('No status matched, returning default')
-      return 'Status Tidak Dikenal'
-    },
-
-    formatDate(dateString) {
-      if (!dateString) return '-'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    },
-
-    formatDateTime(dateString) {
-      if (!dateString) return '-'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-
-    calculateDuration(startDate, endDate) {
-      if (!startDate || !endDate) return 0
-      const start = new Date(startDate)
-      const end = new Date(endDate)
-      const diffTime = Math.abs(end - start)
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-    },
-
-    showNotificationMessage(message, type) {
-      this.notificationMessage = message
-      this.notificationType = type
-      this.showNotification = true
-      setTimeout(() => {
-        this.showNotification = false
-      }, 5000)
-    },
-
-    // New methods for approval history display
-    hasApprovalHistory(request) {
-      return this.getManagerApprovalInfo(request) || 
-             this.getHRApprovalInfo(request) || 
-             this.getManagerNotes(request) || 
-             request.hr_notes || 
-             request.rejection_reason
-    },
-
-    getManagerApprovalInfo(request) {
-      const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
-      const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
-      
-      // Check if manager has approved based on notes or status
-      if (request.distribution_manager_notes && request.distribution_manager_notes.trim() !== '') {
-        return {
-          name: 'Distribution Manager',
-          role: 'Distribution Manager',
-          date: request.approved_at || request.updated_at
-        }
-      }
-      
-      if (request.program_manager_notes && request.program_manager_notes.trim() !== '') {
-        return {
-          name: 'Program Manager', 
-          role: 'Program Manager',
-          date: request.approved_at || request.updated_at
-        }
-      }
-      
-      // Check by status and notes for approved requests
-      const status = request.overall_status || request.status
-      if (status === 'approved') {
-        // Determine manager type based on notes or user role
-        if (request.distribution_manager_notes) {
-          return {
-            name: 'Distribution Manager',
-            role: 'Distribution Manager', 
-            date: request.approved_at || request.updated_at
-          }
-        }
-        
-        if (request.program_manager_notes) {
-          return {
-            name: 'Program Manager',
-            role: 'Program Manager',
-            date: request.approved_at || request.updated_at
-          }
-        }
-      }
-      
-      // Check by overall status for approved requests
-      if (status === 'approved') {
-        if (distributionRoles.includes(this.userRole)) {
-          return {
-            name: 'Distribution Manager',
-            role: 'Distribution Manager',
-            date: request.approved_at || request.updated_at
-          }
-        } else if (programRoles.includes(this.userRole)) {
-          return {
-            name: 'Program Manager', 
-            role: 'Program Manager',
-            date: request.approved_at || request.updated_at
-          }
-        }
-      }
-      
-      return null
-    },
-
-    getHRApprovalInfo(request) {
-      const status = request.overall_status || request.status
-      
-      if (status === 'approved') {
-        return {
-          name: 'HR Manager',
-          status: 'approved',
-          statusLabel: 'Disetujui',
-          date: request.approved_at || request.updated_at
-        }
-      }
-      
-      if (status === 'rejected') {
-        return {
-          name: 'HR Manager',
-          status: 'rejected', 
-          statusLabel: 'Ditolak',
-          date: request.approved_at || request.updated_at
-        }
-      }
-      
-      // If request is still pending
-      if (status === 'pending') {
-        return {
-          name: 'HR Manager',
-          status: 'pending',
-          statusLabel: 'Menunggu Persetujuan',
-          date: null
-        }
-      }
-      
-      return null
-    },
-
-    getManagerNotes(request) {
-      return request.distribution_manager_notes || 
-             request.program_manager_notes || 
-             request.manager_notes || 
-             ''
-    },
-
-    getNotesHeader(request) {
-      const status = request.overall_status || request.status
-      
-      if (request.hr_notes) {
-        return 'Catatan HR Manager'
-      } else if (request.manager_notes) {
-        // Determine which manager based on status or user role
-        const programRoles = ['Producer', 'Creative', 'Production', 'Editor']
-        const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care']
-        
-        if (status && status.includes('distribution')) {
-          return 'Catatan Distribution Manager'
-        } else if (status && status.includes('program')) {
-          return 'Catatan Program Manager'
-        } else if (programRoles.includes(this.userRole)) {
-          return 'Catatan Program Manager'
-        } else if (distributionRoles.includes(this.userRole)) {
-          return 'Catatan Distribution Manager'
-        }
-        return 'Catatan Manager'
-      } else if (request.notes) {
-        return 'Catatan'
-      }
-      
-      return 'Catatan'
-    },
-
-    getNotesContent(request) {
-      // Priority: HR notes > Manager notes > General notes
-      return request.hr_notes || request.manager_notes || request.notes || ''
-    }
-  }
+    getNotesContent(request) {
+      return request.notes || ''
+    }
+  }
 }
 </script>
 
