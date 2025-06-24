@@ -391,6 +391,7 @@ export default {
           fullName: this.form.fullName,
           email: this.form.email,
           password: this.form.password,
+          confirmPassword: this.form.confirmPassword, // Tambahkan ini
           otpToken: this.otpToken
         })
         
