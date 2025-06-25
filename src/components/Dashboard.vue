@@ -1,50 +1,52 @@
 <template>
-  <div class="dashboard-container">
-    <div class="dashboard-content">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{ employees.length }}</h3>
-            <p>Total Karyawan</p>
-            <span class="stat-change positive">+{{ newEmployeesThisMonth }} bulan ini</span>
+  <div class="employee-dashboard">
+    <div class="dashboard-header">
+      <h1>Dashboard Karyawan</h1>
+      <p>Selamat datang, {{ userName }}</p>
+      <div class="employee-info">
+        <span class="role-badge">{{ userRole }}</span>
+        <div class="manager-info" v-if="managerInfo.name">
+          <i class="fas fa-user-tie"></i>
+          <span>Manager: {{ managerInfo.name }} ({{ managerInfo.type }})</span>
+        </div>
+      </div>
+    </div>
+
+      <!-- Zoom Meeting Section -->
+      <div class="zoom-section" v-if="isTodayWorshipDay">
+        <div class="section-header">
+          <h2>Renungan Pagi</h2>
+          <div class="zoom-status">
+            <span class="status-badge" :class="zoomTimeStatus.toLowerCase()">{{ zoomTimeStatus }}</span>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-user-check"></i>
+        <div class="zoom-card">
+          <div class="zoom-info">
+            <i class="fab fa-zoom"></i>
+            <div class="zoom-details">
+              <h4>Renungan Pagi Bersama</h4>
+              <p>Bergabunglah dalam sesi renungan pagi</p>
+              <div class="zoom-time">
+                <i class="fas fa-clock"></i>
+                <span>07:00 - 07:30 WIB</span>
+              </div>
+            </div>
           </div>
-          <div class="stat-content">
-            <h3>{{ activeEmployees }}</h3>
-            <p>Karyawan Aktif</p>
-            <span class="stat-change positive">{{ Math.round((activeEmployees/employees.length)*100) || 0 }}% aktif</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-graduation-cap"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{ totalTrainings }}</h3>
-            <p>Total Pelatihan</p>
-            <span class="stat-change">Sertifikasi karyawan</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-money-bill-wave"></i>
-          </div>
-          <div class="stat-content">
-            <h3>Rp {{ formatCurrency(totalSalary) }}</h3>
-            <p>Total Gaji Bulanan</p>
-            <span class="stat-change positive">Termasuk tunjangan</span>
+          <div class="zoom-actions">
+            <button 
+              @click="joinZoomMeeting" 
+              class="btn-zoom"
+              :disabled="zoomTimeStatus !== 'Hadir'"
+            >
+              <i class="fab fa-zoom"></i>
+              {{ zoomTimeStatus === 'Hadir' ? 'Gabung Zoom' : 'Waktu Absensi Ditutup' }}
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="action-section">
+      <!-- Employee Management Section - Only visible to HR -->
+      <div class="action-section" v-if="isHRUser">
         <div class="section-header">
           <h2>Manajemen Karyawan</h2>
           <div class="action-buttons">
@@ -107,150 +109,212 @@
         {{ notificationMessage }}
       </div>
     </div>
-  </div>
 </template>
 
 <script>
-import axios from 'axios';
-// 1. IMPORT KOMPONEN BARU
-import MyLeaveQuotas from '@/components/MyLeaveQuotas.vue';
+import authService from '../services/authService'
+import axios from 'axios'
+import { useGaStore } from '../stores/gaStore'
+import MyLeaveQuotas from './MyLeaveQuotas.vue'
 
 export default {
   name: 'Dashboard',
-  // 2. DAFTARKAN KOMPONEN BARU
   components: {
-    MyLeaveQuotas,
+    MyLeaveQuotas
   },
   data() {
     return {
-      employees: [],
-      apiUrl: 'http://localhost:8000',
+      gaStore: useGaStore(),
+      userName: '',
+      userRole: '',
+      managerInfo: {
+        name: '',
+        type: ''
+      },
       showNotification: false,
       notificationMessage: '',
-      notificationType: 'success',
-    };
+      notificationType: 'success'
+    }
   },
   computed: {
-    activeEmployees() {
-      return this.employees.filter(emp => emp.status === 'active' || !emp.status).length;
+    isTodayWorshipDay() {
+      return this.gaStore.isTodayWorshipDay
     },
-    newEmployeesThisMonth() {
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      return this.employees.filter(emp => {
-        const startDate = new Date(emp.tanggal_mulai_kerja);
-        return startDate.getMonth() === currentMonth && startDate.getFullYear() === currentYear;
-      }).length;
+    zoomTimeStatus() {
+      return this.gaStore.zoomTimeStatus
     },
-    totalTrainings() {
-      return this.employees.reduce((total, emp) => {
-        return total + (emp.trainings ? emp.trainings.length : 0);
-      }, 0);
-    },
-    totalSalary() {
-      return this.employees.reduce((total, emp) => {
-        return total + this.calculateTotalSalary(emp);
-      }, 0);
+    isHRUser() {
+      // Check if user role is HR or has HR permissions
+      return this.userRole === 'HR' || this.userRole === 'HR Manager' || this.userRole === 'Human Resources'
     }
   },
-  mounted() {
-    this.fetchEmployees();
+  async mounted() {
+    await this.loadUserData();
+    await this.loadManagerInfo();
   },
   methods: {
-    async fetchEmployees() {
+    async loadUserData() {
       try {
-        const response = await axios.get(`${this.apiUrl}/api/employees`);
-        this.employees = response.data.data || response.data || [];
+        const userStr = localStorage.getItem('user')
+        if (!userStr || userStr === 'undefined' || userStr === 'null') {
+          console.warn('No user data found in localStorage')
+          this.userName = 'Karyawan'
+          return
+        }
+        
+        const user = JSON.parse(userStr)
+        this.userName = user.nama_lengkap || user.name || user.fullName || 'Karyawan'
+        this.userRole = user.role
       } catch (error) {
-        this.showNotificationMessage('Gagal mengambil data karyawan', 'error');
-        this.employees = [];
+        console.error('Error loading user data:', error)
+        this.userName = 'Karyawan'
       }
     },
-    calculateTotalSalary(employee) {
-      const gaji = parseFloat(employee.gaji_pokok) || 0;
-      const tunjangan = parseFloat(employee.tunjangan_jabatan) || 0;
-      const bonus = parseFloat(employee.bonus) || 0;
-      return gaji + tunjangan + bonus;
+
+    async loadManagerInfo() {
+      try {
+        const managerRole = this.getManagerForRole(this.userRole);
+        this.managerInfo.name = managerRole;
+        this.managerInfo.type = managerRole;
+      } catch (error) {
+        console.error('Error loading manager info:', error)
+      }
     },
-    formatCurrency(amount) {
-      return new Intl.NumberFormat('id-ID').format(amount);
+
+    getManagerForRole(employeeRole) {
+      if (!employeeRole) return 'Atasan';
+      const hierarchy = {
+        'Finance': 'HR Manager',
+        'General Affairs': 'HR Manager',
+        'Office Assistant': 'HR Manager',
+        'Producer': 'Program Manager',
+        'Creative': 'Program Manager',
+        'Production': 'Program Manager',
+        'Editor': 'Program Manager',
+        'Social Media': 'Distribution Manager',
+        'Promotion': 'Distribution Manager',
+        'Graphic Design': 'Distribution Manager',
+        'Hopeline Care': 'Distribution Manager'
+      };
+      return hierarchy[employeeRole] || 'Atasan';
     },
+
+    joinZoomMeeting() {
+      if (this.zoomTimeStatus === 'Hadir') {
+        window.open('https://zoom.us/j/your-meeting-id', '_blank')
+      }
+    },
+
     generateReport() {
-      this.showNotificationMessage('Fitur laporan akan segera tersedia', 'info');
+      this.showNotificationMessage('Fitur laporan akan segera tersedia', 'info')
     },
+
     exportData() {
-      this.showNotificationMessage('Fitur export data akan segera tersedia', 'info');
+      this.showNotificationMessage('Fitur export data akan segera tersedia', 'info')
     },
+
     showNotificationMessage(message, type = 'success') {
-      this.notificationMessage = message;
-      this.notificationType = type;
-      this.showNotification = true;
+      this.notificationMessage = message
+      this.notificationType = type
+      this.showNotification = true
       setTimeout(() => {
-        this.showNotification = false;
-      }, 3000);
+        this.showNotification = false
+      }, 3000)
     }
-  },
+  }
 };
 </script>
 
 <style scoped>
-:root {
-  --primary-color: #2563eb;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --info-color: #06b6d4;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-900: #111827;
-  --shadow: 0 2px 8px 0 rgb(0 0 0 / 0.07);
-  --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.09);
-}
-
-.dashboard-container {
-  width: 100%;
-  min-height: 100vh;
-  background: var(--gray-50);
-}
-.dashboard-content {
-  width: 100%;
-  max-width: 1240px;
+.employee-dashboard {
+  padding: 2rem;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 2rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
 }
 
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2.5rem;
+.dashboard-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.stat-card {
-  background: var(--bg-secondary);
-  border-radius: 14px;
-  padding: 2rem 1.5rem;
-  box-shadow: var(--shadow);
-  border: 1.5px solid var(--border-light);
+.dashboard-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.dashboard-header p {
+  margin: 0 0 1rem 0;
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+.employee-info {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  transition: all 0.3s ease;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.stat-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px) scale(1.01);
+.role-badge {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
-.btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-  padding: 0.7rem 1.5rem;
+.manager-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.action-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-secondary, .btn-primary {
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
   text-decoration: none;
@@ -259,84 +323,209 @@ export default {
   gap: 0.5rem;
   transition: all 0.3s ease;
   cursor: pointer;
+  border: none;
+}
+
+.btn-secondary {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 2px solid #667eea;
 }
 
 .btn-secondary:hover {
-  background: var(--primary-color);
-  color: var(--bg-secondary);
-  border-color: var(--primary-color);
-  transform: translateY(-1px);
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
 }
 
 .quick-actions-card {
-  background: var(--bg-secondary);
-  border-radius: 14px;
-  padding: 1.7rem 1.5rem;
-  box-shadow: var(--shadow);
-  margin-bottom: 2rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  margin-top: 1.5rem;
 }
 
 .quick-actions-card h3 {
-  margin: 0 0 1.3rem 0;
-  font-size: 1.13rem;
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-primary);
 }
+
 .quick-actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
 }
+
 .quick-action-item {
+  background: rgba(102, 126, 234, 0.05);
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
-  border: 1.5px solid var(--gray-100);
-  border-radius: 10px;
   text-decoration: none;
   color: inherit;
-  background: var(--gray-50);
-  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  transition: all 0.3s ease;
   cursor: pointer;
 }
+
 .quick-action-item:hover {
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px) scale(1.01);
-  background: var(--bg-secondary);
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
 }
+
 .quick-action-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--primary-color);
-  color: white;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  color: white;
+  font-size: 1.25rem;
   flex-shrink: 0;
 }
+
 .quick-action-content h4 {
-  margin: 0 0 0.18rem 0;
+  margin: 0 0 0.25rem 0;
+  color: #2d3748;
   font-weight: 600;
-  color: var(--gray-900);
-  font-size: 1.02rem;
+  font-size: 1rem;
 }
+
 .quick-action-content p {
   margin: 0;
-  font-size: 0.93rem;
-  color: var(--gray-600);
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+/* Zoom Section Styles */
+.zoom-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+.zoom-section .section-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.zoom-section .section-header h2 {
+  color: white;
+  font-size: 1.75rem;
+}
+
+.zoom-status .status-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.zoom-status .status-badge.hadir {
+  background: rgba(34, 197, 94, 0.9);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.zoom-status .status-badge.tutup {
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.zoom-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.zoom-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.zoom-info .fab.fa-zoom {
+  font-size: 3rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.zoom-details h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.zoom-details p {
+  margin: 0 0 1rem 0;
+  opacity: 0.9;
+}
+
+.zoom-time {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.btn-zoom {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+}
+
+.btn-zoom:hover:not(:disabled) {
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.btn-zoom:disabled {
+  background: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: not-allowed;
 }
 
 /* Notification */
 .notification {
   position: fixed;
-  top: 22px;
-  right: 22px;
+  top: 20px;
+  right: 20px;
   padding: 1rem 1.5rem;
   border-radius: 8px;
   color: white;
@@ -346,29 +535,73 @@ export default {
   align-items: center;
   gap: 0.5rem;
   animation: slideIn 0.3s ease;
-  min-width: 220px;
-  box-shadow: var(--shadow-lg);
+  min-width: 250px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
-.notification.success { background: var(--success-color); }
-.notification.error { background: var(--warning-color); }
-.notification.info { background: var(--info-color); }
+
+.notification.success {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #f56565, #e53e3e);
+}
+
+.notification.info {
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+}
 
 @keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .dashboard-content { padding: 1.2rem 0.5rem; }
-  .stats-grid { gap: 1rem; }
-  .quick-actions-grid { grid-template-columns: 1fr; }
-  .stat-card { flex-direction: column; align-items: flex-start; }
-  .section-header { flex-direction: column; gap: 0.7rem; align-items: stretch; }
-}
-@media (max-width: 600px) {
-  .dashboard-content { padding: 0.5rem 0.1rem; }
-  .stat-card { padding: 1.2rem 0.8rem; }
-  .quick-actions-card { padding: 1.1rem 0.7rem; }
+@media (max-width: 768px) {
+  .employee-dashboard {
+    padding: 1rem;
+  }
+  
+  .dashboard-header,
+  .action-section,
+  .zoom-section {
+    padding: 1.5rem;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .action-buttons {
+    justify-content: stretch;
+  }
+  
+  .btn-secondary,
+  .btn-primary {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .zoom-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .zoom-info {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 </style>

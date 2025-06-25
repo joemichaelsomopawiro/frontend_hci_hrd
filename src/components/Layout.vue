@@ -43,6 +43,18 @@
             </router-link>
           </li>
           
+          <!-- Morning Reflection - Available for all roles -->
+            <li class="nav-item">
+              <router-link to="/morning-reflection" class="nav-link" @click="closeMobileMenu">
+                <div class="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.66 9.53l-7.07 7.07-4.24-4.24 1.41-1.41 2.83 2.83 5.66-5.66 1.41 1.41zM4 12c0-2.33 1.02-4.42 2.62-5.88L9 8.5v-6H3l2.2 2.2C3.24 6.52 2 9.11 2 12c0 5.19 3.95 9.45 9 9.95v-2.02c-3.94-.49-7-3.86-7-7.93zm18 0c0-5.19-3.95-9.45-9-9.95v2.02c3.94.49 7 3.86 7 7.93 0 2.33-1.02 4.42-2.62 5.88L15 15.5v6h6l-2.2-2.2c1.96-1.82 3.2-4.41 3.2-7.3z"/>
+                  </svg>
+                </div>
+                <span class="nav-text">Renungan Pagi</span>
+              </router-link>
+            </li>
+          
           <!-- HRD Menu - Full Access -->
           <template v-if="isHRD">
             <li class="nav-item has-submenu">
@@ -114,6 +126,30 @@
             </li>
           </template>
           
+          <!-- GA Menu - General Affairs (Only for GA role) -->
+          <template v-if="isGeneralAffairs">
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link" @click.prevent="toggleSubmenu('generalAffairs')">
+                <div class="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </div>
+                <span class="nav-text">General Affairs</span>
+                <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.generalAffairs }">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                  </svg>
+                </div>
+              </a>
+              <ul class="submenu" :class="{ 'submenu-open': submenuOpen.generalAffairs }">
+                <li><router-link to="/ga-dashboard" class="submenu-link" @click="closeMobileMenu">GA Dashboard</router-link></li>
+                <li><router-link to="/ga-attendance" class="submenu-link" @click="closeMobileMenu">Absensi Renungan</router-link></li>
+                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeMobileMenu">Paket Pegawai</router-link></li>
+              </ul>
+            </li>
+          </template>
+
           <!-- Employee Menu - Paket Pegawai Only -->
           <template v-else-if="isEmployee">
             <li class="nav-item has-submenu">
@@ -275,7 +311,8 @@ export default {
       submenuOpen: {
         dataPegawai: false,
         manajemenCuti: false,
-        paketPegawai: false
+        paketPegawai: false,
+        generalAffairs: false
       }
     }
   },
@@ -356,9 +393,12 @@ export default {
     isManager() {
       return ['Program Manager', 'Distribution Manager'].includes(this.userRole)
     },
+    isGeneralAffairs() {
+      return this.userRole === 'General Affairs'
+    },
     isEmployee() {
       const employeeRoles = [
-        'Employee', 'Finance', 'General Affairs', 'Office Assistant',
+        'Employee', 'Finance', 'Office Assistant',
         'Producer', 'Creative', 'Production', 'Editor',
         'Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'
       ]
@@ -402,7 +442,7 @@ export default {
       } else if (this.isManager) {
         return '/'
       } else if (this.isEmployee) {
-        return '/employee-dashboard'
+        return '/'
       }
       return '/'
     },

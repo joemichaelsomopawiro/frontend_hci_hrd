@@ -61,39 +61,63 @@
         this.loading = true;
         this.error = null;
         try {
-          // Panggil API untuk mendapatkan satu objek besar data kuota
-          // Pastikan endpoint ini ada di backend Anda
-          const response = await apiClient.get('/leave-quotas/my-current'); 
+          // Try multiple possible endpoints for leave quotas
+          let response;
+          const endpoints = [
+            '/api/leave-quotas/current',
+            '/leave-quotas/current', 
+            '/api/employee/leave-quotas',
+            '/employee/leave-quotas'
+          ];
           
-          if (response.data.success) {
-            const rawQuota = response.data.data; // Ini adalah objek besar
+          let lastError = null;
+          for (const endpoint of endpoints) {
+            try {
+              response = await apiClient.get(endpoint);
+              break; // If successful, break out of loop
+            } catch (error) {
+              lastError = error;
+              continue; // Try next endpoint
+            }
+          }
+          
+          if (!response) {
+            // If all endpoints failed, show a message that HR needs to set up quotas
+            this.error = "Data jatah cuti belum diatur oleh HR. Silakan hubungi HR untuk mengatur jatah cuti Anda.";
+            this.quotas = [];
+            return;
+          }
+          
+          if (response.data && response.data.success) {
+            const rawQuota = response.data.data;
             
             if (!rawQuota) {
-              this.error = "Data kuota tidak ditemukan untuk akun Anda.";
+              this.error = "Data kuota tidak ditemukan untuk akun Anda. Silakan hubungi HR.";
               this.quotas = [];
               return;
             }
               
-            this.year = rawQuota.year; // Update tahun dari data API
+            this.year = rawQuota.year || new Date().getFullYear();
   
-            // --- INI BAGIAN PENTING: TRANSFORMASI DATA ---
-            // Ubah objek besar menjadi array yang mudah di-loop oleh template
+            // Transform data into array format for template
             this.quotas = [
-              { name: 'Cuti Tahunan',    total: rawQuota.annual_leave_quota,      used: rawQuota.annual_leave_used },
-              { name: 'Cuti Sakit',      total: rawQuota.sick_leave_quota,        used: rawQuota.sick_leave_used },
-              { name: 'Cuti Darurat',    total: rawQuota.emergency_leave_quota,   used: rawQuota.emergency_leave_used },
-              { name: 'Cuti Melahirkan', total: rawQuota.maternity_leave_quota,   used: rawQuota.maternity_leave_used },
-              { name: 'Cuti Ayah',       total: rawQuota.paternity_leave_quota,   used: rawQuota.paternity_leave_used },
-              { name: 'Cuti Menikah',    total: rawQuota.marriage_leave_quota,    used: rawQuota.marriage_leave_used },
-              { name: 'Cuti Duka',       total: rawQuota.bereavement_leave_quota, used: rawQuota.bereavement_leave_used },
-            ];
+              { name: 'Cuti Tahunan',    total: rawQuota.annual_leave_quota || 12,      used: rawQuota.annual_leave_used || 0 },
+              { name: 'Cuti Sakit',      total: rawQuota.sick_leave_quota || 12,        used: rawQuota.sick_leave_used || 0 },
+              { name: 'Cuti Darurat',    total: rawQuota.emergency_leave_quota || 3,   used: rawQuota.emergency_leave_used || 0 },
+              { name: 'Cuti Melahirkan', total: rawQuota.maternity_leave_quota || 90,   used: rawQuota.maternity_leave_used || 0 },
+              { name: 'Cuti Ayah',       total: rawQuota.paternity_leave_quota || 2,   used: rawQuota.paternity_leave_used || 0 },
+              { name: 'Cuti Menikah',    total: rawQuota.marriage_leave_quota || 3,    used: rawQuota.marriage_leave_used || 0 },
+              { name: 'Cuti Duka',       total: rawQuota.bereavement_leave_quota || 3, used: rawQuota.bereavement_leave_used || 0 },
+            ].filter(quota => quota.total > 0); // Only show quotas that have been allocated
   
           } else {
-            this.error = response.data.message;
+            this.error = "Data jatah cuti belum diatur oleh HR. Silakan hubungi HR untuk mengatur jatah cuti Anda.";
+            this.quotas = [];
           }
         } catch (err) {
-          this.error = err.response?.data?.message || 'Gagal mengambil data dari server.';
-          console.error(err);
+          this.error = "Data jatah cuti belum diatur oleh HR. Silakan hubungi HR untuk mengatur jatah cuti Anda.";
+          console.error('Error fetching leave quotas:', err);
+          this.quotas = [];
         } finally {
           this.loading = false;
         }

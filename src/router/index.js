@@ -16,6 +16,11 @@ import Profile from '../components/Profile.vue'
 import Settings from '../components/Settings.vue'
 import EmployeeDashboard from '../components/EmployeeDashboard.vue'
 import EmployeeRequestLeave from '../components/EmployeeRequestLeave.vue'
+import MorningReflection from '../components/MorningReflection.vue'
+
+// GA Components
+import GaDashboard from '../views/GaDashboard.vue'
+import GaAttendance from '../views/GaAttendance.vue'
 
 // Auth Components
 import Login from '../components/auth/Login.vue'
@@ -132,12 +137,7 @@ const routes = [
         name: 'Settings',
         component: Settings
       },
-      // EMPLOYEE DASHBOARD
-      {
-        path: 'employee-dashboard',
-        name: 'EmployeeDashboard',
-        component: EmployeeDashboard
-      },
+
       // EMPLOYEE LEAVE REQUEST
       {
         path: 'employee/request-leave',
@@ -149,6 +149,23 @@ const routes = [
         path: 'manager/approve-leave',
         name: 'ManagerApproveLeave',
         component: PenerimaanPermohonanCuti
+      },
+      // GA ROUTES
+      {
+        path: 'ga-dashboard',
+        name: 'GaDashboard',
+        component: GaDashboard
+      },
+      {
+        path: 'ga-attendance',
+        name: 'GaAttendance',
+        component: MorningReflection
+      },
+      // Morning Reflection - Available for all roles
+      {
+        path: 'morning-reflection',
+        name: 'MorningReflection',
+        component: MorningReflection
       }
     ]
   }
