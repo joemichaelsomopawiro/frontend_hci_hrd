@@ -100,7 +100,7 @@
           <div class="auth-footer">
             <p class="footer-text">
               Belum memiliki akses?
-              <router-link to="/register" class="auth-link">Hubungi Administrator</router-link>
+              <router-link to="/register" class="auth-link">register sekarang</router-link>
             </p>
           </div>
         </form>

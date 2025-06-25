@@ -5,7 +5,13 @@
       <div class="header-content">
         <div class="page-title">
           <h1>Input Jatah Cuti</h1>
-          <p>Kelola dan atur jatah cuti karyawan per tahun (Jatah otomatis dibuat saat menambah pegawai baru)</p>
+          <p>Kelola dan atur jatah cuti karyawan per tahun</p>
+        </div>
+        <div class="header-actions">
+          <button @click="showAddEmployeeModal" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            Tambah Jatah Cuti Pegawai
+          </button>
         </div>
       </div>
     </div>
@@ -34,6 +40,7 @@
         <table class="modern-table">
           <thead>
             <tr>
+              <th>No</th>
               <th>Karyawan</th>
               <th>Tahun</th>
               <th>Cuti Tahunan</th>
@@ -47,7 +54,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="quota in quotas" :key="quota.id" class="table-row">
+            <tr v-for="(quota, index) in quotas" :key="quota.id" class="table-row">
+              <td>{{ index + 1 }}</td>
               <td>
                 <div class="employee-info">
                   <strong>{{ quota.employee?.nama_lengkap || 'N/A' }}</strong>
@@ -151,6 +159,55 @@
         <i class="fas fa-calendar-times"></i>
         <h3>Belum ada data jatah cuti</h3>
         <p>Mulai dengan menambahkan jatah cuti untuk karyawan</p>
+        <button @click="showAddEmployeeModal" class="btn-primary">
+          <i class="fas fa-plus"></i>
+          Tambah Jatah Cuti Pegawai
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Add Employee Without Quota -->
+    <div v-if="showEmployeeModal" class="modal-overlay" @click="closeEmployeeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Pilih Pegawai untuk Ditambahkan Jatah Cuti</h3>
+          <button @click="closeEmployeeModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="loadingEmployeesWithoutQuota" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Memuat data pegawai...</p>
+          </div>
+          <div v-else-if="employeesWithoutQuota.length === 0" class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <h4>Semua Pegawai Sudah Memiliki Jatah Cuti</h4>
+            <p>Tidak ada pegawai yang belum memiliki jatah cuti untuk tahun {{ currentYear }}</p>
+          </div>
+          <div v-else class="employee-list">
+            <div class="employee-item" 
+                 v-for="employee in employeesWithoutQuota" 
+                 :key="employee.id"
+                 @click="selectEmployeeForQuota(employee)"
+                 :class="{ 'selectable-employee': true }">
+              <div class="employee-avatar">
+                <div class="avatar-placeholder">
+                  {{ getInitials(employee.nama_lengkap) }}
+                </div>
+              </div>
+              <div class="employee-details">
+                <h4>{{ employee.nama_lengkap }}</h4>
+                <p>{{ employee.jabatan_saat_ini }}</p>
+                <small>{{ employee.email }}</small>
+              </div>
+              <div class="select-icon">
+                <i class="fas fa-plus-circle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeEmployeeModal" class="btn-secondary">Tutup</button>
+        </div>
       </div>
     </div>
 
@@ -164,7 +221,7 @@
         <div class="modal-body">
           <div class="form-group">
             <label>Karyawan *</label>
-            <select v-model="form.employee_id" class="form-input" required>
+            <select v-model="form.employee_id" class="form-input" required :disabled="editingQuota">
               <option value="">Pilih karyawan...</option>
               <option v-for="emp in employees" :key="emp.id" :value="emp.id">
                 {{ emp.nama_lengkap }}
@@ -173,7 +230,7 @@
           </div>
           <div class="form-group">
             <label>Tahun *</label>
-            <select v-model="form.year" class="form-input" required>
+            <select v-model="form.year" class="form-input" required :disabled="editingQuota">
               <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
             </select>
           </div>
@@ -238,12 +295,16 @@ export default {
     return {
       quotas: [],
       employees: [],
+      employeesWithoutQuota: [],
       showModal: false,
+      showEmployeeModal: false,
+      loadingEmployeesWithoutQuota: false,
       editingQuota: null,
       isSubmitting: false,
       showNotification: false,
       notificationMessage: '',
       notificationType: 'success',
+      currentYear: new Date().getFullYear(),
       filters: {
         year: new Date().getFullYear(),
         employee_id: ''
@@ -259,7 +320,7 @@ export default {
         marriage_leave_quota: 3,
         bereavement_leave_quota: 3
       },
-      apiUrl: 'http://localhost:8000'
+      apiUrl: 'http://127.0.0.1:8000'
     }
   },
   computed: {
@@ -281,6 +342,24 @@ export default {
         this.showNotificationMessage('Gagal memuat data karyawan', 'error')
       }
     },
+    
+    async loadEmployeesWithoutQuota() {
+      this.loadingEmployeesWithoutQuota = true
+      try {
+        const url = `/leave-quotas/employees-without-quota?year=${this.currentYear}`
+        console.log('Calling API:', url)
+        console.log('Full URL:', apiClient.defaults.baseURL + url)
+        const response = await apiClient.get(url)
+        this.employeesWithoutQuota = response.data.data || []
+      } catch (error) {
+        console.error('Error loading employees without quota:', error)
+        this.showNotificationMessage('Gagal memuat data pegawai tanpa jatah cuti', 'error')
+        this.employeesWithoutQuota = []
+      } finally {
+        this.loadingEmployeesWithoutQuota = false
+      }
+    },
+    
     async loadQuotas() {
       try {
         const params = new URLSearchParams()
@@ -292,58 +371,79 @@ export default {
         this.showNotificationMessage('Gagal memuat data jatah cuti', 'error')
       }
     },
+    
+    async showAddEmployeeModal() {
+      this.showEmployeeModal = true
+      await this.loadEmployeesWithoutQuota()
+    },
+    
+    closeEmployeeModal() {
+      this.showEmployeeModal = false
+      this.employeesWithoutQuota = []
+    },
+    
+    selectEmployeeForQuota(employee) {
+      this.form.employee_id = employee.id
+      this.form.year = this.currentYear
+      this.editingQuota = null
+      this.closeEmployeeModal()
+      this.showModal = true
+    },
+    
+    getInitials(name) {
+      if (!name) return '??'
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    },
+    
     validateForm() {
-      // Validate required fields
       if (!this.form.employee_id || this.form.employee_id === '') {
-        this.showNotificationMessage('Karyawan harus dipilih', 'error');
-        return false;
+        this.showNotificationMessage('Karyawan harus dipilih', 'error')
+        return false
       }
 
       if (!this.form.year || this.form.year === '') {
-        this.showNotificationMessage('Tahun harus dipilih', 'error');
-        return false;
+        this.showNotificationMessage('Tahun harus dipilih', 'error')
+        return false
       }
 
-      // Validate quota values
       const quotaFields = [
         'annual_leave_quota',
         'sick_leave_quota',
         'emergency_leave_quota'
-      ];
+      ]
 
       for (let field of quotaFields) {
-        const value = parseInt(this.form[field]);
+        const value = parseInt(this.form[field])
         if (isNaN(value) || value < 0) {
-          this.showNotificationMessage(`${field.replace(/_/g, ' ')} harus berupa angka positif`, 'error');
-          return false;
+          this.showNotificationMessage(`${field.replace(/_/g, ' ')} harus berupa angka positif`, 'error')
+          return false
         }
       }
 
-      // Validate optional quota fields
       const optionalFields = [
         'maternity_leave_quota',
         'paternity_leave_quota',
         'marriage_leave_quota',
         'bereavement_leave_quota'
-      ];
+      ]
 
       for (let field of optionalFields) {
-        const value = parseInt(this.form[field]);
+        const value = parseInt(this.form[field])
         if (this.form[field] !== '' && (isNaN(value) || value < 0)) {
-          this.showNotificationMessage(`${field.replace(/_/g, ' ')} harus berupa angka positif`, 'error');
-          return false;
+          this.showNotificationMessage(`${field.replace(/_/g, ' ')} harus berupa angka positif`, 'error')
+          return false
         }
       }
 
-      return true;
+      return true
     },
 
     async saveQuota() {
       if (!this.validateForm()) {
-        return;
+        return
       }
 
-      this.isSubmitting = true;
+      this.isSubmitting = true
 
       const formData = {
         employee_id: parseInt(this.form.employee_id),
@@ -355,31 +455,28 @@ export default {
         paternity_leave_quota: parseInt(this.form.paternity_leave_quota) || 0,
         marriage_leave_quota: parseInt(this.form.marriage_leave_quota) || 0,
         bereavement_leave_quota: parseInt(this.form.bereavement_leave_quota) || 0
-      };
+      }
 
       try {
         if (this.editingQuota) {
-          await apiClient.put(`/leave-quotas/${this.editingQuota.id}`, formData);
-          this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success');
+          await apiClient.put(`/leave-quotas/${this.editingQuota.id}`, formData)
+          this.showNotificationMessage('Jatah cuti berhasil diperbarui', 'success')
         } else {
-            // This part of the logic seems to prevent adding new quotas manually.
-            // If this is intended, it's fine. Otherwise, this is where the create logic would go.
-           this.showNotificationMessage('Tidak dapat menambah jatah cuti secara manual. Jatah otomatis dibuat saat menambah pegawai baru.', 'error');
-           this.isSubmitting = false;
-           return;
+          await apiClient.post('/leave-quotas', formData)
+          this.showNotificationMessage('Jatah cuti berhasil ditambahkan', 'success')
         }
 
-        this.closeModal();
-        this.loadQuotas();
+        this.closeModal()
+        this.loadQuotas()
       } catch (error) {
         if (error.response && error.response.data) {
-            const message = error.response.data.message || 'Gagal menyimpan jatah cuti';
-            this.showNotificationMessage(message, 'error');
+          const message = error.response.data.message || 'Gagal menyimpan jatah cuti'
+          this.showNotificationMessage(message, 'error')
         } else {
-            this.showNotificationMessage('Terjadi kesalahan jaringan', 'error');
+          this.showNotificationMessage('Terjadi kesalahan jaringan', 'error')
         }
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     },
     async deleteQuota(id) {
@@ -392,6 +489,7 @@ export default {
         this.showNotificationMessage('Gagal menghapus jatah cuti', 'error')
       }
     },
+    
     editQuota(quota) {
       this.editingQuota = quota
       this.form = {
@@ -407,6 +505,7 @@ export default {
       }
       this.showModal = true
     },
+    
     closeModal() {
       this.showModal = false
       this.editingQuota = null
@@ -422,9 +521,11 @@ export default {
         bereavement_leave_quota: 3
       }
     },
+    
     getQuotaPercentage(used, total) {
       return total > 0 ? Math.min((used / total) * 100, 100) : 0
     },
+    
     showNotificationMessage(message, type) {
       this.notificationMessage = message
       this.notificationType = type
@@ -1291,5 +1392,111 @@ export default {
   .notification i {
     font-size: 0.65rem;
   }
+}
+
+.employee-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.employee-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  transition: var(--transition);
+}
+
+.selectable-employee {
+  cursor: pointer;
+}
+
+.selectable-employee:hover {
+  border-color: var(--primary-color);
+  background-color: var(--primary-bg);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.employee-avatar {
+  margin-right: 16px;
+}
+
+.avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.employee-details {
+  flex: 1;
+}
+
+.employee-details h4 {
+  margin: 0 0 4px 0;
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
+.employee-details p {
+  margin: 0 0 2px 0;
+  color: var(--gray-600);
+  font-size: 14px;
+}
+
+.employee-details small {
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.select-icon {
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.selectable-employee:hover .select-icon {
+  color: var(--primary-dark);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:disabled {
+  background: var(--gray-400);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 </style>

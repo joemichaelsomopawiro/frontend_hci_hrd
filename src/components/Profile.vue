@@ -369,13 +369,24 @@ export default {
         if (result.success) {
           alert('Foto profil berhasil diubah!')
           
-          // Trigger storage event untuk update layout
+          // Update localStorage dengan data terbaru
+          localStorage.setItem('user', JSON.stringify(result.data))
+          
+          // Trigger storage event untuk update layout dan komponen lain
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'user',
             newValue: JSON.stringify(result.data)
           }))
           
+          // Force update komponen ini
           this.$forceUpdate()
+          
+          // Refresh user data untuk memastikan sinkronisasi
+          await this.refreshUserData()
+          
+          // Emit event untuk komponen parent jika ada
+          this.$emit('profile-updated', result.data)
+          
         } else {
           alert(result.message || 'Gagal mengunggah foto profil')
         }
@@ -402,13 +413,24 @@ export default {
         if (result.success) {
           alert('Foto profil berhasil dihapus!')
           
-          // Trigger storage event untuk update layout
+          // Update localStorage dengan data terbaru
+          localStorage.setItem('user', JSON.stringify(result.data))
+          
+          // Trigger storage event untuk update layout dan komponen lain
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'user',
             newValue: JSON.stringify(result.data)
           }))
           
+          // Force update komponen ini
           this.$forceUpdate()
+          
+          // Refresh user data untuk memastikan sinkronisasi
+          await this.refreshUserData()
+          
+          // Emit event untuk komponen parent jika ada
+          this.$emit('profile-updated', result.data)
+          
         } else {
           alert(result.message || 'Gagal menghapus foto profil')
         }

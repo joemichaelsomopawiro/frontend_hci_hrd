@@ -166,7 +166,7 @@ export default {
     const fetchEmployees = async () => {
       try {
         loading.value = true
-        const response = await axios.get('http://localhost:8000/api/employees')
+        const response = await axios.get('http://127.0.0.1:8000/api/employees')
         employees.value = response.data.data || response.data
       } catch (err) {
         console.error('Error fetching employees:', err)

@@ -93,7 +93,7 @@
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
                 <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeMobileMenu">Input Jatah Cuti</router-link></li>
                 <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
-                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Cuti Bawahan</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Riwayat Permohonan Cuti</router-link></li>
                 <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
                 <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeMobileMenu">Rekapitulasi Jam Kerja</router-link></li>
                 <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
@@ -118,8 +118,8 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
-                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Cuti Bawahan</router-link></li>
-                <li><router-link to="/manager/approve-leave" class="submenu-link" @click="closeMobileMenu">Approve Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Riwayat Permohonan Cuti</router-link></li>
                 <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
                 <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
               </ul>
@@ -159,7 +159,7 @@
                     <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                   </svg>
                 </div>
-                <span class="nav-text">Paket Pegawai</span>
+                <span class="nav-text">Permohonan Cuti</span>
                 <div class="nav-arrow" :class="{ 'nav-arrow-open': submenuOpen.paketPegawai }">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>

@@ -125,7 +125,16 @@ const routes = [
         name: 'InputJatahCuti',
         component: InputJatahCuti
       },
-      {        path: 'cuti/permohonan',        name: 'PenerimaanPermohonanCuti',        component: PenerimaanPermohonanCuti      },      {        path: 'cuti/bawahan',        name: 'CutiBawahan',        component: ManagerApproveLeave      },
+      {
+        path: 'cuti/permohonan',
+        name: 'PenerimaanPermohonanCuti',
+        component: PenerimaanPermohonanCuti
+      },
+      {
+        path: 'cuti/bawahan',
+        name: 'RiwayatPermohonanCuti',
+        component: ManagerApproveLeave
+      },
       // USER PROFILE & SETTINGS
       {
         path: 'profile',
@@ -148,7 +157,7 @@ const routes = [
       {
         path: 'manager/approve-leave',
         name: 'ManagerApproveLeave',
-        component: PenerimaanPermohonanCuti
+        component: ManagerApproveLeave
       },
       // GA ROUTES
       {
