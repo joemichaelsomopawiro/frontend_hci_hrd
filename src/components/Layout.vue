@@ -33,7 +33,7 @@
         <ul class="nav-list">
           <!-- Dashboard - Available for all roles -->
           <li class="nav-item">
-            <router-link :to="getDashboardRoute()" class="nav-link" @click="closeMobileMenu">
+            <router-link :to="getDashboardRoute()" class="nav-link" @click="closeAllDropdowns">
               <div class="nav-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
@@ -45,7 +45,7 @@
           
           <!-- Morning Reflection - Available for all roles -->
             <li class="nav-item">
-              <router-link to="/morning-reflection" class="nav-link" @click="closeMobileMenu">
+              <router-link to="/morning-reflection" class="nav-link" @click="closeAllDropdowns">
                 <div class="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.66 9.53l-7.07 7.07-4.24-4.24 1.41-1.41 2.83 2.83 5.66-5.66 1.41 1.41zM4 12c0-2.33 1.02-4.42 2.62-5.88L9 8.5v-6H3l2.2 2.2C3.24 6.52 2 9.11 2 12c0 5.19 3.95 9.45 9 9.95v-2.02c-3.94-.49-7-3.86-7-7.93zm18 0c0-5.19-3.95-9.45-9-9.95v2.02c3.94.49 7 3.86 7 7.93 0 2.33-1.02 4.42-2.62 5.88L15 15.5v6h6l-2.2-2.2c1.96-1.82 3.2-4.41 3.2-7.3z"/>
@@ -54,6 +54,16 @@
                 <span class="nav-text">Renungan Pagi</span>
               </router-link>
             </li>
+          
+          <!-- Office Attendance - Available for all roles -->
+          <li class="nav-item">
+            <router-link to="/absensi-kantor" class="nav-link" :class="{ 'active': $route.name === 'AttendanceOffice' }" @click="closeMobileMenu">
+              <div class="nav-icon">
+                <i class="fas fa-building"></i>
+              </div>
+              <span class="nav-text">Absensi Kantor</span>
+            </router-link>
+          </li>
           
           <!-- HRD Menu - Full Access -->
           <template v-if="isHRD">
@@ -72,8 +82,8 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.dataPegawai }">
-                <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
-                <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai</router-link></li>
+                <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeAllDropdowns">Lihat Data Pegawai</router-link></li>
+                <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeAllDropdowns">Tambah Pegawai</router-link></li>
               </ul>
             </li>
             <li class="nav-item has-submenu">
@@ -91,12 +101,12 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
-                <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeMobileMenu">Input Jatah Cuti</router-link></li>
-                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
-                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Riwayat Permohonan Cuti</router-link></li>
-                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
-                <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeMobileMenu">Rekapitulasi Jam Kerja</router-link></li>
-                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
+                <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeAllDropdowns">Input Jatah Cuti</router-link></li>
+                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeAllDropdowns">Penerimaan Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeAllDropdowns">Riwayat Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeAllDropdowns">Absensi</router-link></li>
+                <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeAllDropdowns">Rekapitulasi Jam Kerja</router-link></li>
+                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeAllDropdowns">Dashboard Cuti & Absensi</router-link></li>
               </ul>
             </li>
           </template>
@@ -118,10 +128,10 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
-                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
-                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Riwayat Permohonan Cuti</router-link></li>
-                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
-                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
+                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeAllDropdowns">Penerimaan Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeAllDropdowns">Riwayat Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeAllDropdowns">Absensi</router-link></li>
+                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeAllDropdowns">Dashboard Cuti & Absensi</router-link></li>
               </ul>
             </li>
           </template>
@@ -143,9 +153,9 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.generalAffairs }">
-                <li><router-link to="/ga-dashboard" class="submenu-link" @click="closeMobileMenu">GA Dashboard</router-link></li>
-                <li><router-link to="/ga-attendance" class="submenu-link" @click="closeMobileMenu">Absensi Renungan</router-link></li>
-                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeMobileMenu">Paket Pegawai</router-link></li>
+                <li><router-link to="/ga-dashboard" class="submenu-link" @click="closeAllDropdowns">GA Dashboard</router-link></li>
+                <li><router-link to="/ga-attendance" class="submenu-link" @click="closeAllDropdowns">Absensi Renungan</router-link></li>
+                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeAllDropdowns">Paket Pegawai</router-link></li>
               </ul>
             </li>
           </template>
@@ -167,8 +177,8 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.paketPegawai }">
-                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeMobileMenu">Permohonan Cuti</router-link></li>
-                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Tampilan Absensi</router-link></li>
+                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeAllDropdowns">Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeAllDropdowns">Tampilan Absensi</router-link></li>
               </ul>
             </li>
           </template>
@@ -190,7 +200,13 @@
           </div>
         </div>
         <button class="logout-btn" @click="handleLogout">
-          <span class="nav-icon">🚪</span>
+          <span class="nav-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16,17 21,12 16,7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </span>
           <span class="nav-text">Logout</span>
         </button>
       </div>
@@ -229,9 +245,63 @@
               </svg>
             </button>
             
-            <button class="notification-btn">
+            <button v-if="canViewNotifications" class="notification-btn" @click="toggleNotificationDropdown" ref="notificationBtn">
               <span class="notification-icon">🔔</span>
-              <span class="notification-badge">3</span>
+              <span v-if="notificationCount > 0" class="notification-badge">{{ notificationCount }}</span>
+              
+              <!-- Notification Dropdown -->
+              <div class="notification-dropdown" :class="{ 'notification-dropdown-open': isNotificationDropdownOpen }">
+                <div class="notification-header">
+                  <h4>Notifikasi Permohonan Cuti</h4>
+                  <span class="notification-count">{{ notificationCount }} permohonan baru</span>
+                </div>
+                
+                <div v-if="loading" class="notification-loading">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <span>Memuat notifikasi...</span>
+                </div>
+                
+                <div v-else-if="notifications.length === 0" class="notification-empty">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Tidak ada permohonan cuti baru</span>
+                </div>
+                
+                <div v-else class="notification-list">
+                  <div 
+                    v-for="notification in notifications" 
+                    :key="notification.id" 
+                    class="notification-item"
+                    @click="handleNotificationClick(notification)"
+                  >
+                    <div class="notification-avatar">
+                      <span>{{ getInitials(notification.employee_name) }}</span>
+                    </div>
+                    <div class="notification-content">
+                      <div class="notification-title">
+                        {{ notification.employee_name }}
+                      </div>
+                      <div class="notification-message">
+                        Mengajukan {{ getLeaveTypeText(notification.leave_type) }}
+                      </div>
+                      <div class="notification-date">
+                        {{ formatDate(notification.start_date) }} - {{ formatDate(notification.end_date) }}
+                      </div>
+                      <div class="notification-time">
+                        {{ getTimeAgo(notification.created_at) }}
+                      </div>
+                    </div>
+                    <div class="notification-status">
+                      <span class="status-badge pending">Pending</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-if="notifications.length > 0" class="notification-footer">
+                  <button @click="viewAllRequests" class="btn-view-all">
+                    Lihat Semua Permohonan
+                  </button>
+                </div>
+              </div>
             </button>
             <div class="user-menu" @click="toggleUserDropdown" ref="userMenu">
               <div class="user-avatar-small">
@@ -241,7 +311,7 @@
                      class="avatar-image-small" />
                 <span v-else>👤</span>
               </div>
-              <span class="welcome-text">Selamat datang, {{ userName }}</span>
+              <span class="welcome-text">{{ userName }}</span>
               <div class="dropdown-arrow" :class="{ 'dropdown-arrow-open': isUserDropdownOpen }">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
@@ -279,7 +349,13 @@
                   </li>
                   <li>
                     <a href="#" @click.prevent="handleLogout" class="dropdown-item logout-item">
-                      <span class="dropdown-icon">🚪</span>
+                      <span class="dropdown-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                          <polyline points="16,17 21,12 16,7"/>
+                          <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                      </span>
                       <span>Logout</span>
                     </a>
                   </li>
@@ -307,13 +383,17 @@ export default {
     return {
       isMobileMenuOpen: false,
       isUserDropdownOpen: false,
+      isNotificationDropdownOpen: false,
       isDarkMode: false,
       submenuOpen: {
         dataPegawai: false,
         manajemenCuti: false,
         paketPegawai: false,
         generalAffairs: false
-      }
+      },
+      notifications: [],
+      loading: false,
+      notificationInterval: null
     }
   },
   computed: {
@@ -330,6 +410,7 @@ export default {
         'LeaveDashboard': 'Dashboard Cuti',
         'InputJatahCuti': 'Input Jatah Cuti',
         'PenerimaanPermohonanCuti': 'Penerimaan Permohonan Cuti',
+        'AttendanceOffice': 'Absensi Kantor',
         'Profile': 'Profil Pengguna',
         'Settings': 'Pengaturan'
       }
@@ -403,6 +484,12 @@ export default {
         'Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'
       ]
       return employeeRoles.includes(this.userRole)
+    },
+    notificationCount() {
+      return this.notifications.length
+    },
+    canViewNotifications() {
+      return this.isHRD || this.isManager
     }
   },
   methods: {
@@ -421,16 +508,21 @@ export default {
     closeUserDropdown() {
       this.isUserDropdownOpen = false
     },
+    closeAllDropdowns() {
+      this.isUserDropdownOpen = false
+      this.isNotificationDropdownOpen = false
+      this.isMobileMenuOpen = false
+    },
     viewProfile() {
-      this.closeUserDropdown()
+      this.closeAllDropdowns()
       this.$router.push('/profile')
     },
     openSettings() {
-      this.closeUserDropdown()
+      this.closeAllDropdowns()
       this.$router.push('/settings')
     },
     async handleLogout() {
-      this.closeUserDropdown()
+      this.closeAllDropdowns()
       if (confirm('Apakah Anda yakin ingin keluar?')) {
         await authService.logout()
         this.$router.push('/login')
@@ -477,6 +569,107 @@ export default {
       } catch (error) {
         console.warn('Failed to refresh user data:', error)
       }
+    },
+    toggleNotificationDropdown() {
+      if (!this.canViewNotifications) return
+      this.isNotificationDropdownOpen = !this.isNotificationDropdownOpen
+      if (this.isNotificationDropdownOpen) {
+        this.fetchNotifications()
+      }
+    },
+    closeNotificationDropdown() {
+      this.isNotificationDropdownOpen = false
+    },
+    async fetchNotifications() {
+      if (!this.canViewNotifications) return
+      
+      this.loading = true
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/leave-requests?status=pending', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          this.notifications = data.data || []
+        } else {
+          console.error('Failed to fetch notifications')
+          this.notifications = []
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+        this.notifications = []
+      } finally {
+        this.loading = false
+      }
+    },
+    handleNotificationClick(notification) {
+      this.closeAllDropdowns()
+      this.$router.push('/cuti/permohonan')
+    },
+    viewAllRequests() {
+      this.closeAllDropdowns()
+      this.$router.push('/cuti/permohonan')
+    },
+    getInitials(name) {
+      if (!name) return '?'
+      return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2)
+    },
+    getLeaveTypeText(type) {
+      const types = {
+        'annual': 'Cuti Tahunan',
+        'sick': 'Cuti Sakit',
+        'emergency': 'Cuti Darurat',
+        'maternity': 'Cuti Melahirkan',
+        'paternity': 'Cuti Ayah'
+      }
+      return types[type] || 'Cuti'
+    },
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    },
+    getTimeAgo(dateString) {
+      if (!dateString) return ''
+      const now = new Date()
+      const date = new Date(dateString)
+      const diffInMinutes = Math.floor((now - date) / (1000 * 60))
+      
+      if (diffInMinutes < 1) return 'Baru saja'
+      if (diffInMinutes < 60) return `${diffInMinutes} menit yang lalu`
+      
+      const diffInHours = Math.floor(diffInMinutes / 60)
+      if (diffInHours < 24) return `${diffInHours} jam yang lalu`
+      
+      const diffInDays = Math.floor(diffInHours / 24)
+      if (diffInDays < 7) return `${diffInDays} hari yang lalu`
+      
+      return this.formatDate(dateString)
+    },
+    startNotificationPolling() {
+      if (!this.canViewNotifications) return
+      
+      // Fetch immediately
+      this.fetchNotifications()
+      
+      // Then fetch every 30 seconds
+      this.notificationInterval = setInterval(() => {
+        this.fetchNotifications()
+      }, 30000)
+    },
+    stopNotificationPolling() {
+      if (this.notificationInterval) {
+        clearInterval(this.notificationInterval)
+        this.notificationInterval = null
+      }
     }
   },
   async mounted() {
@@ -485,6 +678,9 @@ export default {
     
     // Refresh user data saat komponen dimount
     await this.refreshUserData()
+    
+    // Start notification polling for HR and Manager
+    this.startNotificationPolling()
     
     // Listen for window resize
     window.addEventListener('resize', () => {
@@ -498,6 +694,13 @@ export default {
       if (this.$refs.userMenu && !this.$refs.userMenu.contains(event.target)) {
         this.isUserDropdownOpen = false
       }
+      if (this.$refs.notificationBtn && !this.$refs.notificationBtn.contains(event.target)) {
+        this.isNotificationDropdownOpen = false
+      }
+      // Close mobile menu when clicking outside on mobile
+      if (this.isMobileMenuOpen && !event.target.closest('.sidebar')) {
+        this.isMobileMenuOpen = false
+      }
     })
     
     // Listen for storage changes to update user data
@@ -506,6 +709,9 @@ export default {
   beforeUnmount() {
     // Clean up event listeners
     window.removeEventListener('storage', this.handleStorageChange)
+    
+    // Stop notification polling
+    this.stopNotificationPolling()
   }
 }
 </script>
@@ -947,6 +1153,185 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Notification Dropdown Styles */
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-secondary, #ffffff);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 380px;
+  max-width: 420px;
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  max-height: 500px;
+}
+
+.notification-dropdown-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.notification-header {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.notification-count {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.notification-loading,
+.notification-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.notification-loading i,
+.notification-empty i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.notification-loading span,
+.notification-empty span {
+  font-size: 0.875rem;
+}
+
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.notification-message {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+
+.notification-date {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-bottom: 0.125rem;
+}
+
+.notification-time {
+  color: #cbd5e1;
+  font-size: 0.7rem;
+}
+
+.notification-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.notification-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f8fafc;
+}
+
+.btn-view-all {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view-all:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .user-menu {
@@ -1089,6 +1474,19 @@ export default {
   font-size: 1rem;
   width: 20px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-icon svg {
+  transition: all 0.3s ease;
+  stroke: currentColor;
+}
+
+.dropdown-item:hover .dropdown-icon svg {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .logout-item {
@@ -1096,11 +1494,24 @@ export default {
   border-top: 1px solid #e5e7eb;
   margin-top: 0.5rem;
   padding-top: 1rem;
+  position: relative;
 }
 
 .logout-item:hover {
-  background-color: #fef2f2;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   color: #dc2626;
+  box-shadow: inset 0 1px 3px rgba(220, 38, 38, 0.1);
+}
+
+.logout-item .dropdown-icon svg {
+  stroke: #dc2626;
+  filter: drop-shadow(0 1px 2px rgba(220, 38, 38, 0.2));
+}
+
+.logout-item:hover .dropdown-icon svg {
+  transform: scale(1.15) rotate(-5deg);
+  filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.3));
+  stroke: #b91c1c;
 }
 
 /* Desktop Styles */
@@ -1311,6 +1722,59 @@ export default {
   background-color: var(--bg-primary);
 }
 
+/* Dark Mode Notification Styles */
+.dark-mode .notification-dropdown {
+  background: var(--bg-secondary, #1f2937);
+  border: 1px solid var(--border-color, #374151);
+}
+
+.dark-mode .notification-header {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  border-bottom-color: #4a5568;
+}
+
+.dark-mode .notification-header h4 {
+  color: #e5e7eb;
+}
+
+.dark-mode .notification-count {
+  color: #a0aec0;
+}
+
+.dark-mode .notification-loading,
+.dark-mode .notification-empty {
+  color: #a0aec0;
+}
+
+.dark-mode .notification-item:hover {
+  background-color: #374151;
+}
+
+.dark-mode .notification-item {
+  border-bottom-color: #374151;
+}
+
+.dark-mode .notification-title {
+  color: #e5e7eb;
+}
+
+.dark-mode .notification-message {
+  color: #a0aec0;
+}
+
+.dark-mode .notification-date {
+  color: #6b7280;
+}
+
+.dark-mode .notification-time {
+  color: #4b5563;
+}
+
+.dark-mode .notification-footer {
+  background-color: #374151;
+  border-top-color: #4a5568;
+}
+
 @media (max-width: 480px) {
   .sidebar {
     width: 100vw;
@@ -1334,6 +1798,24 @@ export default {
 
   .main-content {
     padding: 70px 0.75rem 0.75rem 0.75rem;
+  }
+  
+  .notification-dropdown {
+    min-width: 320px;
+    max-width: 350px;
+    right: -1rem;
+  }
+  
+  .notification-item {
+    padding: 0.75rem 1rem;
+  }
+  
+  .notification-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .notification-footer {
+    padding: 0.75rem 1rem;
   }
 }
 </style>

@@ -35,56 +35,23 @@
         <div class="profile-info">
           <div class="info-group">
             <label>Nama Lengkap</label>
-            <div class="info-field" v-if="!isEditing">
+            <div class="info-field">
               <span>{{ userProfile.name }}</span>
-              <button class="edit-btn" @click="startEditing">
-                <span class="icon">✏️</span>
-              </button>
             </div>
-            <input 
-              v-else
-              v-model="editForm.name" 
-              type="text" 
-              class="edit-input"
-              placeholder="Masukkan nama lengkap"
-              required
-            />
           </div>
 
           <div class="info-group">
             <label>Email</label>
-            <div class="info-field" v-if="!isEditing">
+            <div class="info-field">
               <span>{{ userProfile.email }}</span>
-              <button class="edit-btn" @click="startEditing">
-                <span class="icon">✏️</span>
-              </button>
             </div>
-            <input 
-              v-else
-              v-model="editForm.email" 
-              type="email" 
-              class="edit-input"
-              placeholder="Masukkan email"
-              required
-            />
           </div>
 
           <div class="info-group">
             <label>Nomor Telepon</label>
-            <div class="info-field" v-if="!isEditing">
+            <div class="info-field">
               <span>{{ userProfile.phone }}</span>
-              <button class="edit-btn" @click="startEditing">
-                <span class="icon">✏️</span>
-              </button>
             </div>
-            <input 
-              v-else
-              v-model="editForm.phone" 
-              type="tel" 
-              class="edit-input"
-              placeholder="Masukkan nomor telepon"
-              required
-            />
           </div>
 
           <div class="info-group">
@@ -94,23 +61,7 @@
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="action-buttons" v-if="isEditing">
-            <button class="save-btn" @click="saveProfile" :disabled="loading">
-              <span v-if="loading" class="loading-spinner">⏳</span>
-              <span v-else class="icon">💾</span>
-              {{ loading ? 'Menyimpan...' : 'Simpan' }}
-            </button>
-            <button class="cancel-btn" @click="cancelEditing">
-              <span class="icon">❌</span>
-              Batal
-            </button>
-          </div>
 
-          <!-- Error Messages -->
-          <div v-if="errors.general" class="error-message">
-            {{ errors.general }}
-          </div>
         </div>
       </div>
 
@@ -204,18 +155,10 @@ export default {
   name: 'Profile',
   data() {
     return {
-      isEditing: false,
-      loading: false,
       uploading: false,
       passwordLoading: false,
       showChangePassword: false,
-      errors: {},
       passwordErrors: {},
-      editForm: {
-        name: '',
-        email: '',
-        phone: ''
-      },
       passwordForm: {
         currentPassword: '',
         newPassword: '',
@@ -290,56 +233,7 @@ export default {
       }
     },
     
-    startEditing() {
-      this.isEditing = true
-      this.errors = {}
-      this.editForm = {
-        name: this.userProfile.name || '',
-        email: this.userProfile.email || '',
-        phone: this.userProfile.phone || ''
-      }
-    },
-    
-    cancelEditing() {
-      this.isEditing = false
-      this.errors = {}
-      this.editForm = {
-        name: '',
-        email: '',
-        phone: ''
-      }
-    },
-    
-    async saveProfile() {
-      this.loading = true
-      this.errors = {}
-      
-      try {
-        const result = await authService.updateProfile({
-          name: this.editForm.name,
-          email: this.editForm.email,
-          phone: this.editForm.phone
-        })
-        
-        if (result.success) {
-          this.isEditing = false
-          alert('Profil berhasil diperbarui!')
-          
-          // Trigger storage event untuk update layout
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'user',
-            newValue: JSON.stringify(result.data)
-          }))
-        } else {
-          this.errors.general = result.message || 'Gagal memperbarui profil'
-        }
-      } catch (error) {
-        console.error('Error updating profile:', error)
-        this.errors.general = 'Gagal memperbarui profil. Silakan coba lagi.'
-      } finally {
-        this.loading = false
-      }
-    },
+
     
     changeAvatar() {
       this.$refs.fileInput.click()
@@ -645,84 +539,7 @@ export default {
   font-weight: 500;
 }
 
-.edit-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
 
-.edit-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-}
-
-.edit-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.edit-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.save-btn, .cancel-btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-}
-
-.save-btn {
-  background: #3b82f6;
-  color: white;
-}
-
-.save-btn:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.save-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.cancel-btn {
-  background: #f3f4f6;
-  color: var(--text-primary);
-  border: 1px solid #d1d5db;
-}
-
-.cancel-btn:hover {
-  background: #e5e7eb;
-}
-
-.error-message {
-  color: #dc2626;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-}
 
 .security-card h3 {
   margin-bottom: 1.5rem;
@@ -1025,9 +842,7 @@ export default {
     gap: 1rem;
   }
   
-  .action-buttons {
-    flex-direction: column;
-  }
+
   
   .modal-actions {
     flex-direction: column;
