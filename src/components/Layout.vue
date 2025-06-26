@@ -229,9 +229,63 @@
               </svg>
             </button>
             
-            <button class="notification-btn">
+            <button v-if="canViewNotifications" class="notification-btn" @click="toggleNotificationDropdown" ref="notificationBtn">
               <span class="notification-icon">🔔</span>
-              <span class="notification-badge">3</span>
+              <span v-if="notificationCount > 0" class="notification-badge">{{ notificationCount }}</span>
+              
+              <!-- Notification Dropdown -->
+              <div class="notification-dropdown" :class="{ 'notification-dropdown-open': isNotificationDropdownOpen }">
+                <div class="notification-header">
+                  <h4>Notifikasi Permohonan Cuti</h4>
+                  <span class="notification-count">{{ notificationCount }} permohonan baru</span>
+                </div>
+                
+                <div v-if="loading" class="notification-loading">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <span>Memuat notifikasi...</span>
+                </div>
+                
+                <div v-else-if="notifications.length === 0" class="notification-empty">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Tidak ada permohonan cuti baru</span>
+                </div>
+                
+                <div v-else class="notification-list">
+                  <div 
+                    v-for="notification in notifications" 
+                    :key="notification.id" 
+                    class="notification-item"
+                    @click="handleNotificationClick(notification)"
+                  >
+                    <div class="notification-avatar">
+                      <span>{{ getInitials(notification.employee_name) }}</span>
+                    </div>
+                    <div class="notification-content">
+                      <div class="notification-title">
+                        {{ notification.employee_name }}
+                      </div>
+                      <div class="notification-message">
+                        Mengajukan {{ getLeaveTypeText(notification.leave_type) }}
+                      </div>
+                      <div class="notification-date">
+                        {{ formatDate(notification.start_date) }} - {{ formatDate(notification.end_date) }}
+                      </div>
+                      <div class="notification-time">
+                        {{ getTimeAgo(notification.created_at) }}
+                      </div>
+                    </div>
+                    <div class="notification-status">
+                      <span class="status-badge pending">Pending</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-if="notifications.length > 0" class="notification-footer">
+                  <button @click="viewAllRequests" class="btn-view-all">
+                    Lihat Semua Permohonan
+                  </button>
+                </div>
+              </div>
             </button>
             <div class="user-menu" @click="toggleUserDropdown" ref="userMenu">
               <div class="user-avatar-small">
@@ -307,13 +361,17 @@ export default {
     return {
       isMobileMenuOpen: false,
       isUserDropdownOpen: false,
+      isNotificationDropdownOpen: false,
       isDarkMode: false,
       submenuOpen: {
         dataPegawai: false,
         manajemenCuti: false,
         paketPegawai: false,
         generalAffairs: false
-      }
+      },
+      notifications: [],
+      loading: false,
+      notificationInterval: null
     }
   },
   computed: {
@@ -403,6 +461,12 @@ export default {
         'Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'
       ]
       return employeeRoles.includes(this.userRole)
+    },
+    notificationCount() {
+      return this.notifications.length
+    },
+    canViewNotifications() {
+      return this.isHRD || this.isManager
     }
   },
   methods: {
@@ -483,6 +547,107 @@ export default {
       } catch (error) {
         console.warn('Failed to refresh user data:', error)
       }
+    },
+    toggleNotificationDropdown() {
+      if (!this.canViewNotifications) return
+      this.isNotificationDropdownOpen = !this.isNotificationDropdownOpen
+      if (this.isNotificationDropdownOpen) {
+        this.fetchNotifications()
+      }
+    },
+    closeNotificationDropdown() {
+      this.isNotificationDropdownOpen = false
+    },
+    async fetchNotifications() {
+      if (!this.canViewNotifications) return
+      
+      this.loading = true
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/leave-requests?status=pending', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          this.notifications = data.data || []
+        } else {
+          console.error('Failed to fetch notifications')
+          this.notifications = []
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+        this.notifications = []
+      } finally {
+        this.loading = false
+      }
+    },
+    handleNotificationClick(notification) {
+      this.closeNotificationDropdown()
+      this.$router.push('/cuti/permohonan')
+    },
+    viewAllRequests() {
+      this.closeNotificationDropdown()
+      this.$router.push('/cuti/permohonan')
+    },
+    getInitials(name) {
+      if (!name) return '?'
+      return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2)
+    },
+    getLeaveTypeText(type) {
+      const types = {
+        'annual': 'Cuti Tahunan',
+        'sick': 'Cuti Sakit',
+        'emergency': 'Cuti Darurat',
+        'maternity': 'Cuti Melahirkan',
+        'paternity': 'Cuti Ayah'
+      }
+      return types[type] || 'Cuti'
+    },
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    },
+    getTimeAgo(dateString) {
+      if (!dateString) return ''
+      const now = new Date()
+      const date = new Date(dateString)
+      const diffInMinutes = Math.floor((now - date) / (1000 * 60))
+      
+      if (diffInMinutes < 1) return 'Baru saja'
+      if (diffInMinutes < 60) return `${diffInMinutes} menit yang lalu`
+      
+      const diffInHours = Math.floor(diffInMinutes / 60)
+      if (diffInHours < 24) return `${diffInHours} jam yang lalu`
+      
+      const diffInDays = Math.floor(diffInHours / 24)
+      if (diffInDays < 7) return `${diffInDays} hari yang lalu`
+      
+      return this.formatDate(dateString)
+    },
+    startNotificationPolling() {
+      if (!this.canViewNotifications) return
+      
+      // Fetch immediately
+      this.fetchNotifications()
+      
+      // Then fetch every 30 seconds
+      this.notificationInterval = setInterval(() => {
+        this.fetchNotifications()
+      }, 30000)
+    },
+    stopNotificationPolling() {
+      if (this.notificationInterval) {
+        clearInterval(this.notificationInterval)
+        this.notificationInterval = null
+      }
     }
   },
   async mounted() {
@@ -491,6 +656,9 @@ export default {
     
     // Refresh user data saat komponen dimount
     await this.refreshUserData()
+    
+    // Start notification polling for HR and Manager
+    this.startNotificationPolling()
     
     // Listen for window resize
     window.addEventListener('resize', () => {
@@ -504,6 +672,9 @@ export default {
       if (this.$refs.userMenu && !this.$refs.userMenu.contains(event.target)) {
         this.isUserDropdownOpen = false
       }
+      if (this.$refs.notificationBtn && !this.$refs.notificationBtn.contains(event.target)) {
+        this.isNotificationDropdownOpen = false
+      }
     })
     
     // Listen for storage changes to update user data
@@ -512,6 +683,9 @@ export default {
   beforeUnmount() {
     // Clean up event listeners
     window.removeEventListener('storage', this.handleStorageChange)
+    
+    // Stop notification polling
+    this.stopNotificationPolling()
   }
 }
 </script>
@@ -953,6 +1127,185 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Notification Dropdown Styles */
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-secondary, #ffffff);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 380px;
+  max-width: 420px;
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  max-height: 500px;
+}
+
+.notification-dropdown-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.notification-header {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.notification-count {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.notification-loading,
+.notification-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.notification-loading i,
+.notification-empty i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.notification-loading span,
+.notification-empty span {
+  font-size: 0.875rem;
+}
+
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.notification-message {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+
+.notification-date {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-bottom: 0.125rem;
+}
+
+.notification-time {
+  color: #cbd5e1;
+  font-size: 0.7rem;
+}
+
+.notification-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.notification-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f8fafc;
+}
+
+.btn-view-all {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view-all:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .user-menu {
@@ -1317,6 +1670,59 @@ export default {
   background-color: var(--bg-primary);
 }
 
+/* Dark Mode Notification Styles */
+.dark-mode .notification-dropdown {
+  background: var(--bg-secondary, #1f2937);
+  border: 1px solid var(--border-color, #374151);
+}
+
+.dark-mode .notification-header {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  border-bottom-color: #4a5568;
+}
+
+.dark-mode .notification-header h4 {
+  color: #e5e7eb;
+}
+
+.dark-mode .notification-count {
+  color: #a0aec0;
+}
+
+.dark-mode .notification-loading,
+.dark-mode .notification-empty {
+  color: #a0aec0;
+}
+
+.dark-mode .notification-item:hover {
+  background-color: #374151;
+}
+
+.dark-mode .notification-item {
+  border-bottom-color: #374151;
+}
+
+.dark-mode .notification-title {
+  color: #e5e7eb;
+}
+
+.dark-mode .notification-message {
+  color: #a0aec0;
+}
+
+.dark-mode .notification-date {
+  color: #6b7280;
+}
+
+.dark-mode .notification-time {
+  color: #4b5563;
+}
+
+.dark-mode .notification-footer {
+  background-color: #374151;
+  border-top-color: #4a5568;
+}
+
 @media (max-width: 480px) {
   .sidebar {
     width: 100vw;
@@ -1340,6 +1746,24 @@ export default {
 
   .main-content {
     padding: 70px 0.75rem 0.75rem 0.75rem;
+  }
+  
+  .notification-dropdown {
+    min-width: 320px;
+    max-width: 350px;
+    right: -1rem;
+  }
+  
+  .notification-item {
+    padding: 0.75rem 1rem;
+  }
+  
+  .notification-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .notification-footer {
+    padding: 0.75rem 1rem;
   }
 }
 </style>
