@@ -55,6 +55,16 @@
               </router-link>
             </li>
           
+          <!-- Office Attendance - Available for all roles -->
+          <li class="nav-item">
+            <router-link to="/absensi-kantor" class="nav-link" :class="{ 'active': $route.name === 'AttendanceOffice' }" @click="closeMobileMenu">
+              <div class="nav-icon">
+                <i class="fas fa-building"></i>
+              </div>
+              <span class="nav-text">Absensi Kantor</span>
+            </router-link>
+          </li>
+          
           <!-- HRD Menu - Full Access -->
           <template v-if="isHRD">
             <li class="nav-item has-submenu">
@@ -330,6 +340,7 @@ export default {
         'LeaveDashboard': 'Dashboard Cuti',
         'InputJatahCuti': 'Input Jatah Cuti',
         'PenerimaanPermohonanCuti': 'Penerimaan Permohonan Cuti',
+        'AttendanceOffice': 'Absensi Kantor',
         'Profile': 'Profil Pengguna',
         'Settings': 'Pengaturan'
       }
