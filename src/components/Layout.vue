@@ -437,13 +437,7 @@ export default {
       }
     },
     getDashboardRoute() {
-      if (this.isHRD) {
-        return '/dashboard-cuti'
-      } else if (this.isManager) {
-        return '/'
-      } else if (this.isEmployee) {
-        return '/'
-      }
+      // Semua role termasuk HR akan ke dashboard utama
       return '/'
     },
     toggleDarkMode() {

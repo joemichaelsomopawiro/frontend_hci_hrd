@@ -86,16 +86,6 @@
         <i class="fas fa-inbox"></i> 
         <h3>{{ getEmptyStateTitle() }}</h3> 
         <p>{{ getEmptyStateMessage() }}</p> 
-        <div class="empty-actions"> 
-          <button @click="clearFiltersAndReload" class="btn btn-secondary"> 
-            <i class="fas fa-filter"></i> 
-            Tampilkan Semua Data 
-          </button> 
-          <button @click="refreshData" class="btn btn-primary"> 
-            <i class="fas fa-sync"></i> 
-            Refresh Data 
-          </button> 
-        </div> 
       </div> 
       
       <div v-else class="requests-grid"> 
@@ -343,12 +333,6 @@ export default {
         return 'Tidak ada data yang sesuai dengan filter yang dipilih. Coba ubah filter atau tampilkan semua data.'; 
       } 
       return 'Belum ada permohonan cuti yang perlu diproses. Data akan muncul di sini ketika ada permohonan baru.'; 
-    }, 
-    
-    clearFiltersAndReload() { 
-      this.selectedStatus = ''; 
-      this.selectedLeaveType = ''; 
-      this.loadRequests(); 
     }, 
     
     async confirmAction() { 
