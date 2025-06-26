@@ -322,10 +322,10 @@ export default {
     }, 
     workflowText() { 
       const programRoles = ['Producer', 'Creative', 'Production', 'Editor'] 
-      if (programRoles.includes(this.userRole)) return 'Ke Program Manager → HR' 
+      if (programRoles.includes(this.userRole)) return 'Ke Program Manager' 
       
       const distributionRoles = ['Social Media', 'Promotion', 'Graphic Design', 'Hopeline Care'] 
-      if (distributionRoles.includes(this.userRole)) return 'Ke Distribution Manager → HR' 
+      if (distributionRoles.includes(this.userRole)) return 'Ke Distribution Manager' 
       
       const hrRoles = ['Finance', 'General Affairs', 'Office Assistant'] 
       if (hrRoles.includes(this.userRole)) return 'Ke HR Manager' 

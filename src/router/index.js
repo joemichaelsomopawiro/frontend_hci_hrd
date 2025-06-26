@@ -28,6 +28,9 @@ import Register from '../components/auth/Register.vue'
 import ForgotPassword from '../components/auth/ForgotPassword.vue'
 import OTPVerification from '../components/auth/OTPVerification.vue'
 
+// Tambahkan import
+import AttendanceOffice from '../components/AttendanceOffice.vue'
+
 const routes = [
   // Auth Routes (tanpa Layout)
   {
@@ -175,6 +178,12 @@ const routes = [
         path: 'morning-reflection',
         name: 'MorningReflection',
         component: MorningReflection
+      },
+      // Office Attendance - New Feature
+      {
+        path: 'absensi-kantor',
+        name: 'AttendanceOffice',
+        component: AttendanceOffice
       }
     ]
   }

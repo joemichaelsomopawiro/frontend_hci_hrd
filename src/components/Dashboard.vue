@@ -45,40 +45,45 @@
         </div>
       </div>
 
-      <!-- Employee Management Section - Only visible to HR -->
+      <!-- HR Dashboard Section - Only visible to HR -->
       <div class="action-section" v-if="isHRUser">
         <div class="section-header">
-          <h2>Manajemen Karyawan</h2>
+          <h2>Dashboard HR</h2>
           <div class="action-buttons">
-            <router-link to="/lihat-data-pegawai" class="btn-secondary">
-              <i class="fas fa-list"></i>
-              Lihat Data Pegawai
-            </router-link>
-            <router-link to="/tambah-pegawai-baru" class="btn-primary">
-              <i class="fas fa-plus"></i>
-              Tambah Pegawai Baru
+            <router-link to="/dashboard-cuti" class="btn-primary">
+              <i class="fas fa-calendar-alt"></i>
+              Dashboard Cuti & Absensi
             </router-link>
           </div>
         </div>
         <div class="quick-actions-card">
-          <h3>Aksi Cepat</h3>
+          <h3>Akses Cepat HR</h3>
           <div class="quick-actions-grid">
-            <router-link to="/lihat-data-pegawai" class="quick-action-item">
+            <router-link to="/dashboard-cuti" class="quick-action-item">
               <div class="quick-action-icon">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-chart-line"></i>
               </div>
               <div class="quick-action-content">
-                <h4>Data Pegawai</h4>
-                <p>Lihat dan kelola semua data pegawai</p>
+                <h4>Dashboard Cuti & Absensi</h4>
+                <p>Monitoring kehadiran dan cuti karyawan</p>
               </div>
             </router-link>
-            <router-link to="/tambah-pegawai-baru" class="quick-action-item">
+            <router-link to="/absensi" class="quick-action-item">
               <div class="quick-action-icon">
-                <i class="fas fa-user-plus"></i>
+                <i class="fas fa-clock"></i>
               </div>
               <div class="quick-action-content">
-                <h4>Tambah Pegawai</h4>
-                <p>Daftarkan pegawai baru ke sistem</p>
+                <h4>Absensi</h4>
+                <p>Kelola data absensi harian</p>
+              </div>
+            </router-link>
+            <router-link to="/cuti/permohonan" class="quick-action-item">
+              <div class="quick-action-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="quick-action-content">
+                <h4>Permohonan Cuti</h4>
+                <p>Review permohonan cuti karyawan</p>
               </div>
             </router-link>
             <div class="quick-action-item" @click="generateReport">
@@ -87,16 +92,7 @@
               </div>
               <div class="quick-action-content">
                 <h4>Laporan</h4>
-                <p>Generate laporan pegawai</p>
-              </div>
-            </div>
-            <div class="quick-action-item" @click="exportData">
-              <div class="quick-action-icon">
-                <i class="fas fa-download"></i>
-              </div>
-              <div class="quick-action-content">
-                <h4>Export Data</h4>
-                <p>Download data dalam format Excel</p>
+                <p>Generate laporan kehadiran</p>
               </div>
             </div>
           </div>
