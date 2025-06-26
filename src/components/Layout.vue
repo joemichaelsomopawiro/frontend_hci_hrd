@@ -33,7 +33,7 @@
         <ul class="nav-list">
           <!-- Dashboard - Available for all roles -->
           <li class="nav-item">
-            <router-link :to="getDashboardRoute()" class="nav-link" @click="closeMobileMenu">
+            <router-link :to="getDashboardRoute()" class="nav-link" @click="closeAllDropdowns">
               <div class="nav-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
@@ -45,7 +45,7 @@
           
           <!-- Morning Reflection - Available for all roles -->
             <li class="nav-item">
-              <router-link to="/morning-reflection" class="nav-link" @click="closeMobileMenu">
+              <router-link to="/morning-reflection" class="nav-link" @click="closeAllDropdowns">
                 <div class="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.66 9.53l-7.07 7.07-4.24-4.24 1.41-1.41 2.83 2.83 5.66-5.66 1.41 1.41zM4 12c0-2.33 1.02-4.42 2.62-5.88L9 8.5v-6H3l2.2 2.2C3.24 6.52 2 9.11 2 12c0 5.19 3.95 9.45 9 9.95v-2.02c-3.94-.49-7-3.86-7-7.93zm18 0c0-5.19-3.95-9.45-9-9.95v2.02c3.94.49 7 3.86 7 7.93 0 2.33-1.02 4.42-2.62 5.88L15 15.5v6h6l-2.2-2.2c1.96-1.82 3.2-4.41 3.2-7.3z"/>
@@ -72,8 +72,8 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.dataPegawai }">
-                <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeMobileMenu">Lihat Data Pegawai</router-link></li>
-                <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeMobileMenu">Tambah Pegawai</router-link></li>
+                <li><router-link to="/lihat-data-pegawai" class="submenu-link" @click="closeAllDropdowns">Lihat Data Pegawai</router-link></li>
+                <li><router-link to="/tambah-pegawai-baru" class="submenu-link" @click="closeAllDropdowns">Tambah Pegawai</router-link></li>
               </ul>
             </li>
             <li class="nav-item has-submenu">
@@ -91,12 +91,12 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
-                <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeMobileMenu">Input Jatah Cuti</router-link></li>
-                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
-                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Riwayat Permohonan Cuti</router-link></li>
-                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
-                <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeMobileMenu">Rekapitulasi Jam Kerja</router-link></li>
-                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
+                <li><router-link to="/cuti/input-jatah" class="submenu-link" @click="closeAllDropdowns">Input Jatah Cuti</router-link></li>
+                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeAllDropdowns">Penerimaan Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeAllDropdowns">Riwayat Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeAllDropdowns">Absensi</router-link></li>
+                <li><router-link to="/rekapitulasi" class="submenu-link" @click="closeAllDropdowns">Rekapitulasi Jam Kerja</router-link></li>
+                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeAllDropdowns">Dashboard Cuti & Absensi</router-link></li>
               </ul>
             </li>
           </template>
@@ -118,10 +118,10 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.manajemenCuti }">
-                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeMobileMenu">Penerimaan Permohonan Cuti</router-link></li>
-                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeMobileMenu">Riwayat Permohonan Cuti</router-link></li>
-                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Absensi</router-link></li>
-                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeMobileMenu">Dashboard Cuti & Absensi</router-link></li>
+                <li><router-link to="/cuti/permohonan" class="submenu-link" @click="closeAllDropdowns">Penerimaan Permohonan Cuti</router-link></li>
+                <li><router-link to="/cuti/bawahan" class="submenu-link" @click="closeAllDropdowns">Riwayat Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeAllDropdowns">Absensi</router-link></li>
+                <li><router-link to="/dashboard-cuti" class="submenu-link" @click="closeAllDropdowns">Dashboard Cuti & Absensi</router-link></li>
               </ul>
             </li>
           </template>
@@ -143,9 +143,9 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.generalAffairs }">
-                <li><router-link to="/ga-dashboard" class="submenu-link" @click="closeMobileMenu">GA Dashboard</router-link></li>
-                <li><router-link to="/ga-attendance" class="submenu-link" @click="closeMobileMenu">Absensi Renungan</router-link></li>
-                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeMobileMenu">Paket Pegawai</router-link></li>
+                <li><router-link to="/ga-dashboard" class="submenu-link" @click="closeAllDropdowns">GA Dashboard</router-link></li>
+                <li><router-link to="/ga-attendance" class="submenu-link" @click="closeAllDropdowns">Absensi Renungan</router-link></li>
+                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeAllDropdowns">Paket Pegawai</router-link></li>
               </ul>
             </li>
           </template>
@@ -167,8 +167,8 @@
                 </div>
               </a>
               <ul class="submenu" :class="{ 'submenu-open': submenuOpen.paketPegawai }">
-                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeMobileMenu">Permohonan Cuti</router-link></li>
-                <li><router-link to="/absensi" class="submenu-link" @click="closeMobileMenu">Tampilan Absensi</router-link></li>
+                <li><router-link to="/employee/request-leave" class="submenu-link" @click="closeAllDropdowns">Permohonan Cuti</router-link></li>
+                <li><router-link to="/absensi" class="submenu-link" @click="closeAllDropdowns">Tampilan Absensi</router-link></li>
               </ul>
             </li>
           </template>
@@ -190,7 +190,13 @@
           </div>
         </div>
         <button class="logout-btn" @click="handleLogout">
-          <span class="nav-icon">🚪</span>
+          <span class="nav-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16,17 21,12 16,7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </span>
           <span class="nav-text">Logout</span>
         </button>
       </div>
@@ -333,7 +339,13 @@
                   </li>
                   <li>
                     <a href="#" @click.prevent="handleLogout" class="dropdown-item logout-item">
-                      <span class="dropdown-icon">🚪</span>
+                      <span class="dropdown-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                          <polyline points="16,17 21,12 16,7"/>
+                          <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                      </span>
                       <span>Logout</span>
                     </a>
                   </li>
@@ -485,16 +497,21 @@ export default {
     closeUserDropdown() {
       this.isUserDropdownOpen = false
     },
+    closeAllDropdowns() {
+      this.isUserDropdownOpen = false
+      this.isNotificationDropdownOpen = false
+      this.isMobileMenuOpen = false
+    },
     viewProfile() {
-      this.closeUserDropdown()
+      this.closeAllDropdowns()
       this.$router.push('/profile')
     },
     openSettings() {
-      this.closeUserDropdown()
+      this.closeAllDropdowns()
       this.$router.push('/settings')
     },
     async handleLogout() {
-      this.closeUserDropdown()
+      this.closeAllDropdowns()
       if (confirm('Apakah Anda yakin ingin keluar?')) {
         await authService.logout()
         this.$router.push('/login')
@@ -585,11 +602,11 @@ export default {
       }
     },
     handleNotificationClick(notification) {
-      this.closeNotificationDropdown()
+      this.closeAllDropdowns()
       this.$router.push('/cuti/permohonan')
     },
     viewAllRequests() {
-      this.closeNotificationDropdown()
+      this.closeAllDropdowns()
       this.$router.push('/cuti/permohonan')
     },
     getInitials(name) {
@@ -674,6 +691,10 @@ export default {
       }
       if (this.$refs.notificationBtn && !this.$refs.notificationBtn.contains(event.target)) {
         this.isNotificationDropdownOpen = false
+      }
+      // Close mobile menu when clicking outside on mobile
+      if (this.isMobileMenuOpen && !event.target.closest('.sidebar')) {
+        this.isMobileMenuOpen = false
       }
     })
     
@@ -1448,6 +1469,19 @@ export default {
   font-size: 1rem;
   width: 20px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-icon svg {
+  transition: all 0.3s ease;
+  stroke: currentColor;
+}
+
+.dropdown-item:hover .dropdown-icon svg {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .logout-item {
@@ -1455,11 +1489,24 @@ export default {
   border-top: 1px solid #e5e7eb;
   margin-top: 0.5rem;
   padding-top: 1rem;
+  position: relative;
 }
 
 .logout-item:hover {
-  background-color: #fef2f2;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   color: #dc2626;
+  box-shadow: inset 0 1px 3px rgba(220, 38, 38, 0.1);
+}
+
+.logout-item .dropdown-icon svg {
+  stroke: #dc2626;
+  filter: drop-shadow(0 1px 2px rgba(220, 38, 38, 0.2));
+}
+
+.logout-item:hover .dropdown-icon svg {
+  transform: scale(1.15) rotate(-5deg);
+  filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.3));
+  stroke: #b91c1c;
 }
 
 /* Desktop Styles */
