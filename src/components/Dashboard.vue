@@ -1,25 +1,10 @@
 <template>
   <div class="dashboard-container">
-    <!-- Header Dashboard -->
-    <div class="dashboard-header">
-      <div class="header-content">
-        <div class="welcome-section">
+    <!-- Welcome Section -->
+    <div class="welcome-banner">
+      <div class="welcome-content">
         <h1>Dashboard</h1>
         <p>Selamat datang kembali, {{ userName }}!</p>
-      </div>
-        <div class="user-profile">
-          <div class="user-avatar">
-            <img v-if="userAvatar" 
-                 :src="userAvatar" 
-                 alt="Profile Avatar" 
-                 class="avatar-image" />
-            <span v-else>{{ getInitials(userName) }}</span>
-        </div>
-          <div class="user-details">
-          <strong>{{ userName }}</strong>
-          <span>{{ userRole }}</span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -151,7 +136,6 @@ export default {
       zoomCountdownInterval: null,
       currentTime: new Date(),
       zoomLink: worshipConfig?.zoomLink || 'https://us06web.zoom.us/j/81652212259?pwd=wbMvT70bX7b5pzXvFetOPY8T1pPVrK.1',
-      userAvatar: null, // Tambahkan untuk menyimpan avatar user
       todayAttendance: false, // Status kehadiran hari ini
       worshipConfig: worshipConfig, // Tambahkan worshipConfig ke data
     };
@@ -257,28 +241,15 @@ export default {
         const userStr = localStorage.getItem('user');
         if (!userStr || userStr === 'undefined' || userStr === 'null') {
           this.userName = 'Karyawan';
-          this.userAvatar = null;
           return;
         }
         const user = JSON.parse(userStr);
         this.userName = user.nama_lengkap || user.name || 'Karyawan';
         this.userRole = user.role;
-        
-        // Set user avatar dari profile_picture
-        if (user.profile_picture) {
-          this.userAvatar = `http://127.0.0.1:8000/storage/${user.profile_picture}`;
-        } else {
-          this.userAvatar = null;
-        }
       } catch (error) {
         console.error('Error loading user data:', error);
         this.userName = 'Karyawan';
-        this.userAvatar = null;
       }
-    },
-    getInitials(name) {
-      if (!name) return '??';
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     },
     async joinWorshipMeeting() {
       if (this.todayAttendance) {
@@ -484,76 +455,46 @@ export default {
   padding: var(--spacing-xl);
 }
 
-.dashboard-header {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+.welcome-banner {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+  pointer-events: none;
 }
 
-.welcome-section h1 {
+.welcome-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.welcome-content h1 {
   font-size: var(--font-size-3xl);
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.welcome-section p {
-  font-size: var(--font-size-lg);
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-content p {
   font-size: var(--font-size-lg);
-  overflow: hidden;
-  border: 2px solid var(--border-color);
-}
-
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-details strong {
-  color: var(--text-primary);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-}
-
-.user-details span {
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Renungan Pagi Card */
@@ -866,27 +807,15 @@ export default {
     padding: var(--spacing-md);
   }
   
-  .dashboard-header {
+  .welcome-banner {
     padding: var(--spacing-lg);
   }
   
-  .header-content {
-    flex-direction: column;
-    gap: var(--spacing-lg);
-    text-align: center;
-  }
-  
-  .welcome-section h1 {
+  .welcome-content h1 {
     font-size: var(--font-size-2xl);
   }
   
-  .welcome-section p {
-    font-size: var(--font-size-base);
-  }
-  
-  .user-avatar {
-    width: 40px;
-    height: 40px;
+  .welcome-content p {
     font-size: var(--font-size-base);
   }
   
@@ -948,11 +877,11 @@ export default {
     padding: var(--spacing-sm);
   }
   
-  .dashboard-header {
+  .welcome-banner {
     padding: var(--spacing-md);
   }
   
-  .welcome-section h1 {
+  .welcome-content h1 {
     font-size: var(--font-size-xl);
   }
   
