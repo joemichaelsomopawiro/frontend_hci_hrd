@@ -349,7 +349,8 @@
                   </div>
                   <div class="user-info-dropdown">
                     <h4>{{ userName }}</h4>
-                    <p>{{ userEmail }}</p>
+                    <p class="user-role-dropdown">{{ userRole }}</p>
+                    <p class="user-email-dropdown">{{ userEmail }}</p>
                   </div>
                 </div>
                 <div class="dropdown-divider"></div>
@@ -1078,6 +1079,7 @@ export default {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  aspect-ratio: 1 / 1;
 }
 
 .avatar-image-small {
@@ -1085,6 +1087,7 @@ export default {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  aspect-ratio: 1 / 1;
 }
 
 .user-details {
@@ -1506,6 +1509,8 @@ export default {
   font-size: 1rem;
   color: #1e3a8a;
   overflow: hidden;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
 }
 
 .welcome-text {
@@ -1568,6 +1573,8 @@ export default {
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   overflow: hidden;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
 }
 
 .user-info-dropdown h4 {
@@ -1581,6 +1588,23 @@ export default {
   margin: 0.25rem 0 0 0;
   font-size: 0.875rem;
   color: #64748b;
+}
+
+.user-info-dropdown .user-role-dropdown {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  color: #3b82f6;
+  font-weight: 600;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  display: inline-block;
+}
+
+.user-info-dropdown .user-email-dropdown {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 .dropdown-divider {
@@ -1903,6 +1927,15 @@ export default {
 
 .dark-mode .user-info-dropdown p {
   color: #a0aec0;
+}
+
+.dark-mode .user-info-dropdown .user-role-dropdown {
+  color: #60a5fa;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+}
+
+.dark-mode .user-info-dropdown .user-email-dropdown {
+  color: #6b7280;
 }
 
 .dark-mode .dropdown-divider {
