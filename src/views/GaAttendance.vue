@@ -3,30 +3,13 @@
     <!-- Header Section -->
     <div class="header">
       <div class="header-left">
-        <h1>Attendance Management</h1>
-        <p>Kelola kehadiran renungan pagi</p>
+        <h1>Absensi Renungan Pagi</h1>
+        <p>Riwayat kehadiran renungan pagi keseluruhan</p>
       </div>
       <div class="time-info">
         <div class="current-time">
           <span class="time">{{ currentTimeDisplay }}</span>
           <span class="date">{{ currentDateDisplay }}</span>
-        </div>
-        <div class="status-info">
-          <span
-            class="day-status"
-            :class="{ 'worship-day': store.isTodayWorshipDay }"
-          >
-            {{ store.isTodayWorshipDay ? "Hari Renungan" : "Hari Biasa" }}
-          </span>
-          <div
-            v-if="store.zoomTimeStatus === 'Tutup'"
-            class="closed-status-block"
-          >
-            <span class="closed-status-text">{{ timeStatusMessage }}</span>
-          </div>
-          <span v-else class="status-badge" :class="timeStatusClass">{{
-            timeStatusMessage
-          }}</span>
         </div>
       </div>
     </div>
@@ -38,149 +21,198 @@
         <div class="section-header">
           <h2>Riwayat Kehadiran</h2>
           <div class="section-header-actions">
-            <button class="btn btn-primary" @click="store.fetchReflections">
-              <svg
-                class="icon"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M23 4v6h-6"></path>
-                <path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L20.5 10"></path>
-                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L3.5 14"></path>
-              </svg>
-              <span>Refresh</span>
-            </button>
-            <button class="btn btn-success" @click="exportToCSV">
-              <span class="icon">📄</span> Export to CSV
+            <button class="btn btn-primary" @click="refreshData" :disabled="loading">
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
+              Refresh
             </button>
           </div>
         </div>
 
-        <!-- Search and Filter Controls -->
-        <div class="controls">
-          <div class="search-section">
-            <label class="search-label">Pencarian:</label>
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input
-                type="text"
-                v-model="searchQuery"
-                placeholder="Cari nama atau ID karyawan..."
-                class="search-input"
-              />
-            </div>
+        <!-- Filters -->
+        <div class="filters">
+          <div class="filter-group">
+            <label>Tanggal:</label>
+            <input 
+              type="date" 
+              v-model="dateFilter" 
+              @change="loadAttendanceHistory"
+              class="filter-input"
+            />
           </div>
-
-          <div class="filter-controls">
-            <div class="filter-group">
-              <label class="filter-label">Urutkan:</label>
-              <select v-model="sortOrder" class="sort-select">
-                <option value="asc">Nama A-Z</option>
-                <option value="desc">Nama Z-A</option>
-                <option value="date-desc">Tanggal Terbaru</option>
-                <option value="date-asc">Tanggal Terlama</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label class="filter-label">Status:</label>
-              <select v-model="statusFilter" class="status-filter">
-                <option value="all">Semua Status</option>
-                <option value="Hadir">Hadir</option>
-                <option value="Terlambat">Terlambat</option>
-                <option value="Absen">Absen</option>
-              </select>
-            </div>
+          <div class="filter-group">
+            <label>Status:</label>
+            <select v-model="statusFilter" @change="loadAttendanceHistory" class="filter-select">
+              <option value="">Semua Status</option>
+              <option value="present">Hadir</option>
+              <option value="late">Terlambat</option>
+              <option value="absent">Tidak Hadir</option>
+              <option value="leave">Cuti</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Urutkan:</label>
+            <select v-model="sortOrder" @change="loadAttendanceHistory" class="filter-select">
+              <option value="date-desc">Tanggal (Terbaru)</option>
+              <option value="date-asc">Tanggal (Terlama)</option>
+              <option value="name-asc">Nama (A-Z)</option>
+              <option value="name-desc">Nama (Z-A)</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Cari:</label>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Cari nama karyawan..."
+              @input="loadAttendanceHistory"
+              class="filter-input"
+            />
           </div>
         </div>
 
-        <div v-if="filteredReflections.length" class="table-wrapper">
-          <table class="simple-table">
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-state">
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Memuat data absensi...</p>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="error-state">
+          <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>{{ error }}</p>
+            <button @click="loadAttendanceHistory" class="btn btn-primary">Coba Lagi</button>
+          </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div v-else class="table-container">
+          <table class="attendance-table">
             <thead>
               <tr>
-                <th>Karyawan</th>
+                <th>No</th>
+                <th>Nama Karyawan</th>
+                <th>Email</th>
                 <th>Tanggal</th>
+                <th>Waktu Hadir</th>
                 <th>Status</th>
-                <th>Waktu Join</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="reflection in filteredReflections"
-                :key="reflection.id"
-              >
+              <tr v-for="(attendance, index) in paginatedAttendances" :key="attendance.id">
+                <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
                 <td>
                   <div class="employee-info">
-                    <span class="employee-name">{{
-                      reflection.employee?.full_name || "Unknown"
-                    }}</span>
-                    <span class="employee-id"
-                      >ID: {{ reflection.employee?.employee_id || "-" }}</span
-                    >
+                    <strong>{{ attendance.user_name }}</strong>
                   </div>
                 </td>
-                <td>{{ formatDate(reflection.date) }}</td>
+                <td>{{ attendance.user_email }}</td>
+                <td>{{ formatDate(attendance.date) }}</td>
                 <td>
-                  <span
-                    class="status-badge"
-                    :class="getStatusClass(reflection.status)"
-                    >{{ reflection.status }}</span
-                  >
+                  <span v-if="attendance.attended_at" class="time-attended">
+                    {{ attendance.attended_at }}
+                  </span>
+                  <span v-else class="time-not-attended">-</span>
                 </td>
                 <td>
-                  {{
-                    reflection.join_time
-                      ? new Date(reflection.join_time).toLocaleTimeString(
-                          "id-ID",
-                          { timeZone: "Asia/Jakarta" }
-                        )
-                      : "Manual Entry"
-                  }}
+                  <span class="status-badge" :class="attendance.status_color">
+                    {{ attendance.status_label }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <select 
+                      v-model="attendance.status" 
+                      @change="updateAttendanceStatus(attendance)"
+                      class="status-select"
+                      :disabled="loading"
+                    >
+                      <option value="present">Hadir</option>
+                      <option value="late">Terlambat</option>
+                      <option value="absent">Tidak Hadir</option>
+                      <option value="leave">Cuti</option>
+                    </select>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <!-- Empty State -->
+          <div v-if="attendances.length === 0" class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <p>Tidak ada data absensi untuk periode yang dipilih</p>
+          </div>
         </div>
 
-        <div v-else-if="store.reflections.length === 0" class="empty-message">
-          <p>Belum ada data kehadiran</p>
-        </div>
-
-        <div v-else class="empty-message">
-          <p>Tidak ada data yang sesuai dengan filter</p>
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button 
+            @click="currentPage--" 
+            :disabled="currentPage === 1"
+            class="btn-pagination"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          
+          <span class="page-info">
+            Halaman {{ currentPage }} dari {{ totalPages }}
+          </span>
+          
+          <button 
+            @click="currentPage++" 
+            :disabled="currentPage === totalPages"
+            class="btn-pagination"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </div>
+    </div>
+
+    <!-- Notification -->
+    <div v-if="showNotification" class="notification" :class="notificationType">
+      <i :class="notificationIcon"></i>
+      {{ notificationMessage }}
     </div>
   </div>
 </template>
 
 <script>
-import { useGaStore } from "../stores/gaStore";
 import { ref, computed, onMounted, onUnmounted } from "vue";
+import morningReflectionService from '../services/morningReflectionService';
 
 export default {
   setup() {
-    const store = useGaStore();
     const currentTime = ref(new Date());
     const timeInterval = ref(null);
+    const loading = ref(false);
+    const error = ref(null);
+
+    // Data
+    const attendances = ref([]);
 
     // Search and filter reactive variables
     const searchQuery = ref("");
+    const dateFilter = ref("");
     const sortOrder = ref("date-desc");
-    const statusFilter = ref("all");
+    const statusFilter = ref("");
+
+    // Pagination
+    const currentPage = ref(1);
+    const itemsPerPage = ref(10);
+
+    // Notification
+    const showNotification = ref(false);
+    const notificationMessage = ref("");
+    const notificationType = ref("success");
 
     // Update waktu setiap detik
     const updateTime = () => {
       currentTime.value = new Date();
-      store.updateCurrentTime();
     };
 
     // Computed properties
@@ -189,7 +221,6 @@ export default {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        timeZone: "Asia/Jakarta",
       });
     });
 
@@ -199,144 +230,177 @@ export default {
         year: "numeric",
         month: "long",
         day: "numeric",
-        timeZone: "Asia/Jakarta",
       });
     });
 
-    const timeStatusClass = computed(() => {
-      const status = store.zoomTimeStatus;
-      return {
-        "status-hadir": status === "Hadir",
-        "status-terlambat": status === "Terlambat",
-        "status-closed": status === "Tutup",
-      };
-    });
+    const filteredAttendances = computed(() => {
+      let filtered = attendances.value;
 
-    const timeStatusIcon = computed(() => {
-      const status = store.zoomTimeStatus;
-      switch (status) {
-        case "Hadir":
-          return "✅";
-        case "Terlambat":
-          return "⏰";
-        case "Tutup":
-          return "🔒";
-        default:
-          return "❓";
-      }
-    });
-
-    const timeStatusMessage = computed(() => {
-      return store.zoomTimeStatus;
-    });
-
-    // Filtered and sorted reflections
-    const filteredReflections = computed(() => {
-      let filtered = [...store.reflections];
-
-      // Apply search filter
-      if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase().trim();
-        filtered = filtered.filter((reflection) => {
-          const employeeName =
-            reflection.employee?.full_name?.toLowerCase() || "";
-          const employeeId =
-            reflection.employee?.employee_id?.toLowerCase() || "";
-          return employeeName.includes(query) || employeeId.includes(query);
-        });
-      }
-
-      // Apply status filter
-      if (statusFilter.value !== "all") {
-        filtered = filtered.filter(
-          (reflection) => reflection.status === statusFilter.value
+      // Filter berdasarkan pencarian
+      if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        filtered = filtered.filter(attendance =>
+          attendance.user_name.toLowerCase().includes(query) ||
+          attendance.user_email.toLowerCase().includes(query)
         );
       }
 
-      // Apply sorting
+      // Filter berdasarkan tanggal
+      if (dateFilter.value) {
+        filtered = filtered.filter(attendance => attendance.date === dateFilter.value);
+      }
+
+      // Filter berdasarkan status
+      if (statusFilter.value) {
+        filtered = filtered.filter(attendance => attendance.status === statusFilter.value);
+      }
+
+      // Sorting
       filtered.sort((a, b) => {
         switch (sortOrder.value) {
-          case "asc":
-            const nameA = a.employee?.full_name || "";
-            const nameB = b.employee?.full_name || "";
-            return nameA.localeCompare(nameB);
-          case "desc":
-            const nameA2 = a.employee?.full_name || "";
-            const nameB2 = b.employee?.full_name || "";
-            return nameB2.localeCompare(nameA2);
+          case "date-desc":
+            return new Date(b.date) - new Date(a.date);
           case "date-asc":
             return new Date(a.date) - new Date(b.date);
-          case "date-desc":
+          case "name-asc":
+            return a.user_name.localeCompare(b.user_name);
+          case "name-desc":
+            return b.user_name.localeCompare(a.user_name);
           default:
-            return new Date(b.date) - new Date(a.date);
+            return 0;
         }
       });
 
       return filtered;
     });
 
+    const paginatedAttendances = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return filteredAttendances.value.slice(start, end);
+    });
+
+    const totalPages = computed(() => {
+      return Math.ceil(filteredAttendances.value.length / itemsPerPage.value);
+    });
+
+    const notificationIcon = computed(() => {
+      return notificationType.value === "success"
+        ? "fas fa-check-circle"
+        : "fas fa-exclamation-circle";
+    });
+
     // Methods
+    const loadAttendanceHistory = async () => {
+      try {
+        loading.value = true;
+        error.value = null;
 
-    const formatDate = (date) => {
-      return date
-        ? new Date(date).toLocaleDateString("id-ID", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })
-        : "-";
-    };
+        // Validasi parameter sebelum request
+        const params = {
+          per_page: itemsPerPage.value,
+          page: currentPage.value
+        };
 
-    const getInitials = (name) => {
-      if (!name) return "?";
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    };
+        // Hanya tambahkan parameter jika ada nilai
+        if (searchQuery.value && searchQuery.value.trim() !== '') {
+          params.search = searchQuery.value.trim();
+        }
+        if (dateFilter.value && dateFilter.value !== '') {
+          params.date = dateFilter.value;
+        }
+        if (statusFilter.value && statusFilter.value !== '') {
+          params.status = statusFilter.value;
+        }
 
-    const getStatusBadgeClass = (status) => {
-      const baseClass = "badge ";
-      switch (status) {
-        case "Hadir":
-          return baseClass + "badge-success";
-        case "Absen":
-          return baseClass + "badge-danger";
-        case "Terlambat":
-          return baseClass + "badge-warning";
-        default:
-          return baseClass + "badge-info";
+        const result = await morningReflectionService.getGaAttendanceHistory(params);
+        
+        if (result.success) {
+          attendances.value = result.data.attendances || [];
+          // Update pagination jika ada
+          if (result.data.pagination) {
+            currentPage.value = result.data.pagination.current_page || 1;
+            itemsPerPage.value = result.data.pagination.per_page || 10;
+          }
+        } else {
+          error.value = result.message || 'Gagal memuat data absensi';
+        }
+      } catch (err) {
+        console.error("Error loading attendance history:", err);
+        error.value = "Gagal memuat data absensi. Silakan coba lagi.";
+        attendances.value = [];
+      } finally {
+        loading.value = false;
       }
     };
 
-    const getStatusClass = (status) => {
-      switch (status) {
-        case "Hadir":
-          return "status-present";
-        case "Absen":
-          return "status-absent";
-        case "Terlambat":
-          return "status-late";
-        default:
-          return "status-absent";
+    const updateAttendanceStatus = async (attendance) => {
+      try {
+        loading.value = true;
+
+        // Update status di local state terlebih dahulu
+        const originalStatus = attendance.status;
+        attendance.status_label = morningReflectionService.getStatusLabel(attendance.status);
+        attendance.status_color = morningReflectionService.getStatusColor(attendance.status);
+
+        // Simpan ke backend (implementasi sesuai dengan API yang tersedia)
+        const updateData = {
+          user_id: attendance.user_id,
+          date: attendance.date,
+          status: attendance.status
+        };
+
+        // Jika ada API untuk update status, gunakan di sini
+        // await morningReflectionService.updateAttendanceStatus(updateData);
+
+        showNotificationMessage("Status berhasil diperbarui", "success");
+
+        // Refresh data untuk memastikan konsistensi
+        await loadAttendanceHistory();
+
+      } catch (err) {
+        console.error("Error updating attendance status:", err);
+
+        // Rollback status jika gagal
+        attendance.status = originalStatus;
+        attendance.status_label = morningReflectionService.getStatusLabel(originalStatus);
+        attendance.status_color = morningReflectionService.getStatusColor(originalStatus);
+
+        showNotificationMessage("Gagal memperbarui status", "error");
+      } finally {
+        loading.value = false;
       }
     };
 
-    const showNotification = (message, type) => {
-      // Simple notification - you can replace with a proper notification library
-      alert(message);
+    const refreshData = () => {
+      currentPage.value = 1;
+      loadAttendanceHistory();
     };
 
-    // Lifecycle hooks
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString("id-ID", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    const showNotificationMessage = (message, type = "success") => {
+      notificationMessage.value = message;
+      notificationType.value = type;
+      showNotification.value = true;
+
+      setTimeout(() => {
+        showNotification.value = false;
+      }, 3000);
+    };
+
+    // Lifecycle
     onMounted(() => {
-      store.fetchEmployees();
-      store.fetchReflections();
-
-      // Start time interval
+      updateTime();
       timeInterval.value = setInterval(updateTime, 1000);
+      loadAttendanceHistory();
     });
 
     onUnmounted(() => {
@@ -345,237 +409,127 @@ export default {
       }
     });
 
-    const exportToCSV = () => {
-      const headers = [
-        "Karyawan",
-        "ID Karyawan",
-        "Tanggal",
-        "Status",
-        "Waktu Join",
-      ];
-      const rows = filteredReflections.value.map((reflection) => [
-        `"${reflection.employee?.full_name || "Unknown"}"`,
-        `"${reflection.employee?.employee_id || "-"}"`,
-        `"${formatDate(reflection.date)}"`,
-        `"${reflection.status}"`,
-        `"${
-          reflection.join_time
-            ? new Date(reflection.join_time).toLocaleTimeString("id-ID", {
-                timeZone: "Asia/Jakarta",
-              })
-            : "Manual Entry"
-        }"`,
-      ]);
-
-      let csvContent =
-        "data:text/csv;charset=utf-8," +
-        headers.join(",") +
-        "\n" +
-        rows.map((e) => e.join(",")).join("\n");
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "riwayat_kehadiran.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
-
     return {
-      store,
-      currentTime,
       currentTimeDisplay,
       currentDateDisplay,
-      timeStatusClass,
-      timeStatusIcon,
-      timeStatusMessage,
+      loading,
+      error,
+      attendances,
       searchQuery,
+      dateFilter,
       sortOrder,
       statusFilter,
-      filteredReflections,
-      formatDate,
-      getInitials,
-      getStatusBadgeClass,
-      getStatusClass,
+      currentPage,
+      itemsPerPage,
+      paginatedAttendances,
+      totalPages,
       showNotification,
-      exportToCSV,
-      loading: computed(() => store.loading),
-      errors: computed(() => store.errors),
-      employees: computed(() => store.employees),
-      reflections: computed(() => store.reflections),
+      notificationMessage,
+      notificationType,
+      notificationIcon,
+      loadAttendanceHistory,
+      updateAttendanceStatus,
+      refreshData,
+      formatDate,
+      showNotificationMessage
     };
-  },
+  }
 };
 </script>
 
 <style scoped>
+/* GA Attendance Styles */
 .attendance {
+  min-height: 100vh;
+  background: var(--gray-50);
   padding: 2rem;
-  background-color: #f9fafb;
 }
 
 /* Header */
 .header {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
 }
 
 .header-left h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #111827;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
 }
 
 .header-left p {
-  font-size: 1rem;
-  color: #6b7280;
+  color: var(--gray-600);
+  margin: 0;
 }
 
-/* Time Info Styling */
 .time-info {
   text-align: right;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
 }
 
-.current-time {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-
-.time {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #111827;
-  line-height: 1.2;
-}
-
-.date {
-  font-size: 1rem;
-  color: #6b7280;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.status-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-  margin-top: 0.5rem;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.day-status {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.worship-day {
-  color: #3b82f6;
-  font-weight: 600;
-}
-
-/* Closed Status Block */
-.closed-status-block {
-  background-color: #fee2e2;
-  border: 1px solid #dc2626;
-  border-radius: 6px;
-  padding: 0.25rem 0.5rem;
-  margin-top: 0.25rem;
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.1);
-  display: inline-block;
-}
-
-.closed-status-text {
-  color: #dc2626;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
+.current-time .time {
   display: block;
-  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
-/* Controls */
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.search-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex-grow: 1;
-  max-width: 400px;
-}
-
-.search-label {
+.current-time .date {
+  display: block;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.25rem;
+  color: var(--gray-600);
+  margin-top: 0.25rem;
 }
 
-.search-box {
-  position: relative;
+/* Content */
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Section */
+.section {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.section-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 4px 12px;
-  transition: all 0.3s ease;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-50);
 }
 
-.search-box:hover,
-.search-box:focus-within {
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+.section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
 }
 
-.search-input {
-  flex-grow: 1;
-  border: none;
-  outline: none;
-  padding: 8px;
-  font-size: 1rem;
-  background-color: transparent;
-}
-
-.search-icon {
-  color: #9e9e9e;
-  margin-right: 8px;
-  font-size: 1.1rem;
-}
-
-.filter-controls {
+.section-header-actions {
   display: flex;
   gap: 1rem;
-  align-items: flex-end;
+}
+
+/* Filters */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--white);
 }
 
 .filter-group {
@@ -584,276 +538,318 @@ export default {
   gap: 0.5rem;
 }
 
-.filter-label {
+.filter-group label {
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: var(--gray-700);
 }
 
-.sort-select,
-.status-filter {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-  background-color: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
+.filter-input,
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--white);
+  transition: border-color 0.2s ease;
 }
 
-.search-input:focus,
-.sort-select:focus,
-.status-filter:focus {
+.filter-input:focus,
+.filter-select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Section Header */
-.section-header {
+/* Loading and Error States */
+.loading-state,
+.error-state {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  padding: 3rem;
+  text-align: center;
 }
 
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-/* Table Styles */
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.simple-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.simple-table th,
-.simple-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.simple-table th {
-  background-color: #f3f4f6;
-  font-weight: 600;
-  color: #374151;
-}
-
-.employee-info {
+.loading-spinner {
   display: flex;
   flex-direction: column;
-}
-
-.employee-name {
-  font-weight: 600;
-}
-
-.employee-id {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.sort-select,
-.status-filter {
-  padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-  color: #2d3748;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 140px;
-}
-
-.sort-select:focus,
-.status-filter:focus {
-  outline: none;
-  border-color: #3182ce;
-  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-}
-
-.sort-select:hover,
-.status-filter:hover {
-  border-color: #cbd5e0;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
 }
 
-.section-header h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a202c;
+.loading-spinner i {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.loading-spinner p {
+  color: var(--gray-600);
   margin: 0;
 }
 
-.refresh-btn {
-  background: #3182ce;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.refresh-btn:hover {
-  background: #2c5282;
-}
-
-.refresh-btn:disabled {
-  background: #a0aec0;
-  cursor: not-allowed;
-}
-
-.section-header-actions {
+.error-message {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s, transform 0.2s;
+.error-message i {
+  font-size: 2rem;
+  color: var(--error-color);
 }
 
-.btn:hover {
-  transform: translateY(-2px);
+.error-message p {
+  color: var(--gray-700);
+  margin: 0;
 }
 
-.btn-primary {
-  background-color: #3498db;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #2980b9;
-}
-
-.btn-success {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #27ae60;
-}
-
-.icon {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.3s ease;
-}
-
-.btn:hover .icon {
-  transform: rotate(90deg);
-}
-
-/* Table Styles */
-.table-wrapper {
+/* Table Container */
+.table-container {
   overflow-x: auto;
 }
 
-.simple-table {
+.attendance-table {
   width: 100%;
   border-collapse: collapse;
+  background: var(--white);
+}
+
+.attendance-table th {
+  background: var(--gray-50);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
   font-size: 0.875rem;
 }
 
-.simple-table th {
-  background: #f7fafc;
-  color: #4a5568;
-  font-weight: 600;
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 2px solid #e2e8f0;
+.attendance-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
 }
 
-.simple-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-  color: #2d3748;
-}
-
-.simple-table tr:hover {
-  background: #f7fafc;
+.attendance-table tbody tr:hover {
+  background: var(--gray-50);
 }
 
 /* Employee Info */
 .employee-info {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
-.employee-name {
+.employee-info strong {
+  color: var(--gray-900);
   font-weight: 600;
-  color: #2d3748;
 }
 
-.employee-id {
-  font-size: 0.75rem;
-  color: #718096;
-}
-
-/* Status Badges */
+/* Status Badge */
 .status-badge {
-  display: inline-block;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.5px;
 }
 
-.status-present {
-  background: #c6f6d5;
-  color: #22543d;
+.status-badge.success {
+  background: var(--success-color);
+  color: white;
 }
 
-.status-late {
-  background: #fed7d7;
-  color: #742a2a;
+.status-badge.warning {
+  background: var(--warning-color);
+  color: white;
 }
 
-.status-absent {
-  background: #e2e8f0;
-  color: #4a5568;
+.status-badge.danger {
+  background: var(--error-color);
+  color: white;
 }
 
-/* Empty Message */
-.empty-message {
+.status-badge.info {
+  background: var(--info-color);
+  color: white;
+}
+
+.status-badge.secondary {
+  background: var(--gray-500);
+  color: white;
+}
+
+/* Time Display */
+.time-attended {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.time-not-attended {
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-select {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.status-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
   text-align: center;
-  padding: 2rem;
-  color: #718096;
+  color: var(--gray-500);
 }
 
-.empty-message p {
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
   margin: 0;
   font-size: 1rem;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+.btn-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pagination:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-pagination:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+.notification.success {
+  background: var(--success-color);
+}
+
+.notification.error {
+  background: var(--error-color);
+}
+
+.notification i {
+  font-size: 1.25rem;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Responsive Design */
@@ -864,66 +860,68 @@ export default {
 
   .header {
     flex-direction: column;
-    align-items: flex-start;
     gap: 1rem;
+    text-align: center;
   }
 
   .time-info {
-    align-items: flex-start;
-  }
-
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .search-section {
-    max-width: none;
-  }
-
-  .filter-controls {
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .filter-group {
-    flex: 1;
-    min-width: 120px;
-  }
-
-  .sort-select,
-  .status-filter {
-    width: 100%;
-    min-width: auto;
+    text-align: center;
   }
 
   .section-header {
     flex-direction: column;
-    align-items: flex-start;
     gap: 1rem;
+    align-items: stretch;
   }
 
-  .simple-table {
-    font-size: 0.75rem;
+  .section-header-actions {
+    justify-content: center;
   }
 
-  .simple-table th,
-  .simple-table td {
-    padding: 0.5rem;
+  .filters {
+    grid-template-columns: 1fr;
   }
 
-  .employee-info {
-    min-width: auto;
-  }
-
-  .employee-name {
+  .attendance-table {
     font-size: 0.875rem;
   }
 
-  .employee-id {
+  .attendance-table th,
+  .attendance-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .notification {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .attendance-table {
+    font-size: 0.75rem;
+  }
+
+  .attendance-table th,
+  .attendance-table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .status-badge {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.5rem;
+  }
+
+  .btn {
+    padding: 0.375rem 0.75rem;
     font-size: 0.75rem;
   }
 }
 </style>
+

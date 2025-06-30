@@ -171,7 +171,7 @@ const routes = [
       {
         path: 'ga-attendance',
         name: 'GaAttendance',
-        component: MorningReflection
+        component: GaAttendance
       },
       // Morning Reflection - Available for all roles
       {

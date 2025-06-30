@@ -163,22 +163,40 @@ export default {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
-      }
+      },
+      // Reactive user data untuk auto-update
+      userProfileData: null,
+      profileUpdateKey: 0 // Key untuk force re-render
     }
   },
   async mounted() {
+    // Load initial user data
+    this.loadUserData()
+    
     // Refresh user data saat komponen dimount
     await this.refreshUserData()
     
     // Listen for storage changes
     window.addEventListener('storage', this.handleStorageChange)
+    
+    // Listen for profile updates from other components
+    window.addEventListener('profile-updated', this.handleProfileUpdate)
   },
   beforeUnmount() {
     // Clean up event listeners
     window.removeEventListener('storage', this.handleStorageChange)
+    window.removeEventListener('profile-updated', this.handleProfileUpdate)
   },
   computed: {
     userProfile() {
+      // Force reactivity dengan profileUpdateKey
+      this.profileUpdateKey
+      
+      // Gunakan reactive data jika tersedia
+      if (this.userProfileData) {
+        return this.userProfileData
+      }
+      
       try {
         const userStr = localStorage.getItem('user')
         if (!userStr || userStr === 'undefined' || userStr === 'null') {
@@ -188,13 +206,17 @@ export default {
         const user = JSON.parse(userStr)
         
         // Pastikan menggunakan data terbaru dari database
-        return {
+        const profile = {
           name: user.name || user.fullName || user.username || 'Admin',
           email: user.email || 'admin@example.com',
           phone: user.phone || user.phoneNumber || '-',
           created_at: user.created_at || user.createdAt || new Date().toISOString(),
           avatar: user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
         }
+        
+        // Update reactive data
+        this.userProfileData = profile
+        return profile
       } catch (error) {
         console.warn('Error parsing user data:', error)
         return this.getDefaultProfile()
@@ -215,12 +237,31 @@ export default {
         avatar: null
       }
     },
+    loadUserData() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+          const user = JSON.parse(userStr)
+          this.userProfileData = {
+            name: user.name || user.fullName || user.username || 'Admin',
+            email: user.email || 'admin@example.com',
+            phone: user.phone || user.phoneNumber || '-',
+            created_at: user.created_at || user.createdAt || new Date().toISOString(),
+            avatar: user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
+          }
+        }
+      } catch (error) {
+        console.warn('Error loading user data:', error)
+        this.userProfileData = this.getDefaultProfile()
+      }
+    },
     
     async refreshUserData() {
       try {
         const result = await authService.refreshUserData()
         if (result.success) {
-          this.$forceUpdate()
+          this.loadUserData()
+          this.profileUpdateKey++
         }
       } catch (error) {
         console.warn('Failed to refresh user data:', error)
@@ -229,8 +270,15 @@ export default {
     
     handleStorageChange(event) {
       if (event.key === 'user') {
-        this.$forceUpdate()
+        this.loadUserData()
+        this.profileUpdateKey++
       }
+    },
+    
+    handleProfileUpdate(event) {
+      // Handle custom profile update events
+      this.loadUserData()
+      this.profileUpdateKey++
     },
     
 
@@ -261,22 +309,19 @@ export default {
         const result = await authService.uploadProfilePicture(file)
         
         if (result.success) {
-          alert('Foto profil berhasil diubah!')
+          // Show success message
+          this.$nextTick(() => {
+            alert('Foto profil berhasil diubah!')
+          })
           
-          // Update localStorage dengan data terbaru
-          localStorage.setItem('user', JSON.stringify(result.data))
+          // Update reactive data immediately
+          this.loadUserData()
+          this.profileUpdateKey++
           
-          // Trigger storage event untuk update layout dan komponen lain
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'user',
-            newValue: JSON.stringify(result.data)
+          // Dispatch custom event untuk komponen lain
+          window.dispatchEvent(new CustomEvent('profile-updated', {
+            detail: result.data
           }))
-          
-          // Force update komponen ini
-          this.$forceUpdate()
-          
-          // Refresh user data untuk memastikan sinkronisasi
-          await this.refreshUserData()
           
           // Emit event untuk komponen parent jika ada
           this.$emit('profile-updated', result.data)
@@ -305,22 +350,19 @@ export default {
         const result = await authService.deleteProfilePicture()
         
         if (result.success) {
-          alert('Foto profil berhasil dihapus!')
+          // Show success message
+          this.$nextTick(() => {
+            alert('Foto profil berhasil dihapus!')
+          })
           
-          // Update localStorage dengan data terbaru
-          localStorage.setItem('user', JSON.stringify(result.data))
+          // Update reactive data immediately
+          this.loadUserData()
+          this.profileUpdateKey++
           
-          // Trigger storage event untuk update layout dan komponen lain
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'user',
-            newValue: JSON.stringify(result.data)
+          // Dispatch custom event untuk komponen lain
+          window.dispatchEvent(new CustomEvent('profile-updated', {
+            detail: result.data
           }))
-          
-          // Force update komponen ini
-          this.$forceUpdate()
-          
-          // Refresh user data untuk memastikan sinkronisasi
-          await this.refreshUserData()
           
           // Emit event untuk komponen parent jika ada
           this.$emit('profile-updated', result.data)

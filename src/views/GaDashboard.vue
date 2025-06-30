@@ -1,618 +1,313 @@
 <template>
   <div class="ga-dashboard">
-    <!-- Dashboard Header -->
     <div class="dashboard-header">
-      <h1>General Affairs Dashboard</h1>
-      <div class="header-actions">
-        <button @click="showConfigPanel = !showConfigPanel" class="config-btn">
-          <i class="fas fa-cog"></i> {{ showConfigPanel ? 'Tutup Konfigurasi' : 'Konfigurasi Worship' }}
+      <h1>Dashboard General Affairs</h1>
+      <p>Manajemen Absensi Renungan Pagi</p>
+    </div>
+
+    <!-- Statistik -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon present">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.present }}</h3>
+          <p>Hadir Hari Ini</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon absent">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.absent }}</h3>
+          <p>Tidak Hadir</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon late">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.late }}</h3>
+          <p>Terlambat</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon leave">
+          <i class="fas fa-umbrella-beach"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.leave }}</h3>
+          <p>Cuti</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-section">
+      <div class="filter-group">
+        <label>Tanggal:</label>
+        <input type="date" v-model="selectedDate" @change="filterData">
+      </div>
+      
+      <div class="filter-group">
+        <label>Status:</label>
+        <select v-model="selectedStatus" @change="filterData">
+          <option value="">Semua Status</option>
+          <option value="present">Hadir</option>
+          <option value="absent">Tidak Hadir</option>
+          <option value="late">Terlambat</option>
+          <option value="leave">Cuti</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Cari:</label>
+        <input type="text" v-model="searchQuery" @input="filterData" placeholder="Nama pegawai...">
+      </div>
+      
+      <div class="filter-group">
+        <button @click="loadData" class="btn-refresh">
+          <i class="fas fa-sync-alt"></i>
+          Refresh Data
         </button>
-        <button @click="refreshDashboard" class="refresh-btn">
-          <i class="fas fa-sync-alt"></i> Refresh Data
+      </div>
+      
+      <div class="filter-group">
+        <button @click="debugData" class="btn-debug">
+          <i class="fas fa-bug"></i>
+          Debug Data
+        </button>
+      </div>
+      
+      <div class="filter-group">
+        <button @click="resetData" class="btn-reset">
+          <i class="fas fa-trash"></i>
+          Reset Data
         </button>
       </div>
     </div>
-    
-    <!-- Worship Config Panel -->
-    <WorshipConfigPanel v-if="showConfigPanel" class="worship-config-container" />
 
-    <!-- Simple Header -->
-    <header class="header">
-      <h1 class="title">Dashboard Morning Reflection</h1>
-      <div class="time-info">
-        <div class="current-time">
-          <span class="time">{{ currentTime }}</span>
-          <span class="date">{{ currentDate }}</span>
-        </div>
+    <!-- Tabel -->
+    <div class="table-container">
+      <div v-if="filteredData.length === 0" class="no-data">
+        <i class="fas fa-inbox"></i>
+        <p>Belum ada data absensi renungan pagi</p>
+        <small>Data akan muncul setelah user melakukan absensi renungan pagi</small>
       </div>
-    </header>
-
-    <!-- Zoom Meeting Section -->
-    <div class="zoom-section" v-if="store.isTodayWorshipDay">
-      <div class="section-header">
-        <h2>Renungan Pagi</h2>
-        <div class="zoom-status">
-          <span class="status-badge" :class="store.zoomTimeStatus.toLowerCase()">{{ store.zoomTimeStatus }}</span>
-        </div>
-      </div>
-      <div class="zoom-card">
-        <div class="zoom-info">
-          <i class="fab fa-zoom"></i>
-          <div class="zoom-details">
-            <h4>Renungan Pagi Bersama</h4>
-            <p>Bergabunglah dalam sesi renungan pagi</p>
-            <div class="zoom-time">
-              <i class="fas fa-clock"></i>
-              <span>07:10 - 07:35 WIB</span>
-            </div>
-          </div>
-        </div>
-        <div class="zoom-actions">
-          <button 
-            @click="joinZoomMeeting" 
-            class="btn-zoom"
-            :disabled="store.zoomTimeStatus !== 'Hadir' && !store.testingMode"
-          >
-            <i class="fab fa-zoom"></i>
-            {{ (store.zoomTimeStatus === 'Hadir' || store.testingMode) ? 'Gabung Zoom' : 'Waktu Absensi Ditutup' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Employee Zoom Access Section -->
-    <div class="employee-zoom-section" v-if="store.isTodayReflectionDay">
-      <div class="section-header">
-        <h2>Akses Zoom Karyawan - Renungan Pagi</h2>
-        <div class="schedule-info">
-          <i class="fas fa-calendar-alt"></i>
-          <span>Senin, Rabu, Jumat | 07:10 - 07:35 WIB</span>
-        </div>
-      </div>
-      <div class="employee-grid">
-        <div v-for="employee in store.employees" :key="employee.id" class="employee-card">
-          <div class="employee-info">
-            <div class="employee-avatar">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="employee-details">
-              <h4>{{ employee.full_name || employee.nama_lengkap || employee.name }}</h4>
-              <p>{{ employee.position || employee.role || 'Karyawan' }}</p>
-              <div class="attendance-status">
-                <span class="status-indicator" :class="getEmployeeAttendanceStatus(employee.id).class">
-                  {{ getEmployeeAttendanceStatus(employee.id).text }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="employee-actions">
-            <button 
-              @click="joinZoomForEmployee(employee)" 
-              class="btn-zoom-employee"
-              :disabled="store.zoomTimeStatus !== 'Hadir' && !store.testingMode"
-              :class="{
-                'active': store.zoomTimeStatus === 'Hadir' || store.testingMode,
-                'disabled': store.zoomTimeStatus !== 'Hadir' && !store.testingMode
-              }"
-            >
-              <i class="fab fa-zoom"></i>
-              <span v-if="store.zoomTimeStatus === 'Hadir' || store.testingMode">
-                Gabung Zoom
+      
+      <table v-else class="attendance-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Jabatan</th>
+            <th>Tanggal</th>
+            <th>Waktu</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(record, index) in filteredData" :key="record.id">
+            <td>{{ index + 1 }}</td>
+            <td>{{ record.name }}</td>
+            <td>{{ record.position }}</td>
+            <td>{{ formatDate(record.date) }}</td>
+            <td>{{ record.attendance_time || '-' }}</td>
+            <td>
+              <span class="status-badge" :class="getStatusClass(record.status)">
+                {{ getStatusText(record.status) }}
               </span>
-              <span v-else>
-                Tutup
-              </span>
-            </button>
-            <div class="zoom-info-text">
-              <small>Klik untuk absen renungan pagi</small>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="attendance-note">
-        <div class="note-card">
-          <i class="fas fa-info-circle"></i>
-          <div class="note-content">
-            <h4>Informasi Absensi Renungan Pagi</h4>
-            <ul>
-              <li>Jadwal: <strong>Senin, Rabu, Jumat</strong></li>
-              <li>Waktu: <strong>07:10 - 07:35 WIB</strong></li>
-              <li>Klik "Gabung Zoom" = <strong>Hadir</strong></li>
-              <li>Tidak klik = <strong>Tidak Hadir</strong></li>
-              <li>Setelah jam 07:35 = <strong>Terlambat</strong></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-info">
-          <div class="stat-number">{{ store.employees.length }}</div>
-          <div class="stat-label">Total Karyawan</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-info">
-          <div class="stat-number">{{ todayTotalAttendance }}</div>
-          <div class="stat-label">Kehadiran Hari Ini</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-info">
-          <div class="stat-number">{{ pendingLeaves.length }}</div>
-          <div class="stat-label">Cuti Pending</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🗓️</div>
-        <div class="stat-info">
-          <div class="stat-number">{{ store.isTodayWorshipDay ? 'Ibadah' : 'Kerja' }}</div>
-          <div class="stat-label">Status Hari</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">⏰</div>
-        <div class="stat-info">
-          <div class="stat-number">{{ lateArrivalsCount }}</div>
-          <div class="stat-label">Terlambat Hari Ini</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">📈</div>
-        <div class="stat-info">
-          <div class="stat-number">{{ monthlyAttendancePercentage }}%</div>
-          <div class="stat-label">Kehadiran Bulan Ini</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Content Sections -->
-    <div class="content">
-      <!-- Morning Reflections -->
-      <section class="section">
-        <div class="section-header">
-          <h2>Morning Reflections</h2>
-          <button @click="store.fetchReflections" class="refresh-btn" :disabled="store.loading">
-            {{ store.loading ? 'Loading...' : 'Refresh' }}
-          </button>
-        </div>
-        
-        <div v-if="store.reflections.length" class="table-wrapper">
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Karyawan</th>
-                <th>Tanggal</th>
-                <th>Status</th>
-                <th>Waktu</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="reflection in store.reflections" :key="reflection.id">
-                <td>{{ reflection.employee?.full_name || 'Unknown' }}</td>
-                <td>{{ formatDate(reflection.date) }}</td>
-                <td>
-                  <span class="status-badge" :class="getStatusBadgeClass(reflection.status)">
-                    {{ reflection.status }}
-                  </span>
-                </td>
-                <td>{{ reflection.join_time ? formatTime(reflection.join_time) : '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div v-else class="empty-message">
-          <p>Belum ada data kehadiran hari ini</p>
-        </div>
-      </section>
-
-      <!-- Leave Requests -->
-      <section class="section">
-        <div class="section-header">
-          <h2>Data Cuti</h2>
-          <button @click="store.fetchLeaves" class="refresh-btn" :disabled="store.loading">
-            {{ store.loading ? 'Loading...' : 'Refresh' }}
-          </button>
-        </div>
-        
-        <div v-if="store.leaves.length" class="table-wrapper">
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Karyawan</th>
-                <th>Mulai</th>
-                <th>Selesai</th>
-                <th>Tipe</th>
-                <th>Status</th>
-                <th>Durasi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="leave in store.leaves" :key="leave.id">
-                <td>{{ leave.employee?.full_name || 'Unknown' }}</td>
-                <td>{{ formatDate(leave.start_date) }}</td>
-                <td>{{ formatDate(leave.end_date) }}</td>
-                <td>{{ leave.type }}</td>
-                <td>
-                  <span class="status-badge" :class="getLeaveStatusBadgeClass(leave.status)">
-                    {{ leave.status }}
-                  </span>
-                </td>
-                <td>{{ calculateLeaveDuration(leave.start_date, leave.end_date) }} hari</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div v-else class="empty-message">
-          <p>Belum ada data cuti</p>
-        </div>
-      </section>
+            </td>
+            <td>
+              <button class="btn-edit" @click="editRecord(record)">
+                <i class="fas fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
 
 <script>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useGaStore } from '@/stores/gaStore'
-import WorshipConfigPanel from '@/components/WorshipConfigPanel.vue'
+import { useGaStore } from '../stores/gaStore'
 
 export default {
-  name: 'Dashboard',
-  components: {
-    WorshipConfigPanel
-  },
-  setup() {
-    const store = useGaStore()
-    const currentTime = ref('')
-    const currentDate = ref('')
-    const showConfigPanel = ref(false)
-    let timeInterval = null
-
-    // Update current time
-    const updateTime = () => {
-      const now = new Date()
-      const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}))
-      
-      currentTime.value = jakartaTime.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: 'Asia/Jakarta'
-      })
-      
-      currentDate.value = jakartaTime.toLocaleDateString('id-ID', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        timeZone: 'Asia/Jakarta'
-      })
-      
-      store.updateCurrentTime()
-    }
-
-    // Computed properties using dashboard data
-    const todayReflections = computed(() => {
-      const today = new Date().toISOString().split('T')[0]
-      const todayDate = new Date()
-      const dayOfWeek = todayDate.getDay()
-      
-      // Hanya tampilkan jika hari ini adalah hari renungan (Senin, Rabu, Jumat)
-      if (![1, 3, 5].includes(dayOfWeek)) {
-        return []
-      }
-      
-      // Use dashboard attendances data if available, fallback to reflections
-      const attendanceData = store.dashboardAttendances.length > 0 ? store.dashboardAttendances : store.reflections
-      return attendanceData.filter(reflection => 
-        reflection.date === today && reflection.status === 'Hadir'
-      )
-    })
-
-    const todayTotalAttendance = computed(() => {
-      const today = new Date().toISOString().split('T')[0]
-      const todayDate = new Date()
-      const dayOfWeek = todayDate.getDay()
-      
-      // Hanya tampilkan jika hari ini adalah hari renungan (Senin, Rabu, Jumat)
-      if (![1, 3, 5].includes(dayOfWeek)) {
-        return 0
-      }
-      
-      // Use dashboard attendances data if available, fallback to reflections
-      const attendanceData = store.dashboardAttendances.length > 0 ? store.dashboardAttendances : store.reflections
-      return attendanceData.filter(reflection => 
-        reflection.date === today && (reflection.status === 'Hadir' || reflection.status === 'Terlambat')
-      ).length
-    })
-
-    const pendingLeaves = computed(() => {
-      // Use dashboard leave requests data if available, fallback to leaves
-      const leaveData = store.dashboardLeaveRequests.length > 0 ? store.dashboardLeaveRequests : store.leaves
-      return leaveData.filter(leave => 
-        leave.status === 'pending' || leave.status === 'Pending'
-      )
-    })
-
-    const lateArrivalsCount = computed(() => {
-      const today = new Date().toISOString().slice(0, 10);
-      // Use dashboard attendances data if available, fallback to reflections
-      const attendanceData = store.dashboardAttendances.length > 0 ? store.dashboardAttendances : store.reflections
-      return attendanceData.filter(r => {
-        if (r.date !== today || !r.join_time || r.status !== 'Terlambat') return false;
-        
-        // Cek apakah hari ini adalah hari renungan
-        const reflectionDate = new Date(r.date);
-        const dayOfWeek = reflectionDate.getDay();
-        if (![1, 3, 5].includes(dayOfWeek)) return false;
-        
-        return true;
-      }).length;
-    });
-
-    const monthlyAttendancePercentage = computed(() => {
-      // Use attendance statistics if available
-      if (store.attendanceStatistics && store.attendanceStatistics.monthly_percentage) {
-        return store.attendanceStatistics.monthly_percentage
-      }
-      
-      // Fallback to manual calculation
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const worshipDays = getWorshipDaysInMonth(year, month);
-      
-      // Use dashboard attendances data if available, fallback to reflections
-      const attendanceData = store.dashboardAttendances.length > 0 ? store.dashboardAttendances : store.reflections
-      const presentDays = attendanceData
-        .filter(r => {
-          const reflectionDate = new Date(r.date);
-          return reflectionDate.getFullYear() === year && 
-                 reflectionDate.getMonth() === month &&
-                 r.status === 'Hadir';
-        }).length;
-
-      return worshipDays > 0 ? Math.round((presentDays / worshipDays) * 100) : 0;
-    });
-
-    function getWorshipDaysInMonth(year, month) {
-      let worshipDays = 0;
-      const date = new Date(year, month, 1);
-      while (date.getMonth() === month) {
-        const dayOfWeek = date.getDay();
-        // Hanya hitung hari Senin (1), Rabu (3), dan Jumat (5)
-        if ([1, 3, 5].includes(dayOfWeek)) {
-          worshipDays++;
-        }
-        date.setDate(date.getDate() + 1);
-      }
-      return worshipDays;
-    }
-
-    const timeStatusClass = computed(() => {
-      const status = store.zoomTimeStatus
-      return {
-        'status-on-time': status === 'On Time',
-        'status-late': status === 'Late',
-        'status-closed': status === 'Closed'
-      }
-    })
-
-    const timeStatusText = computed(() => {
-      const status = store.zoomTimeStatus
-      switch (status) {
-        case 'On Time':
-          return '✅ Tepat Waktu'
-        case 'Late':
-          return '⚠️ Terlambat'
-        case 'Closed':
-          return '❌ Tutup'
-        default:
-          return status
-      }
-    })
-
-    // Methods
-    const formatDate = (date) => {
-      return new Date(date).toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      })
-    }
-
-    const formatTime = (time) => {
-      return new Date(time).toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Jakarta'
-      })
-    }
-
-    const getInitials = (name) => {
-      if (!name) return '?'
-      return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
-    }
-
-    const getStatusBadgeClass = (status) => {
-      const baseClass = 'status-badge'
-      switch (status) {
-        case 'Hadir':
-        case 'On Time':
-          return `${baseClass} status-present`
-        case 'Terlambat':
-        case 'Late':
-          return `${baseClass} status-late`
-        case 'Tidak Hadir':
-        case 'Absent':
-          return `${baseClass} status-absent`
-        default:
-          return baseClass
-      }
-    }
-
-    const getLeaveStatusBadgeClass = (status) => {
-      const baseClass = 'status-badge'
-      switch (status.toLowerCase()) {
-        case 'approved':
-        case 'disetujui':
-          return `${baseClass} status-approved`
-        case 'pending':
-        case 'menunggu':
-          return `${baseClass} status-pending`
-        case 'rejected':
-        case 'ditolak':
-          return `${baseClass} status-rejected`
-        default:
-          return baseClass
-      }
-    }
-
-    const calculateLeaveDuration = (startDate, endDate) => {
-      const start = new Date(startDate)
-      const end = new Date(endDate)
-      const diffTime = Math.abs(end - start)
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-      return diffDays
-    }
-
-    // Get employee attendance status
-    const getEmployeeAttendanceStatus = (employeeId) => {
-      const today = new Date().toISOString().split('T')[0]
-      const attendanceData = store.dashboardAttendances.length > 0 ? store.dashboardAttendances : store.reflections
-      
-      const attendance = attendanceData.find(att => 
-        att.employee_id === employeeId && att.date === today
-      )
-      
-      if (attendance) {
-        switch (attendance.status) {
-          case 'Hadir':
-            return { text: 'Hadir', class: 'status-present' }
-          case 'Terlambat':
-            return { text: 'Terlambat', class: 'status-late' }
-          case 'Tidak Hadir':
-            return { text: 'Tidak Hadir', class: 'status-absent' }
-          default:
-            return { text: attendance.status, class: 'status-unknown' }
-        }
-      }
-      
-      return { text: 'Belum Absen', class: 'status-pending' }
-    }
-
-    // Join zoom for specific employee
-    const joinZoomForEmployee = async (employee) => {
-      try {
-        // Simulate user data for the selected employee
-        const userData = {
-          id: employee.id,
-          nama_lengkap: employee.full_name || employee.nama_lengkap || employee.name,
-          name: employee.full_name || employee.nama_lengkap || employee.name,
-          role: employee.position || employee.role || 'Karyawan',
-          position: employee.position || employee.role || 'Karyawan'
-        }
-        
-        // Store current user data temporarily
-        const originalUser = localStorage.getItem('user')
-        localStorage.setItem('user', JSON.stringify(userData))
-        
-        // Call the zoom join function
-        const result = await store.joinZoomMeeting()
-        
-        // Restore original user data
-        if (originalUser) {
-          localStorage.setItem('user', originalUser)
-        }
-        
-        if (result.success) {
-          // Refresh attendance data
-          await refreshDashboard()
-        }
-        
-        return result
-      } catch (error) {
-        console.error('Error joining zoom for employee:', error)
-        return { success: false, message: 'Gagal bergabung ke Zoom' }
-      }
-    }
-
-    // Join zoom meeting (original function)
-    const joinZoomMeeting = async () => {
-      try {
-        const result = await store.joinZoomMeeting()
-        if (result.success) {
-          await refreshDashboard()
-        }
-        return result
-      } catch (error) {
-        console.error('Error joining zoom:', error)
-        return { success: false, message: 'Gagal bergabung ke Zoom' }
-      }
-    }
-
-    // Refresh dashboard data
-    const refreshDashboard = async () => {
-      try {
-        await store.loadDashboardData()
-        // Also fetch basic GA data as fallback
-        await Promise.all([
-          store.fetchEmployees(),
-          store.fetchReflections(),
-          store.fetchLeaves()
-        ])
-      } catch (error) {
-        console.error('Error refreshing dashboard:', error)
-      }
-    }
-
-    // Lifecycle hooks
-    onMounted(async () => {
-      updateTime()
-      timeInterval = setInterval(updateTime, 1000)
-      
-      // Load dashboard data
-      await refreshDashboard()
-    })
-
-    onUnmounted(() => {
-      if (timeInterval) {
-        clearInterval(timeInterval)
-      }
-    })
-
-
-
+  name: 'GaDashboard',
+  data() {
     return {
-      store,
-      currentTime,
-      currentDate,
-      todayReflections,
-      todayTotalAttendance,
-      pendingLeaves,
-      lateArrivalsCount,
-      monthlyAttendancePercentage,
-      timeStatusClass,
-      timeStatusText,
-      formatDate,
-      formatTime,
-      getInitials,
-      getStatusBadgeClass,
-      getLeaveStatusBadgeClass,
-      calculateLeaveDuration,
-      refreshDashboard,
-      joinZoomMeeting,
-      joinZoomForEmployee,
-      getEmployeeAttendanceStatus,
-      showConfigPanel
+      gaStore: useGaStore(),
+      selectedDate: new Date().toISOString().split('T')[0],
+      selectedStatus: '',
+      searchQuery: '',
+      attendanceData: [],
+      stats: {
+        present: 0,
+        absent: 0,
+        late: 0,
+        leave: 0
+      }
+    }
+  },
+  computed: {
+    filteredData() {
+      let filtered = [...this.attendanceData];
+      
+      if (this.selectedDate) {
+        filtered = filtered.filter(item => item.date === this.selectedDate);
+      }
+      
+      if (this.selectedStatus) {
+        filtered = filtered.filter(item => item.status === this.selectedStatus);
+      }
+      
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(item => 
+          item.name.toLowerCase().includes(query) ||
+          item.position.toLowerCase().includes(query)
+        );
+      }
+      
+      return filtered;
+    }
+  },
+  mounted() {
+    this.loadData();
+  },
+  methods: {
+    async loadData() {
+      try {
+        console.log('Loading GA Dashboard data...');
+        
+        // Load data dari GA Store dengan error handling
+        try {
+          await this.gaStore.fetchMorningReflectionHistory();
+        } catch (error) {
+          console.warn('Error loading morning reflection history:', error);
+        }
+        
+        try {
+          await this.gaStore.fetchEmployees();
+        } catch (error) {
+          console.warn('Error loading employees:', error);
+        }
+        
+        console.log('GA Store data:', {
+          reflections: this.gaStore.morningReflectionHistory,
+          employees: this.gaStore.employees
+        });
+        
+        // Transform data untuk tampilan
+        this.attendanceData = this.transformAttendanceData();
+        
+        console.log('Transformed attendance data:', this.attendanceData);
+        
+        this.calculateStats();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // Fallback: set data kosong jika error
+        this.attendanceData = [];
+        this.stats = {
+          total: 0,
+          present: 0,
+          absent: 0,
+          late: 0
+        };
+      }
+    },
+    
+    transformAttendanceData() {
+      const reflections = this.gaStore.morningReflectionHistory || [];
+      const employees = this.gaStore.employees || [];
+      
+      console.log('Transforming data:', { reflections, employees });
+      
+      return reflections.map(reflection => {
+        const employee = employees.find(emp => emp.id === reflection.user_id);
+        console.log('Finding employee for user_id:', reflection.user_id, 'Found:', employee);
+        
+        return {
+          id: reflection.id,
+          name: employee ? employee.nama_lengkap : `User ${reflection.user_id}`,
+          position: employee ? employee.jabatan : '-',
+          date: reflection.date,
+          attendance_time: reflection.timestamp ? new Date(reflection.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
+          status: reflection.status || 'present'
+        };
+      });
+    },
+    
+    calculateStats() {
+      const today = this.selectedDate;
+      const todayData = this.attendanceData.filter(item => item.date === today);
+      
+      this.stats.present = todayData.filter(item => item.status === 'present').length;
+      this.stats.absent = todayData.filter(item => item.status === 'absent').length;
+      this.stats.late = todayData.filter(item => item.status === 'late').length;
+      this.stats.leave = todayData.filter(item => item.status === 'leave').length;
+    },
+    
+    filterData() {
+      // Refresh data dan stats
+      this.attendanceData = this.transformAttendanceData();
+      this.calculateStats();
+    },
+    
+    editRecord(record) {
+      console.log('Edit record:', record);
+    },
+    
+    formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('id-ID');
+    },
+    
+    getStatusClass(status) {
+      const classMap = {
+        present: 'status-present',
+        absent: 'status-absent',
+        late: 'status-late',
+        leave: 'status-leave'
+      };
+      return classMap[status] || '';
+    },
+    
+    getStatusText(status) {
+      const textMap = {
+        present: 'Hadir',
+        absent: 'Tidak Hadir',
+        late: 'Terlambat',
+        leave: 'Cuti'
+      };
+      return textMap[status] || status;
+    },
+    
+    debugData() {
+      console.log('=== DEBUG DATA ===');
+      console.log('LocalStorage morningReflectionHistory:', localStorage.getItem('morningReflectionHistory'));
+      console.log('LocalStorage employees:', localStorage.getItem('employees'));
+      console.log('GA Store morningReflectionHistory:', this.gaStore.morningReflectionHistory);
+      console.log('GA Store employees:', this.gaStore.employees);
+      console.log('Transformed attendanceData:', this.attendanceData);
+      console.log('Filtered data:', this.filteredData);
+      console.log('Stats:', this.stats);
+      console.log('==================');
+      
+      // Tampilkan alert dengan data
+      alert(`Data Debug:\n\nReflections: ${this.gaStore.morningReflectionHistory?.length || 0}\nEmployees: ${this.gaStore.employees?.length || 0}\nAttendance: ${this.attendanceData?.length || 0}`);
+    },
+    
+    resetData() {
+      // Implementasi reset data
+      console.log('Reset data');
     }
   }
 }
@@ -621,720 +316,281 @@ export default {
 <style scoped>
 .ga-dashboard {
   padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 20px 30px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  text-align: center;
+  margin-bottom: 30px;
 }
 
 .dashboard-header h1 {
+  margin: 0 0 10px 0;
   color: #2c3e50;
-  margin: 0;
   font-size: 28px;
-  font-weight: 600;
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
+.dashboard-header p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 16px;
 }
 
-.config-btn, .refresh-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.config-btn {
-  background: #9b59b6;
-  color: white;
-}
-
-.config-btn:hover {
-  background: #8e44ad;
-  transform: translateY(-2px);
-}
-
-.refresh-btn {
-  background: #3498db;
-  color: white;
-}
-
-.refresh-btn:hover {
-  background: #2980b9;
-  transform: translateY(-2px);
-}
-
-.worship-config-container {
-  margin-bottom: 20px;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dashboard {
-  padding: 1rem;
-  background-color: #f9fafb;
-}
-
-/* Header */
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #111827;
-}
-
-.time-info {
-  text-align: right;
-}
-
-.current-time {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-
-.time {
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.date {
-  font-size: 0.875rem;
-  color: #6b7280;
-  line-height: 1.2;
-}
-
-/* Stats Grid */
-.stats {
+.stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.25rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  transition: all 0.3s ease-in-out;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  gap: 15px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .stat-icon {
-  font-size: 2rem;
-}
-
-.stat-number {
-  font-size: 1.75rem;
-  font-weight: 700;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #4b5563;
-}
-
-/* Content Sections */
-.content {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-}
-
-@media (min-width: 1024px) {
-  .content {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.section {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-}
-
-.section-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.section-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.refresh-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  width: 50px;
+  height: 50px;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
 }
 
+.stat-icon.present {
+  background: rgba(46, 204, 113, 0.1);
+  color: #27ae60;
+}
 
-/* Table Styles */
-.table-wrapper {
-  overflow-x: auto;
+.stat-icon.absent {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.stat-icon.late {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.stat-icon.leave {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+.stat-content h3 {
+  margin: 0 0 5px 0;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.stat-content p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.filter-section {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
 }
 
-.simple-table {
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.attendance-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
 }
 
-.simple-table th {
-  background: #f7fafc;
-  color: #4a5568;
-  font-weight: 600;
-  padding: 0.75rem 0.5rem;
+.attendance-table th {
+  background: #f8f9fa;
+  padding: 15px;
   text-align: left;
-  border-bottom: 2px solid #e2e8f0;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.simple-table td {
-  padding: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  color: #2d3748;
-  vertical-align: middle;
-}
-
-.simple-table tr:hover {
-  background: #f7fafc;
-}
-
-.simple-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Status Badges */
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status-present {
-  background: #c6f6d5;
-  color: #22543d;
-}
-
-.status-late {
-  background: #fed7d7;
-  color: #742a2a;
-}
-
-.status-absent {
-  background: #e2e8f0;
-  color: #4a5568;
-}
-
-.status-approved {
-  background: #c6f6d5;
-  color: #22543d;
-}
-
-.status-pending {
-  background: #fef5e7;
-  color: #744210;
-}
-
-.status-rejected {
-  background: #fed7d7;
-  color: #742a2a;
-}
-
-/* Empty Message */
-.empty-message {
-  text-align: center;
-  padding: 2rem 1rem;
-  color: #718096;
-}
-
-.empty-message p {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-/* Zoom Section Styles */
-.zoom-section {
-  margin-bottom: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.section-header h2 {
-  margin: 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.zoom-status {
-  display: flex;
-  align-items: center;
-}
-
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-badge.hadir {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.status-badge.terlambat {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-badge.closed {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.zoom-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-}
-
-.zoom-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.zoom-info .fab.fa-zoom {
-  font-size: 2rem;
-  color: #2563eb;
-}
-
-.zoom-details h4 {
-  margin: 0 0 4px 0;
-  color: #1f2937;
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.zoom-details p {
-  margin: 0 0 8px 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.zoom-time {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.zoom-time .fas.fa-clock {
-  font-size: 0.75rem;
-}
-
-.btn-zoom {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-zoom:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-.btn-zoom:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Employee Zoom Access Section */
-.employee-zoom-section {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.employee-zoom-section .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.employee-zoom-section .section-header h2 {
   color: #2c3e50;
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  border-bottom: 1px solid #e1e8ed;
 }
 
-.schedule-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #7c3aed;
-  font-weight: 500;
-  background: #f3f4f6;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
+.attendance-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f1f3f4;
 }
 
-.employee-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+.attendance-table tr:hover {
+  background: #f8f9fa;
 }
 
-.employee-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  transition: all 0.2s ease;
-}
-
-.employee-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.employee-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.employee-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 20px;
-}
-
-.employee-details h4 {
-  margin: 0 0 4px 0;
-  color: #1f2937;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.employee-details p {
-  margin: 0 0 8px 0;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.attendance-status {
-  margin-top: 8px;
-}
-
-.status-indicator {
-  padding: 4px 12px;
-  border-radius: 20px;
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
   font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-weight: 500;
 }
 
-.status-indicator.status-present {
-  background: #dcfce7;
-  color: #166534;
+.status-badge.status-present {
+  background: rgba(46, 204, 113, 0.1);
+  color: #27ae60;
 }
 
-.status-indicator.status-late {
-  background: #fef3c7;
-  color: #92400e;
+.status-badge.status-absent {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
 }
 
-.status-indicator.status-absent {
-  background: #fee2e2;
-  color: #991b1b;
+.status-badge.status-late {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
 }
 
-.status-indicator.status-pending {
-  background: #e0e7ff;
-  color: #3730a3;
+.status-badge.status-leave {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
 }
 
-.status-indicator.status-unknown {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.employee-actions {
-  display: flex;
-  justify-content: center;
-}
-
-.btn-zoom-employee {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+.btn-edit {
+  padding: 6px 10px;
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 4px;
+  background: #3498db;
+  color: white;
   cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  width: 100%;
-  justify-content: center;
+  font-size: 12px;
 }
 
-.btn-zoom-employee:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.btn-edit:hover {
+  background: #2980b9;
 }
 
-.btn-zoom-employee:disabled,
-.btn-zoom-employee.disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+.btn-refresh {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-.btn-zoom-employee.active {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.btn-refresh:hover {
+  background: #2980b9;
 }
 
-.btn-zoom-employee.active:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+.btn-debug {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-/* Responsive Design */
+.btn-debug:hover {
+  background: #2980b9;
+}
+
+.btn-reset {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-reset:hover {
+  background: #2980b9;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-data i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #ddd;
+}
+
+.no-data p {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.no-data small {
+  color: #999;
+}
+
 @media (max-width: 768px) {
-  .stats {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+  .ga-dashboard {
+    padding: 15px;
   }
   
-  .header {
-    padding: 1rem;
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
   }
   
-  .section {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 0;
-  }
-  
-  .header {
+  .filter-section {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1rem;
+    gap: 15px;
   }
   
-  .time-info {
-    align-items: flex-start;
-    width: 100%;
+  .filter-group input,
+  .filter-group select {
+    min-width: auto;
   }
   
-  .title {
-    font-size: 1.5rem;
+  .attendance-table {
+    font-size: 14px;
   }
   
-  .stats {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+  .attendance-table th,
+  .attendance-table td {
+    padding: 10px;
   }
-  
-  .stat-card {
-    padding: 1rem;
-  }
-  
-  .stat-number {
-    font-size: 1.75rem;
-  }
-  
-  .section {
-    padding: 1rem;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .refresh-btn {
-    width: 100%;
-  }
-  
-  .simple-table {
-    font-size: 0.75rem;
-  }
-  
-  .simple-table th,
-  .simple-table td {
-    padding: 0.5rem 0.25rem;
-  }
-  
-  .simple-table th {
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .stat-card {
-    padding: 0.75rem;
-  }
-  
-  .stat-number {
-    font-size: 1.5rem;
-  }
-  
-  .section {
-    padding: 0.75rem;
-  }
-  
-  .header {
-    padding: 0.75rem;
-  }
-  
-  .title {
-    font-size: 1.25rem;
-  }
-  
-  .time {
-    font-size: 1rem;
-  }
-  
-  .simple-table th,
-  .simple-table td {
-    padding: 0.5rem 0.25rem;
-    font-size: 0.7rem;
-  }
-  
-  .status-badge {
-    font-size: 0.65rem;
-    padding: 0.2rem 0.5rem;
-  }
-}
-
-/* Loading and transition states */
-.section {
-  transition: opacity 0.3s ease;
-}
-
-.section.loading {
-  opacity: 0.7;
-}
-
-/* Accessibility improvements */
-.refresh-btn:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
-
-.nav-link:focus,
-.simple-table:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="app-layout" :class="{ 'dark-mode': isDarkMode }">
+  <div class="app-layout" :class="{ 'dark-mode': isDarkMode, 'mobile-menu-open': isMobileMenuOpen }">
     <!-- Mobile Menu Overlay -->
     <div 
       v-if="isMobileMenuOpen" 
@@ -48,7 +48,16 @@
               <router-link to="/morning-reflection" class="nav-link" @click="closeAllDropdowns">
                 <div class="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.66 9.53l-7.07 7.07-4.24-4.24 1.41-1.41 2.83 2.83 5.66-5.66 1.41 1.41zM4 12c0-2.33 1.02-4.42 2.62-5.88L9 8.5v-6H3l2.2 2.2C3.24 6.52 2 9.11 2 12c0 5.19 3.95 9.45 9 9.95v-2.02c-3.94-.49-7-3.86-7-7.93zm18 0c0-5.19-3.95-9.45-9-9.95v2.02c3.94.49 7 3.86 7 7.93 0 2.33-1.02 4.42-2.62 5.88L15 15.5v6h6l-2.2-2.2c1.96-1.82 3.2-4.41 3.2-7.3z"/>
+                    <!-- Seventh-day Adventist Logo: Bible and Cross -->
+                    <!-- Open Bible -->
+                    <path d="M4 4h7v12H4z" fill="currentColor" opacity="0.8" stroke="currentColor" stroke-width="0.5"/>
+                    <path d="M13 4h7v12h-7z" fill="currentColor" opacity="0.8" stroke="currentColor" stroke-width="0.5"/>
+                    <path d="M5 6h5M5 8h4M5 10h5M5 12h3" stroke="currentColor" stroke-width="0.3" opacity="0.6"/>
+                    <path d="M14 6h5M14 8h4M14 10h5M14 12h3" stroke="currentColor" stroke-width="0.3" opacity="0.6"/>
+                    <!-- Cross rising from Bible -->
+                    <path d="M12 16v6M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <!-- Flame/Light above -->
+                    <ellipse cx="12" cy="2.5" rx="1" ry="1.5" fill="#FFD700" opacity="0.9"/>
                   </svg>
                 </div>
                 <span class="nav-text">Renungan Pagi</span>
@@ -220,6 +229,7 @@
           <button 
             class="menu-toggle"
             @click="toggleMobileMenu"
+            aria-label="Toggle mobile menu"
           >
             <span class="hamburger"></span>
             <span class="hamburger"></span>
@@ -231,6 +241,9 @@
           </div>
 
           <div class="navbar-actions">
+            <!-- Morning Reflection Status -->
+            <MorningReflection />
+            
             <!-- Dark Mode Toggle Button -->
             <button 
               class="theme-toggle-btn" 
@@ -382,9 +395,13 @@
 
 <script>
 import authService from '../services/authService'
+import MorningReflection from './MorningReflection.vue'
 
 export default {
   name: 'Layout',
+  components: {
+    MorningReflection
+  },
   data() {
     return {
       isMobileMenuOpen: false,
@@ -501,9 +518,37 @@ export default {
   methods: {
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen
+      
+      // Update overlay class
+      const overlay = document.querySelector('.mobile-overlay')
+      if (overlay) {
+        if (this.isMobileMenuOpen) {
+          overlay.classList.add('active')
+        } else {
+          overlay.classList.remove('active')
+        }
+      }
+      
+      // Prevent body scroll when menu is open
+      if (this.isMobileMenuOpen) {
+        document.body.style.overflow = 'hidden'
+        document.body.classList.add('menu-open')
+      } else {
+        document.body.style.overflow = ''
+        document.body.classList.remove('menu-open')
+      }
     },
     closeMobileMenu() {
       this.isMobileMenuOpen = false
+      
+      // Update overlay class
+      const overlay = document.querySelector('.mobile-overlay')
+      if (overlay) {
+        overlay.classList.remove('active')
+      }
+      
+      document.body.style.overflow = ''
+      document.body.classList.remove('menu-open')
     },
     toggleSubmenu(menuName) {
       this.submenuOpen[menuName] = !this.submenuOpen[menuName]
@@ -517,7 +562,19 @@ export default {
     closeAllDropdowns() {
       this.isUserDropdownOpen = false
       this.isNotificationDropdownOpen = false
-      this.isMobileMenuOpen = false
+      
+      if (this.isMobileMenuOpen) {
+        this.isMobileMenuOpen = false
+        
+        // Update overlay class
+        const overlay = document.querySelector('.mobile-overlay')
+        if (overlay) {
+          overlay.classList.remove('active')
+        }
+        
+        document.body.style.overflow = ''
+        document.body.classList.remove('menu-open')
+      }
     },
     viewProfile() {
       this.closeAllDropdowns()
@@ -564,6 +621,10 @@ export default {
       if (event.key === 'user') {
         this.$forceUpdate()
       }
+    },
+    handleProfileUpdate(event) {
+      // Handle profile updates from Profile component
+      this.refreshUserData()
     },
     async refreshUserData() {
       try {
@@ -690,8 +751,8 @@ export default {
     
     // Listen for window resize
     window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) {
-        this.isMobileMenuOpen = false
+      if (window.innerWidth > 768 && this.isMobileMenuOpen) {
+        this.closeMobileMenu()
       }
     })
     
@@ -704,17 +765,35 @@ export default {
         this.isNotificationDropdownOpen = false
       }
       // Close mobile menu when clicking outside on mobile
-      if (this.isMobileMenuOpen && !event.target.closest('.sidebar')) {
-        this.isMobileMenuOpen = false
+      if (this.isMobileMenuOpen && !event.target.closest('.sidebar') && !event.target.closest('.menu-toggle')) {
+        this.closeMobileMenu()
+      }
+    })
+    
+    // Add click event listener to mobile overlay
+    this.$nextTick(() => {
+      const overlay = document.querySelector('.mobile-overlay')
+      if (overlay) {
+        overlay.addEventListener('click', this.closeMobileMenu)
       }
     })
     
     // Listen for storage changes to update user data
     window.addEventListener('storage', this.handleStorageChange)
+    
+    // Listen for profile updates from Profile component
+    window.addEventListener('profile-updated', this.handleProfileUpdate)
   },
   beforeUnmount() {
     // Clean up event listeners
     window.removeEventListener('storage', this.handleStorageChange)
+    window.removeEventListener('profile-updated', this.handleProfileUpdate)
+    
+    // Remove overlay event listener
+    const overlay = document.querySelector('.mobile-overlay')
+    if (overlay) {
+      overlay.removeEventListener('click', this.closeMobileMenu)
+    }
     
     // Stop notification polling
     this.stopNotificationPolling()
@@ -740,6 +819,18 @@ export default {
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 998;
   display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  pointer-events: none;
+}
+
+.mobile-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* Sidebar Styles */
@@ -757,6 +848,8 @@ export default {
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .sidebar-nav {
@@ -819,9 +912,15 @@ export default {
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border-radius: 4px;
   transition: background-color 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .close-btn:hover {
@@ -1109,15 +1208,56 @@ export default {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  min-width: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 1001;
+}
+
+.menu-toggle:hover {
+  background-color: rgba(30, 58, 138, 0.1);
+  transform: scale(1.05);
+}
+
+.menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.menu-toggle:focus {
+  outline: 2px solid rgba(30, 58, 138, 0.3);
+  outline-offset: 2px;
 }
 
 .hamburger {
-  width: 24px;
-  height: 2px;
+  width: 26px;
+  height: 3px;
   background-color: #1e3a8a;
-  border-radius: 1px;
-  transition: all 0.3s ease;
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  display: block;
+}
+
+/* Hamburger Animation when menu is open */
+.app-layout.mobile-menu-open .menu-toggle .hamburger:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+  background-color: #dc2626;
+}
+
+.app-layout.mobile-menu-open .menu-toggle .hamburger:nth-child(2) {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.app-layout.mobile-menu-open .menu-toggle .hamburger:nth-child(3) {
+  transform: rotate(-45deg) translate(8px, -8px);
+  background-color: #dc2626;
 }
 
 .navbar-actions {
@@ -1520,8 +1660,8 @@ export default {
   stroke: #b91c1c;
 }
 
-/* Desktop Styles */
-@media (min-width: 769px) {
+/* Tablet and Desktop Styles */
+@media (min-width: 1025px) {
   .sidebar {
     transform: translateX(0);
   }
@@ -1540,10 +1680,65 @@ export default {
   }
 }
 
-/* Mobile Styles */
-@media (max-width: 768px) {
+/* Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 1000;
+    width: 280px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+  
+  .main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .menu-toggle {
+    display: flex;
+    z-index: 1001;
+    position: relative;
+  }
+  
   .mobile-overlay {
     display: block;
+  }
+  
+  .app-layout.mobile-menu-open .mobile-overlay {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 1000;
+    width: 280px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+  }
+  
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+  
+  .mobile-overlay {
+    display: block;
+  }
+  
+  .app-layout.mobile-menu-open .mobile-overlay {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
   
   .mobile-only {
@@ -1553,6 +1748,15 @@ export default {
   .main-wrapper {
     margin-left: 0;
     width: 100%;
+  }
+  
+  .menu-toggle {
+    display: flex;
+    z-index: 1001;
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
   }
   
   .navbar-content {

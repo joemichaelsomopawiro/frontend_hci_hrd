@@ -1,118 +1,70 @@
 <template>
-  <div class="morning-reflection-container">
-    <div class="reflection-header">
-      <div class="header-content">
-        <div class="header-left">
-          <h2>Renungan Pagi</h2>
-          <p class="current-time">{{ currentTime }}</p>
-          <p class="current-date">{{ currentDate }}</p>
-        </div>
-        <div class="header-right">
-          <div class="status-badge" :class="statusClass">
-            <i :class="statusIcon"></i>
-            <span>{{ statusText }}</span>
-          </div>
-        </div>
+  <div class="morning-reflection-navbar">
+    <div class="reflection-status" @click="openReflectionModal">
+      <div class="status-icon" :class="getStatusClass()">
+        <i :class="getStatusIcon()"></i>
+      </div>
+      <div class="status-info">
+        <span class="status-text">{{ getStatusText() }}</span>
+        <span class="status-date">{{ getCurrentDate() }}</span>
       </div>
     </div>
 
-    <div class="reflection-content">
-      <!-- Today's Status -->
-      <div class="today-status">
-        <h3>Status Hari Ini</h3>
-        <div class="status-card" :class="todayStatusClass">
-          <i :class="todayStatusIcon"></i>
-          <div class="status-info">
-            <h4>{{ todayStatusTitle }}</h4>
-            <p>{{ todayStatusDescription }}</p>
-          </div>
+    <!-- Modal Renungan Pagi -->
+    <div v-if="showModal" class="reflection-modal-overlay" @click="closeModal">
+      <div class="reflection-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Status Renungan Pagi</h3>
+          <button class="close-btn" @click="closeModal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-      </div>
-
-      <!-- Attendance Section -->
-      <div class="attendance-section" v-if="isTodayWorshipDay">
-        <h3>Absensi Renungan</h3>
-        <div class="attendance-card">
-          <div class="attendance-info">
-            <p><strong>Nama:</strong> {{ userName }}</p>
-            <p><strong>Role:</strong> {{ userRole }}</p>
-            <p><strong>Waktu:</strong> {{ currentTime }}</p>
-          </div>
-          
-          <div class="attendance-actions">
-            <button 
-              v-if="!hasAttendedToday" 
-              @click="markAttendance" 
-              class="btn-attend"
-              :disabled="isLoading"
-            >
-              <i class="fas fa-check-circle"></i>
-              {{ isLoading ? 'Memproses...' : 'Hadir Renungan' }}
-            </button>
-            
-            <div v-else class="attended-status">
-              <i class="fas fa-check-circle"></i>
-              <span>Sudah Absen Hari Ini</span>
-              <small>{{ attendanceTime }}</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Zoom Meeting Section -->
-      <div class="zoom-section" v-if="isTodayWorshipDay">
-        <h3>Link Zoom Renungan</h3>
-        <div class="zoom-card">
-          <div class="zoom-info">
-            <i class="fab fa-zoom"></i>
-            <div class="zoom-details">
-              <h4>Renungan Pagi Bersama</h4>
-              <p>Bergabunglah dalam sesi renungan pagi</p>
-              <div class="zoom-time">
-                <i class="fas fa-clock"></i>
-                <span>07:00 - 07:30 WIB</span>
+        
+        <div class="modal-content">
+          <div class="today-status">
+            <div class="status-card" :class="getStatusClass()">
+              <div class="status-header">
+                <i :class="getStatusIcon()"></i>
+                <h4>{{ getStatusTitle() }}</h4>
+              </div>
+              <p>{{ getStatusDescription() }}</p>
+              <div class="status-details">
+                <span class="detail-item">
+                  <i class="fas fa-calendar"></i>
+                  {{ getCurrentDate() }}
+                </span>
+                <span class="detail-item">
+                  <i class="fas fa-clock"></i>
+                  {{ getCurrentTime() }}
+                </span>
               </div>
             </div>
           </div>
-          
-          <div class="zoom-actions">
-            <button 
-              @click="joinZoomMeeting" 
-              class="btn-zoom"
-              :disabled="!canJoinZoom"
-            >
-              <i class="fab fa-zoom"></i>
-              {{ zoomButtonText }}
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Recent Attendance History -->
-      <div class="history-section">
-        <h3>Riwayat Absensi Renungan</h3>
-        <div class="history-list">
-          <div 
-            v-for="record in recentAttendance" 
-            :key="record.id"
-            class="history-item"
-          >
-            <div class="history-date">
-              <span class="date">{{ formatDate(record.date) }}</span>
-              <span class="day">{{ getDayName(record.date) }}</span>
-            </div>
-            <div class="history-status">
-              <i :class="getAttendanceIcon(record.status)"></i>
-              <span>{{ getAttendanceText(record.status) }}</span>
-            </div>
-            <div class="history-time">
-              {{ record.time || '-' }}
+          <div class="attendance-history">
+            <h4>Riwayat Kehadiran Minggu Ini</h4>
+            <div class="history-list">
+              <div 
+                v-for="day in getWeekHistory()" 
+                :key="day.date" 
+                class="history-item"
+                :class="day.status"
+              >
+                <span class="day-name">{{ day.dayName }}</span>
+                <span class="day-date">{{ day.date }}</span>
+                <span class="day-status">
+                  <i :class="getHistoryIcon(day.status)"></i>
+                  {{ getHistoryText(day.status) }}
+                </span>
+              </div>
             </div>
           </div>
-          
-          <div v-if="recentAttendance.length === 0" class="no-history">
-            <i class="fas fa-calendar-times"></i>
-            <p>Belum ada riwayat absensi renungan</p>
+
+          <div class="leave-info" v-if="hasApprovedLeave">
+            <div class="leave-notice">
+              <i class="fas fa-info-circle"></i>
+              <span>Anda memiliki cuti yang disetujui untuk hari ini</span>
+            </div>
           </div>
         </div>
       </div>
@@ -121,565 +73,541 @@
 </template>
 
 <script>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useGaStore } from '../stores/gaStore'
-
 export default {
   name: 'MorningReflection',
-  setup() {
-    const store = useGaStore()
-    const currentTime = ref('')
-    const currentDate = ref('')
-    const timeInterval = ref(null)
-    const isLoading = ref(false)
-    const hasAttendedToday = ref(false)
-    const attendanceTime = ref('')
-    const recentAttendance = ref([])
-
-    // Update time function
-    const updateTime = () => {
-      const now = new Date()
-      const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}))
+  data() {
+    return {
+      showModal: false,
+      currentUser: null,
+      todayAttendance: null,
+      weekHistory: [],
+      hasApprovedLeave: false
+    }
+  },
+  async mounted() {
+    await this.loadUserData();
+    await this.loadTodayAttendance();
+    await this.loadWeekHistory();
+    await this.checkApprovedLeave();
+  },
+  methods: {
+    async loadUserData() {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          this.currentUser = JSON.parse(userStr);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    },
+    
+    async loadTodayAttendance() {
+      try {
+        // Simulasi API call untuk mengambil absensi hari ini
+        const today = new Date().toISOString().split('T')[0];
+        const userId = this.currentUser?.id;
+        
+        // Ganti dengan API call yang sebenarnya
+        // const response = await axios.get(`/api/morning-reflection/attendance/${userId}/${today}`);
+        
+        // Simulasi data
+        this.todayAttendance = {
+          date: today,
+          status: 'present', // present, absent, late, leave, not_worship_day
+          timestamp: new Date().toISOString(),
+          note: ''
+        };
+      } catch (error) {
+        console.error('Error loading today attendance:', error);
+      }
+    },
+    
+    async loadWeekHistory() {
+      try {
+        // Simulasi API call untuk mengambil riwayat minggu ini
+        // const response = await axios.get(`/api/morning-reflection/week-history/${this.currentUser?.id}`);
+        
+        // Simulasi data
+        this.weekHistory = [
+          { dayName: 'Senin', date: '2024-01-15', status: 'present' },
+          { dayName: 'Selasa', date: '2024-01-16', status: 'not_worship_day' },
+          { dayName: 'Rabu', date: '2024-01-17', status: 'late' },
+          { dayName: 'Kamis', date: '2024-01-18', status: 'not_worship_day' },
+          { dayName: 'Jumat', date: '2024-01-19', status: 'absent' }
+        ];
+      } catch (error) {
+        console.error('Error loading week history:', error);
+      }
+    },
+    
+    async checkApprovedLeave() {
+      try {
+        // Simulasi API call untuk mengecek cuti yang disetujui
+        const today = new Date().toISOString().split('T')[0];
+        const userId = this.currentUser?.id;
+        
+        // Ganti dengan API call yang sebenarnya
+        // const response = await axios.get(`/api/leave/approved/${userId}/${today}`);
+        
+        // Simulasi data
+        this.hasApprovedLeave = false; // Set true jika ada cuti yang disetujui
+      } catch (error) {
+        console.error('Error checking approved leave:', error);
+      }
+    },
+    
+    getStatusClass() {
+      if (this.hasApprovedLeave) return 'status-leave';
+      if (!this.todayAttendance) return 'status-unknown';
       
-      currentTime.value = jakartaTime.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })
+      const statusMap = {
+        present: 'status-present',
+        absent: 'status-absent',
+        late: 'status-late',
+        leave: 'status-leave',
+        not_worship_day: 'status-not-worship'
+      };
       
-      currentDate.value = jakartaTime.toLocaleDateString('id-ID', {
+      return statusMap[this.todayAttendance.status] || 'status-unknown';
+    },
+    
+    getStatusIcon() {
+      if (this.hasApprovedLeave) return 'fas fa-umbrella-beach';
+      if (!this.todayAttendance) return 'fas fa-question-circle';
+      
+      const iconMap = {
+        present: 'fas fa-check-circle',
+        absent: 'fas fa-times-circle',
+        late: 'fas fa-clock',
+        leave: 'fas fa-umbrella-beach',
+        not_worship_day: 'fas fa-calendar-times'
+      };
+      
+      return iconMap[this.todayAttendance.status] || 'fas fa-question-circle';
+    },
+    
+    getStatusText() {
+      if (this.hasApprovedLeave) return 'Cuti';
+      if (!this.todayAttendance) return 'Belum Ada Data';
+      
+      const textMap = {
+        present: 'Hadir',
+        absent: 'Tidak Hadir',
+        late: 'Terlambat',
+        leave: 'Cuti',
+        not_worship_day: 'Bukan Jadwal'
+      };
+      
+      return textMap[this.todayAttendance.status] || 'Belum Ada Data';
+    },
+    
+    getStatusTitle() {
+      if (this.hasApprovedLeave) return 'Cuti Disetujui';
+      if (!this.todayAttendance) return 'Status Belum Tersedia';
+      
+      const titleMap = {
+        present: 'Hadir Tepat Waktu',
+        absent: 'Tidak Hadir',
+        late: 'Hadir Terlambat',
+        leave: 'Cuti Disetujui',
+        not_worship_day: 'Bukan Jadwal Renungan'
+      };
+      
+      return titleMap[this.todayAttendance.status] || 'Status Belum Tersedia';
+    },
+    
+    getStatusDescription() {
+      if (this.hasApprovedLeave) return 'Anda memiliki cuti yang disetujui untuk hari ini.';
+      if (!this.todayAttendance) return 'Data kehadiran renungan pagi belum tersedia.';
+      
+      const descMap = {
+        present: 'Anda telah hadir tepat waktu di renungan pagi hari ini.',
+        absent: 'Anda tidak hadir di renungan pagi hari ini.',
+        late: 'Anda hadir terlambat di renungan pagi hari ini.',
+        leave: 'Anda memiliki cuti yang disetujui untuk hari ini.',
+        not_worship_day: 'Hari ini bukan jadwal renungan pagi.'
+      };
+      
+      return descMap[this.todayAttendance.status] || 'Data kehadiran belum tersedia.';
+    },
+    
+    getCurrentDate() {
+      return new Date().toLocaleDateString('id-ID', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      })
-    }
-
-    // Computed properties
-    const userName = computed(() => {
-      try {
-        const userStr = localStorage.getItem('user')
-        if (!userStr) return 'User'
-        const user = JSON.parse(userStr)
-        return user.nama_lengkap || user.name || 'User'
-      } catch {
-        return 'User'
-      }
-    })
-
-    const userRole = computed(() => {
-      try {
-        const userStr = localStorage.getItem('user')
-        if (!userStr) return 'Employee'
-        const user = JSON.parse(userStr)
-        return user.role || user.position || 'Employee'
-      } catch {
-        return 'Employee'
-      }
-    })
-
-    const isTodayWorshipDay = computed(() => store.isTodayWorshipDay)
+      });
+    },
     
-    const todayStatusClass = computed(() => {
-      return isTodayWorshipDay.value ? 'worship-day' : 'regular-day'
-    })
+    getCurrentTime() {
+      return new Date().toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
     
-    const todayStatusIcon = computed(() => {
-      return isTodayWorshipDay.value ? 'fas fa-praying-hands' : 'fas fa-briefcase'
-    })
+    getWeekHistory() {
+      return this.weekHistory;
+    },
     
-    const todayStatusTitle = computed(() => {
-      return isTodayWorshipDay.value ? 'Hari Renungan' : 'Hari Kerja Biasa'
-    })
-    
-    const todayStatusDescription = computed(() => {
-      return isTodayWorshipDay.value 
-        ? 'Hari ini adalah hari renungan. Silakan bergabung dalam sesi renungan pagi.'
-        : 'Hari ini adalah hari kerja biasa. Tidak ada sesi renungan.'
-    })
-
-    const statusClass = computed(() => {
-      const status = store.zoomTimeStatus
-      return {
-        'status-before': status === 'Tutup',
-        'status-active': status === 'Hadir', 
-        'status-after': status === 'Tutup'
-      }
-    })
-
-    const statusIcon = computed(() => {
-      const status = store.zoomTimeStatus
-      switch(status) {
-        case 'Hadir': return 'fas fa-video'
-        case 'Tutup': return 'fas fa-clock'
-        default: return 'fas fa-info-circle'
-      }
-    })
-
-    const statusText = computed(() => {
-      const status = store.zoomTimeStatus
-      switch(status) {
-        case 'Hadir': return 'Sedang Berlangsung'
-        case 'Tutup': return 'Belum Dimulai / Sudah Selesai'
-        default: return 'Tidak Aktif'
-      }
-    })
-
-    const canJoinZoom = computed(() => {
-      return isTodayWorshipDay.value && (store.zoomTimeStatus === 'Hadir' || store.testingMode)
-    })
-
-    const zoomButtonText = computed(() => {
-      if (!isTodayWorshipDay.value) return 'Tidak Ada Renungan'
-      if (store.zoomTimeStatus === 'Hadir' || store.testingMode) return 'Gabung Sekarang'
-      if (store.zoomTimeStatus === 'Tutup') return 'Belum Dimulai / Sudah Selesai'
-      return 'Tidak Tersedia'
-    })
-
-    // Methods
-    const markAttendance = async () => {
-      if (isLoading.value || hasAttendedToday.value) return
+    getHistoryIcon(status) {
+      const iconMap = {
+        present: 'fas fa-check-circle',
+        absent: 'fas fa-times-circle',
+        late: 'fas fa-clock',
+        leave: 'fas fa-umbrella-beach',
+        not_worship_day: 'fas fa-calendar-times'
+      };
       
-      isLoading.value = true
-      try {
-        const attendanceData = {
-          user_name: userName.value,
-          user_role: userRole.value,
-          attendance_time: new Date().toISOString(),
-          type: 'morning_reflection'
-        }
-        
-        await store.submitAttendance(attendanceData)
-        hasAttendedToday.value = true
-        attendanceTime.value = currentTime.value
-        
-        // Refresh attendance history
-        await loadAttendanceHistory()
-        
-      } catch (error) {
-        console.error('Error marking attendance:', error)
-        alert('Gagal mencatat kehadiran. Silakan coba lagi.')
-      } finally {
-        isLoading.value = false
-      }
-    }
-
-    const joinZoomMeeting = () => {
-      if (!canJoinZoom.value) return
-      store.joinZoomMeeting()
-    }
-
-    const loadAttendanceHistory = async () => {
-      try {
-        // Load recent 7 days attendance history
-        const history = await store.fetchMorningReflectionHistory()
-        recentAttendance.value = history.slice(0, 7)
-        
-        // Check if user attended today
-        const today = new Date().toISOString().split('T')[0]
-        const todayRecord = history.find(record => 
-          record.date === today && record.user_name === userName.value
-        )
-        
-        if (todayRecord) {
-          hasAttendedToday.value = true
-          attendanceTime.value = todayRecord.time
-        }
-      } catch (error) {
-        console.error('Error loading attendance history:', error)
-      }
-    }
-
-    const formatDate = (dateStr) => {
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    }
-
-    const getDayName = (dateStr) => {
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('id-ID', { weekday: 'short' })
-    }
-
-    const getAttendanceIcon = (status) => {
-      switch(status) {
-        case 'present': return 'fas fa-check-circle text-success'
-        case 'absent': return 'fas fa-times-circle text-danger'
-        default: return 'fas fa-minus-circle text-muted'
-      }
-    }
-
-    const getAttendanceText = (status) => {
-      switch(status) {
-        case 'present': return 'Hadir'
-        case 'absent': return 'Tidak Hadir'
-        default: return 'Tidak Ada Data'
-      }
-    }
-
-    // Lifecycle
-    onMounted(() => {
-      updateTime()
-      timeInterval.value = setInterval(updateTime, 1000)
-      store.updateCurrentTime()
-      loadAttendanceHistory()
-    })
-
-    onUnmounted(() => {
-      if (timeInterval.value) {
-        clearInterval(timeInterval.value)
-      }
-    })
-
-    return {
-      currentTime,
-      currentDate,
-      isLoading,
-      hasAttendedToday,
-      attendanceTime,
-      recentAttendance,
-      userName,
-      userRole,
-      isTodayWorshipDay,
-      todayStatusClass,
-      todayStatusIcon,
-      todayStatusTitle,
-      todayStatusDescription,
-      statusClass,
-      statusIcon,
-      statusText,
-      canJoinZoom,
-      zoomButtonText,
-      markAttendance,
-      joinZoomMeeting,
-      formatDate,
-      getDayName,
-      getAttendanceIcon,
-      getAttendanceText
+      return iconMap[status] || 'fas fa-question-circle';
+    },
+    
+    getHistoryText(status) {
+      const textMap = {
+        present: 'Hadir',
+        absent: 'Tidak Hadir',
+        late: 'Terlambat',
+        leave: 'Cuti',
+        not_worship_day: 'Bukan Jadwal'
+      };
+      
+      return textMap[status] || 'Belum Ada Data';
+    },
+    
+    openReflectionModal() {
+      this.showModal = true;
+    },
+    
+    closeModal() {
+      this.showModal = false;
     }
   }
 }
 </script>
 
 <style scoped>
-.morning-reflection-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+.morning-reflection-navbar {
+  position: relative;
 }
 
-.reflection-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  padding: 24px;
-  color: white;
-  margin-bottom: 24px;
+.reflection-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
 }
 
-.header-content {
+.reflection-status:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary-color);
+}
+
+.status-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+}
+
+.status-present {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.status-absent {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+}
+
+.status-late {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.status-leave {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary-color);
+}
+
+.status-not-worship {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
+}
+
+.status-unknown {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.status-text {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-date {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Modal Styles */
+.reflection-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+}
+
+.reflection-modal {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.header-left h2 {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  font-weight: 600;
-}
-
-.current-time {
-  font-size: 18px;
-  font-weight: 500;
-  margin: 4px 0;
-}
-
-.current-date {
-  font-size: 14px;
-  opacity: 0.9;
+.modal-header h3 {
   margin: 0;
-}
-
-.status-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-.status-badge.status-before {
-  background: rgba(255, 193, 7, 0.2);
-}
-
-.status-badge.status-active {
-  background: rgba(40, 167, 69, 0.2);
-}
-
-.status-badge.status-after {
-  background: rgba(108, 117, 125, 0.2);
-}
-
-.reflection-content {
-  display: grid;
-  gap: 24px;
-}
-
-.today-status h3,
-.attendance-section h3,
-.zoom-section h3,
-.history-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 20px;
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  color: #2c3e50;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-lg);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.modal-content {
+  padding: var(--spacing-lg);
+}
+
+.today-status {
+  margin-bottom: var(--spacing-xl);
 }
 
 .status-card {
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.status-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  border-radius: 12px;
-  border: 2px solid #e9ecef;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
-.status-card.worship-day {
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-  border-color: #fd7e14;
+.status-header i {
+  font-size: var(--font-size-xl);
 }
 
-.status-card.regular-day {
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-color: #2196f3;
-}
-
-.status-card i {
-  font-size: 32px;
-  color: #495057;
-}
-
-.status-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.status-info p {
+.status-header h4 {
   margin: 0;
-  color: #6c757d;
-}
-
-.attendance-card,
-.zoom-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
-}
-
-.attendance-info {
-  margin-bottom: 16px;
-}
-
-.attendance-info p {
-  margin: 4px 0;
-  color: #495057;
-}
-
-.btn-attend {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-
-.btn-attend:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.btn-attend:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.attended-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #28a745;
-  font-weight: 500;
-}
-
-.attended-status small {
-  color: #6c757d;
-  margin-left: 8px;
-}
-
-.zoom-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.zoom-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.zoom-info i {
-  font-size: 32px;
-  color: #0066cc;
-}
-
-.zoom-details h4 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 
-.zoom-details p {
-  margin: 0 0 8px 0;
-  color: #6c757d;
+.status-card p {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
 }
 
-.zoom-time {
+.status-details {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.detail-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #495057;
-  font-size: 14px;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
 }
 
-.btn-zoom {
-  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-
-.btn-zoom:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-}
-
-.btn-zoom:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: #6c757d;
+.attendance-history h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 600;
 }
 
 .history-list {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .history-item {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f8f9fa;
+  padding: var(--spacing-md);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  transition: all 0.2s ease;
 }
 
-.history-item:last-child {
-  border-bottom: none;
+.history-item.present {
+  border-left: 4px solid var(--success-color);
 }
 
-.history-date .date {
-  font-weight: 500;
-  color: #495057;
+.history-item.absent {
+  border-left: 4px solid var(--error-color);
 }
 
-.history-date .day {
-  display: block;
-  font-size: 12px;
-  color: #6c757d;
-  margin-top: 2px;
+.history-item.late {
+  border-left: 4px solid var(--warning-color);
 }
 
-.history-status {
+.history-item.leave {
+  border-left: 4px solid var(--primary-color);
+}
+
+.history-item.not_worship_day {
+  border-left: 4px solid var(--text-muted);
+}
+
+.day-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.day-date {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.day-status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
 }
 
-.history-time {
-  text-align: right;
-  color: #6c757d;
-  font-size: 14px;
+.day-status.present {
+  color: var(--success-color);
 }
 
-.no-history {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6c757d;
+.day-status.absent {
+  color: var(--error-color);
 }
 
-.no-history i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.day-status.late {
+  color: var(--warning-color);
 }
 
-.text-success {
-  color: #28a745 !important;
+.day-status.leave {
+  color: var(--primary-color);
 }
 
-.text-danger {
-  color: #dc3545 !important;
+.day-status.not_worship_day {
+  color: var(--text-muted);
 }
 
-.text-muted {
-  color: #6c757d !important;
+.leave-info {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: var(--radius);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
+.leave-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--primary-color);
+  font-size: var(--font-size-sm);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .morning-reflection-container {
-    padding: 16px;
+  .reflection-status {
+    min-width: 120px;
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
   
-  .header-content {
+  .status-icon {
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .status-text {
+    font-size: var(--font-size-xs);
+  }
+  
+  .status-date {
+    font-size: var(--font-size-xs);
+  }
+  
+  .reflection-modal {
+    margin: var(--spacing-sm);
+    max-height: 90vh;
+  }
+  
+  .modal-content {
+    padding: var(--spacing-md);
+  }
+  
+  .status-details {
     flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-  
-  .zoom-card {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-  
-  .history-item {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    text-align: center;
+    gap: var(--spacing-sm);
   }
 }
 </style>

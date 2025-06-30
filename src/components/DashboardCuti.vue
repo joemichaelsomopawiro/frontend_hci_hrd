@@ -359,73 +359,113 @@ export default {
     
     async fetchTodayStats() {
       try {
-        // Simulate API call - replace with actual API
-        const mockData = {
-          present: 45,
-          absent: 5,
-          sick: 2,
-          leave: 3,
-          presentPercentage: 82,
-          absentPercentage: 9,
-          sickPercentage: 4,
-          leavePercentage: 5
+        // Ambil data statistik hari ini dari API
+        const response = await fetch('/api/dashboard/today-stats', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          this.todayStats = data.data;
+        } else {
+          console.error('Error fetching today stats:', response.status);
+          // Fallback data kosong jika API error
+          this.todayStats = {
+            present: 0,
+            absent: 0,
+            sick: 0,
+            leave: 0,
+            presentPercentage: 0,
+            absentPercentage: 0,
+            sickPercentage: 0,
+            leavePercentage: 0
+          };
         }
-        this.todayStats = mockData
       } catch (error) {
-        console.error('Error fetching today stats:', error)
+        console.error('Error fetching today stats:', error);
+        // Fallback data kosong jika error
+        this.todayStats = {
+          present: 0,
+          absent: 0,
+          sick: 0,
+          leave: 0,
+          presentPercentage: 0,
+          absentPercentage: 0,
+          sickPercentage: 0,
+          leavePercentage: 0
+        };
       }
     },
     
     async fetchMonthlyData() {
       try {
-        // Simulate API call - replace with actual API
-        const mockData = {
-          totalWorkHours: 1680,
-          totalOvertime: 120,
-          leaveRequests: 15,
-          pendingLeave: 3,
-          attendanceRate: 94,
-          avgWorkHours: 8.2,
-          overtimeDays: 12
+        // Ambil data statistik bulanan dari API
+        const response = await fetch('/api/dashboard/monthly-stats', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          this.monthlyStats = data.data;
+        } else {
+          console.error('Error fetching monthly data:', response.status);
+          // Fallback data kosong jika API error
+          this.monthlyStats = {
+            totalWorkHours: 0,
+            totalOvertime: 0,
+            leaveRequests: 0,
+            pendingLeave: 0,
+            attendanceRate: 0,
+            avgWorkHours: 0,
+            overtimeDays: 0
+          };
         }
-        this.monthlyStats = mockData
       } catch (error) {
-        console.error('Error fetching monthly data:', error)
+        console.error('Error fetching monthly data:', error);
+        // Fallback data kosong jika error
+        this.monthlyStats = {
+          totalWorkHours: 0,
+          totalOvertime: 0,
+          leaveRequests: 0,
+          pendingLeave: 0,
+          attendanceRate: 0,
+          avgWorkHours: 0,
+          overtimeDays: 0
+        };
       }
     },
     
     async fetchRecentActivities() {
       try {
-        // Simulate API call - replace with actual API
-        const mockActivities = [
-          {
-            id: 1,
-            type: 'leave_request',
-            title: 'Permohonan Cuti Tahunan',
-            description: 'John Doe mengajukan cuti tahunan 3 hari',
-            timestamp: new Date().toISOString(),
-            status: 'pending'
-          },
-          {
-            id: 2,
-            type: 'attendance',
-            title: 'Check-in Terlambat',
-            description: 'Jane Smith check-in pada 09:15',
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            status: 'warning'
-          },
-          {
-            id: 3,
-            type: 'overtime',
-            title: 'Lembur Disetujui',
-            description: 'Mike Johnson lembur 2 jam disetujui',
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-            status: 'approved'
+        // Ambil data aktivitas terbaru dari API
+        const response = await fetch('/api/dashboard/recent-activities', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
-        ]
-        this.recentActivities = mockActivities
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          this.recentActivities = data.data;
+        } else {
+          console.error('Error fetching recent activities:', response.status);
+          // Fallback data kosong jika API error
+          this.recentActivities = [];
+        }
       } catch (error) {
-        console.error('Error fetching activities:', error)
+        console.error('Error fetching recent activities:', error);
+        // Fallback data kosong jika error
+        this.recentActivities = [];
       }
     },
     

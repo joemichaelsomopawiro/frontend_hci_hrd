@@ -41,8 +41,8 @@
           </div>
         </div>
         <div class="stat-item">
-          <div class="stat-icon success">
-            <i class="fas fa-user-check"></i>
+          <div class="stat-icon">
+            <i class="fas fa-user"></i>
           </div>
           <div class="stat-info">
             <h3>{{ activeEmployees }}</h3>
@@ -55,7 +55,6 @@
       <div class="controls-section">
         <div class="search-controls">
           <div class="search-box">
-            <i class="fas fa-search"></i>
             <input 
               type="text" 
               placeholder="Cari pegawai..." 
@@ -93,77 +92,50 @@
             </thead>
             <tbody>
               <tr v-for="(employee, index) in paginatedEmployees" :key="employee.id" class="table-row">
-                <td class="number-cell">
+                <td class="number-cell" data-label="No">
                   <span class="row-number">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</span>
                 </td>
-                <td>
+                <td class="name-cell" data-label="Nama Lengkap">
                   <div class="employee-info">
                     <div class="employee-name">
-                      <i class="fas fa-user employee-icon"></i>
                       <strong>{{ employee.nama_lengkap }}</strong>
                     </div>
-                    <small class="employee-education">{{ employee.tingkat_pendidikan }}</small>
+                    <div class="employee-education">{{ employee.tingkat_pendidikan }}</div>
                   </div>
                 </td>
-                <td>
-                  <div class="nik-info">
-                    <i class="fas fa-id-card field-icon"></i>
-                    <span>{{ employee.nik }}</span>
-                  </div>
+                <td class="id-cell" data-label="NIK">
+                  <div class="id-info">{{ employee.nik }}</div>
                 </td>
-                <td>
-                  <div class="nip-info">
-                    <i class="fas fa-id-badge field-icon"></i>
-                    <span>{{ employee.nip || '-' }}</span>
-                  </div>
+                <td class="id-cell" data-label="NIP">
+                  <div class="id-info">{{ employee.nip || '-' }}</div>
                 </td>
-                <td>
-                  <span class="job-title">
-                    <i class="fas fa-briefcase field-icon"></i>
-                    {{ employee.jabatan_saat_ini }}
-                  </span>
+                <td class="position-cell" data-label="Jabatan">
+                  <div class="position-info">{{ employee.jabatan_saat_ini }}</div>
                 </td>
-                <td>
+                <td class="salary-cell" data-label="Gaji Total">
                   <div class="salary-info">
                     <div class="total-salary">
-                      <i class="fas fa-money-bill-wave field-icon"></i>
                       <strong>Rp {{ formatCurrency(calculateTotalSalary(employee)) }}</strong>
                     </div>
-                    <small class="base-salary">Gaji Pokok: Rp {{ formatCurrency(employee.gaji_pokok) }}</small>
+                    <div class="base-salary">Gaji Pokok: Rp {{ formatCurrency(employee.gaji_pokok) }}</div>
                   </div>
                 </td>
-                <td>
+                <td class="training-cell" data-label="Pelatihan">
                   <div class="training-info">
-                    <i class="fas fa-graduation-cap field-icon"></i>
                     <span class="training-count">
                       {{ employee.trainings ? employee.trainings.length : 0 }} pelatihan
                     </span>
                   </div>
                 </td>
-                <td>
+                <td class="documents-cell" data-label="Dokumen">
                   <div class="documents-info">
-                    <i class="fas fa-folder field-icon"></i>
-                    <div class="documents-list">
                       <span v-if="employee.documents && employee.documents.length" class="doc-count">
                         {{ employee.documents.length }} dokumen
-                        <div class="doc-tooltip">
-                          <a
-                            v-for="doc in employee.documents"
-                            :key="doc.id"
-                            :href="`${apiUrl}/storage/${doc.file_path}`"
-                            target="_blank"
-                            class="doc-link"
-                          >
-                            <i class="fas fa-file-pdf"></i>
-                            {{ doc.document_type }}
-                          </a>
-                        </div>
                       </span>
                       <span v-else class="no-docs">Tidak ada</span>
-                    </div>
                   </div>
                 </td>
-                <td>
+                <td class="actions-cell" data-label="Aksi">
                   <div class="action-buttons">
                     <button class="btn-icon view-btn" @click="viewEmployee(employee.id)" title="Lihat Detail">
                       <i class="fas fa-eye"></i>
@@ -336,53 +308,126 @@ export default {
 </script>
 
 <style scoped>
-/* Container utama */
+/* Employee List Container */
 .employee-list-container {
-  padding: 20px;
-  background-color: var(--bg-primary);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  background: var(--bg-primary);
   min-height: 100vh;
-  transition: background-color 0.3s ease;
 }
 
 .page-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-lg) 0;
+  margin-bottom: var(--spacing-xl);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.back-btn {
   background: var(--bg-secondary);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-  margin-bottom: 20px;
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  border-radius: var(--radius);
+  padding: var(--spacing-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: var(--font-size-base);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .page-title h1 {
-  margin: 0;
   color: var(--text-primary);
-  font-size: 1.8rem;
+  font-size: var(--font-size-2xl);
   font-weight: 600;
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.page-title p {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
 }
 
 .stat-item {
-  background: var(--bg-secondary);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease;
+}
+
+.stat-item:hover {
+  border-color: var(--border-color);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
 }
 
 .stat-info h3 {
-  margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
 }
 
 .stat-info p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin: var(--spacing-xs) 0 0 0;
+  font-weight: 500;
 }
 
 /* Table Styles */
@@ -408,227 +453,177 @@ export default {
   font-weight: 600;
 }
 
-/* Header */
-.page-header {
-  background: var(--bg-secondary);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.back-btn {
-  background: #6b7280;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.back-btn:hover {
-  background: #4b5563;
-}
-
-.page-title h1 {
-  margin: 0;
-  color: var(--text-primary); /* Ganti dari #1f2937 */
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-
-.page-title p {
-  margin: 5px 0 0 0;
-  color: var(--text-secondary); /* Ganti dari #6b7280 */
-  font-size: 0.9rem;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-}
-
 /* Stats Summary */
 .stats-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.stat-item {
-  background: var(--bg-secondary);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-}
-
-.stat-icon.success {
-  background: #10b981;
-}
-
-.stat-info h3 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.stat-info p {
-  margin: 5px 0 0 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
 /* Search Section */
 .controls-section {
-  background: var(--bg-secondary);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-controls {
   display: flex;
-  gap: 15px;
+  gap: var(--spacing-md);
   align-items: center;
+  margin-bottom: var(--spacing-lg);
   flex-wrap: wrap;
 }
 
 .search-box {
-  position: relative;
   flex: 1;
   min-width: 250px;
-}
-
-.search-box i {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
+  position: relative;
 }
 
 .search-box input {
   width: 100%;
-  padding: 10px 10px 10px 40px;
-  border: 1px solid #d1d5db;
-  border-radius: 5px;
-  font-size: 0.9rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  transition: border-color 0.2s ease;
 }
 
 .search-box input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
 }
 
 .filter-select {
-  padding: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 5px;
-  background: var(--bg-secondary);
-  font-size: 0.9rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
   min-width: 150px;
 }
 
 .filter-select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-/* Tabel Sederhana */
+/* Tabel Sederhana seperti Excel */
 .table-section {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
 .table-container {
   overflow-x: auto;
+  border-radius: var(--radius-lg);
 }
 
 .modern-table {
   width: 100%;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: var(--bg-card);
   border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  min-width: 1000px;
 }
 
 .modern-table th {
-  background: var(--bg-tertiary); /* Ganti dari #f8f9fa */
-  color: var(--text-primary); /* Ganti dari #374151 */
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   font-weight: 600;
-  padding: 15px 12px;
+  padding: var(--spacing-md) var(--spacing-lg);
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-/* Tambahkan hover effect untuk table row */
-.modern-table tbody tr:hover {
-  background: var(--bg-tertiary) !important;
+  border-bottom: 2px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
 }
 
 .modern-table td {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 15px 12px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 0.9rem;
-  color: var(--text-primary);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--spacing-md) var(--spacing-lg);
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.modern-table tr:hover {
-  background-color: #f9fafb;
+.modern-table tr {
+  transition: background-color 0.2s ease;
+}
+
+/* Hover sederhana seperti Excel */
+.modern-table tbody tr:hover {
+  background: var(--bg-tertiary);
 }
 
 .modern-table tr:last-child td {
   border-bottom: none;
 }
 
-/* Nomor urut */
+/* Kolom dengan lebar yang optimal */
 .number-column {
-  width: 70px;
+  width: 60px;
   text-align: center;
 }
 
+.name-column {
+  width: 200px;
+  min-width: 180px;
+}
+
+.id-column {
+  width: 140px;
+  min-width: 120px;
+}
+
+.position-column {
+  width: 150px;
+  min-width: 130px;
+}
+
+.salary-column {
+  width: 180px;
+  min-width: 160px;
+}
+
+.training-column {
+  width: 120px;
+  text-align: center;
+}
+
+.documents-column {
+  width: 140px;
+  text-align: center;
+}
+
+.actions-column {
+  width: 120px;
+  text-align: center;
+}
+
+/* Nomor urut sederhana */
 .number-cell {
   text-align: center;
   width: 60px;
@@ -637,137 +632,171 @@ export default {
 .row-number {
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  padding: 5px 10px;
-  border-radius: 15px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
   border: 1px solid var(--border-color);
 }
 
-/* Info karyawan */
+/* Info karyawan sederhana */
+.name-cell {
+  width: 200px;
+  min-width: 180px;
+}
+
 .employee-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--spacing-xs);
 }
 
 .employee-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.employee-icon {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
+  line-height: 1.3;
 }
 
 .employee-education {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
 }
 
-/* Field dengan icon */
-.nik-info, .nip-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* ID Info sederhana */
+.id-cell {
+  width: 140px;
+  min-width: 120px;
 }
 
-.field-icon {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-.job-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.id-info {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
   color: var(--text-primary);
+  font-size: var(--font-size-sm);
 }
 
-/* Salary info */
+/* Position Info sederhana */
+.position-cell {
+  width: 150px;
+  min-width: 130px;
+}
+
+.position-info {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  line-height: 1.3;
+}
+
+/* Salary info sederhana */
+.salary-cell {
+  width: 180px;
+  min-width: 160px;
+}
+
 .salary-info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--spacing-xs);
 }
 
 .total-salary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-weight: 600;
-  color: #059669;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
 }
 
 .base-salary {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
 }
 
-/* Training dan Documents */
+/* Training dan Documents sederhana */
+.training-cell {
+  width: 120px;
+  text-align: center;
+}
+
+.documents-cell {
+  width: 140px;
+  text-align: center;
+}
+
 .training-info, .documents-info {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
 }
 
 .training-count, .doc-count {
   color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
 }
 
 .no-docs {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-style: italic;
+  font-size: var(--font-size-sm);
 }
 
-/* Action buttons */
+/* Actions cell sederhana */
+.actions-cell {
+  width: 120px;
+  text-align: center;
+}
+
+/* Tombol Aksi Sederhana */
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  align-items: center;
 }
 
 .btn-icon {
-  width: 35px;
-  height: 35px;
-  border: none;
-  border-radius: 5px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
-  transition: all 0.2s;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
-.view-btn {
-  background: #3b82f6;
-  color: white;
+.btn-icon:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .view-btn:hover {
-  background: #2563eb;
-}
-
-.edit-btn {
-  background: #f59e0b;
-  color: white;
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: #d97706;
-}
-
-.delete-btn {
-  background: #ef4444;
-  color: white;
+  background: var(--bg-tertiary);
+  color: var(--warning-color);
+  border-color: var(--warning-color);
 }
 
 .delete-btn:hover {
-  background: #dc2626;
+  background: var(--bg-tertiary);
+  color: var(--error-color);
+  border-color: var(--error-color);
 }
 
 /* Pagination Sederhana */
@@ -775,51 +804,54 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-top: 20px;
-  padding: 20px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
 }
 
-.pagination button {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
+.pagination-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
   background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: 5px;
+  color: var(--text-secondary);
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.pagination button:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #3b82f6;
-  color: #3b82f6;
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
-.pagination button:disabled {
+.pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 .pagination-info {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin: 0 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
-/* Loading */
+/* Loading State Sederhana */
 .loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 60px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-height: 400px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
 }
 
 .loading-spinner {
@@ -829,11 +861,11 @@ export default {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #3b82f6;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
+  margin: 0 auto var(--spacing-lg);
 }
 
 @keyframes spin {
@@ -841,95 +873,351 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Empty state */
+.loading-spinner p {
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+/* Empty State Sederhana */
 .empty-state {
   text-align: center;
-  padding: 60px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: var(--spacing-2xl);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
 }
 
 .empty-state i {
   font-size: 3rem;
-  color: #d1d5db;
-  margin-bottom: 15px;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-lg);
 }
 
 .empty-state h3 {
   color: var(--text-primary);
-  margin-bottom: 10px;
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
 }
 
 .empty-state p {
-  color: var(--text-secondary);
-  margin-bottom: 20px;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-xl);
 }
 
-/* Notifikasi */
+/* Notification Sederhana */
 .notification {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 20px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: var(--spacing-md) var(--spacing-lg);
+  box-shadow: var(--shadow-md);
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 250px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  min-width: 300px;
+  max-width: 400px;
 }
 
 .notification.success {
-  background: #10b981;
+  border-left: 4px solid var(--success-color);
 }
 
 .notification.error {
-  background: #ef4444;
+  border-left: 4px solid var(--error-color);
 }
 
-.notification.info {
-  background: #3b82f6;
+.notification i {
+  font-size: var(--font-size-base);
 }
 
-/* Responsive */
+.notification.success i {
+  color: var(--success-color);
+}
+
+.notification.error i {
+  color: var(--error-color);
+}
+
+/* Responsive Design yang Sederhana */
 @media (max-width: 768px) {
   .employee-list-container {
-    padding: 15px;
+    padding: var(--spacing-md);
   }
   
   .header-content {
     flex-direction: column;
-    gap: 15px;
+    gap: var(--spacing-lg);
     text-align: center;
+  }
+  
+  .page-title h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .stats-summary {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .stat-item {
+    padding: var(--spacing-md);
+    min-height: auto;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-base);
+  }
+  
+  .stat-info h3 {
+    font-size: 1.5rem;
   }
   
   .search-controls {
     flex-direction: column;
-    align-items: stretch;
+    gap: var(--spacing-md);
   }
   
   .search-box {
     min-width: auto;
   }
   
-  .modern-table {
-    font-size: 0.8rem;
+  .search-box input,
+  .filter-select {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-base);
   }
   
-  .modern-table th,
+  /* Mobile Table Layout - Sederhana */
+  .table-container {
+    overflow: visible;
+  }
+  
+  .modern-table {
+    min-width: auto;
+    display: block;
+  }
+  
+  .modern-table thead {
+    display: none;
+  }
+  
+  .modern-table tbody {
+    display: block;
+  }
+  
+  .modern-table tr {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  
   .modern-table td {
-    padding: 10px 8px;
+    display: block;
+    border: none;
+    padding: var(--spacing-sm) 0;
+    text-align: left;
+    white-space: normal;
+  }
+  
+  .modern-table td::before {
+    content: attr(data-label) ": ";
+    font-weight: 600;
+    color: var(--text-primary);
+    display: inline-block;
+    width: 100px;
+    margin-right: var(--spacing-sm);
+  }
+  
+  /* Mobile specific cell styles */
+  .number-cell {
+    text-align: left;
+    width: auto;
+  }
+  
+  .number-cell::before {
+    content: "No: ";
+  }
+  
+  .name-cell::before {
+    content: "Nama: ";
+  }
+  
+  .id-cell::before {
+    content: attr(data-label) ": ";
+  }
+  
+  .position-cell::before {
+    content: "Jabatan: ";
+  }
+  
+  .salary-cell::before {
+    content: "Gaji: ";
+  }
+  
+  .training-cell::before {
+    content: "Pelatihan: ";
+  }
+  
+  .documents-cell::before {
+    content: "Dokumen: ";
+  }
+  
+  .actions-cell::before {
+    content: "Aksi: ";
+  }
+  
+  .actions-cell {
+    text-align: left;
+    width: auto;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .action-buttons {
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
   }
   
   .btn-icon {
-    width: 30px;
-    height: 30px;
-    font-size: 0.8rem;
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+  }
+  
+  .pagination-btn {
+    min-width: 40px;
+    height: 40px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .notification {
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    left: var(--spacing-md);
+    min-width: auto;
   }
 }
+
+@media (max-width: 480px) {
+  .employee-list-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .page-title h1 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .page-title p {
+    font-size: var(--font-size-xs);
+  }
+  
+  .stat-item {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-size-sm);
+  }
+  
+  .stat-info h3 {
+    font-size: 1.25rem;
+  }
+  
+  .controls-section {
+    padding: var(--spacing-md);
+  }
+  
+  .modern-table tr {
+    padding: var(--spacing-md);
+  }
+  
+  .modern-table td {
+    padding: var(--spacing-xs) 0;
+  }
+  
+  .modern-table td::before {
+    width: 80px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .row-number {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    min-width: 28px;
+  }
+  
+  .action-buttons {
+    gap: var(--spacing-xs);
+  }
+  
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .employee-name {
+    font-size: var(--font-size-sm);
+  }
+  
+  .employee-education {
+    font-size: var(--font-size-xs);
+  }
+  
+  .id-info {
+    font-size: var(--font-size-xs);
+  }
+  
+  .position-info {
+    font-size: var(--font-size-xs);
+  }
+  
+  .total-salary {
+    font-size: var(--font-size-xs);
+  }
+  
+  .base-salary {
+    font-size: var(--font-size-xs);
+  }
+  
+  .training-count, .doc-count, .no-docs {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Tooltip untuk dokumen - dihapus karena tidak user-friendly */
+.doc-count {
+  cursor: default;
+}
+
+/* Employee List Content */
+.employee-list-content {
+  background: var(--bg-primary);
+}
+
+/* Header Sederhana */
 </style>

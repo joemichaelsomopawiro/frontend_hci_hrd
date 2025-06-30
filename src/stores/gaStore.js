@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import morningReflectionService from '../services/morningReflectionService'
 
 // Set base URL for API requests
 axios.defaults.baseURL = '/api'
@@ -43,11 +44,11 @@ export const useGaStore = defineStore('ga', {
     // Testing dan konfigurasi worship
     testingMode: false, // Set ke false untuk production
     worshipConfig: {
-      startHour: 7,
-      startMinute: 10, // Buka jam 07:10
-      endHour: 7,
-      endMinute: 35, // Tutup jam 07:35
-      worshipDays: [1, 3, 5] // Monday, Wednesday, Friday
+      startHour: 17, // Jam 5 sore
+      startMinute: 50, // Buka jam 17:50
+      endHour: 18, // Jam 6 sore
+      endMinute: 20, // Tutup jam 18:20
+      worshipDays: [6] // Sabtu
     }
   }),
   getters: {
@@ -100,20 +101,219 @@ export const useGaStore = defineStore('ga', {
       this.currentTime = new Date()
     },
     
+    // Data dummy untuk employees
+    getDummyEmployees() {
+      return [
+        {
+          id: 8,
+          nama_lengkap: 'Jelly Lukas',
+          nik: '1111111111111111',
+          nip: 'HR001',
+          tanggal_lahir: '1985-01-01',
+          jenis_kelamin: 'Laki-laki',
+          alamat: 'Jakarta',
+          status_pernikahan: 'Menikah',
+          jabatan_saat_ini: 'HR',
+          manager_id: null,
+          tanggal_mulai_kerja: '2020-01-01',
+          tingkat_pendidikan: 'S1',
+          gaji_pokok: 15000000.00,
+          tunjangan: 0.00,
+          bonus: 0.00,
+          nomor_bpjs_kesehatan: null,
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-18 07:24:24',
+          updated_at: '2025-06-18 07:24:24'
+        },
+        {
+          id: 13,
+          nama_lengkap: 'Jefry Siadari',
+          nik: '1231231231231312',
+          nip: '12312323',
+          tanggal_lahir: '2025-06-23',
+          jenis_kelamin: 'Perempuan',
+          alamat: '123123132',
+          status_pernikahan: 'Cerai',
+          jabatan_saat_ini: 'Program Manager',
+          manager_id: null,
+          tanggal_mulai_kerja: '2025-06-23',
+          tingkat_pendidikan: 'S1',
+          gaji_pokok: 10000000.00,
+          tunjangan: 0.00,
+          bonus: 0.00,
+          nomor_bpjs_kesehatan: '124243234',
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-23 02:36:32',
+          updated_at: '2025-06-23 02:55:42'
+        },
+        {
+          id: 14,
+          nama_lengkap: 'Joe Michael Somopawiro',
+          nik: '1231231231231231',
+          nip: '1231231',
+          tanggal_lahir: '2025-06-23',
+          jenis_kelamin: 'Laki-laki',
+          alamat: '123123123',
+          status_pernikahan: 'Menikah',
+          jabatan_saat_ini: 'Editor',
+          manager_id: 13,
+          tanggal_mulai_kerja: '2025-06-23',
+          tingkat_pendidikan: 'S3',
+          gaji_pokok: 100000.00,
+          tunjangan: 10000.00,
+          bonus: 1000000.00,
+          nomor_bpjs_kesehatan: null,
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-23 04:43:21',
+          updated_at: '2025-06-23 04:43:21'
+        },
+        {
+          id: 18,
+          nama_lengkap: 'Daniel Luther Somopawiro',
+          nik: '9879879879879879',
+          nip: '123123176',
+          tanggal_lahir: '2025-06-23',
+          jenis_kelamin: 'Laki-laki',
+          alamat: '123123123',
+          status_pernikahan: 'Menikah',
+          jabatan_saat_ini: 'Finance',
+          manager_id: 8,
+          tanggal_mulai_kerja: '2025-06-23',
+          tingkat_pendidikan: 'S3',
+          gaji_pokok: 100000.00,
+          tunjangan: 10000.00,
+          bonus: 1000000.00,
+          nomor_bpjs_kesehatan: null,
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-23 04:43:21',
+          updated_at: '2025-06-23 04:43:21'
+        },
+        {
+          id: 19,
+          nama_lengkap: 'Natanael',
+          nik: '6782167281938738',
+          nip: '78327832',
+          tanggal_lahir: '2024-06-07',
+          jenis_kelamin: 'Laki-laki',
+          alamat: 'bukit duri',
+          status_pernikahan: 'Belum Menikah',
+          jabatan_saat_ini: 'Social Media',
+          manager_id: 23,
+          tanggal_mulai_kerja: '2025-06-02',
+          tingkat_pendidikan: 'S1',
+          gaji_pokok: 8893232.00,
+          tunjangan: 9300.00,
+          bonus: 300.00,
+          nomor_bpjs_kesehatan: '9320',
+          nomor_bpjs_ketenagakerjaan: '9320',
+          npwp: '932',
+          nomor_kontrak: '032',
+          tanggal_kontrak_berakhir: '2025-08-04',
+          created_at: '2025-06-23 14:35:00',
+          updated_at: '2025-06-23 14:35:00'
+        },
+        {
+          id: 20,
+          nama_lengkap: 'Albert',
+          nik: '6378329932932923',
+          nip: '932932',
+          tanggal_lahir: '2023-11-07',
+          jenis_kelamin: 'Laki-laki',
+          alamat: 'jakarta',
+          status_pernikahan: 'Belum Menikah',
+          jabatan_saat_ini: 'General Affairs',
+          manager_id: 8,
+          tanggal_mulai_kerja: '2025-06-02',
+          tingkat_pendidikan: 'S1',
+          gaji_pokok: 100000.00,
+          tunjangan: 0.00,
+          bonus: 0.00,
+          nomor_bpjs_kesehatan: null,
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-24 06:52:05',
+          updated_at: '2025-06-24 06:52:05'
+        },
+        {
+          id: 21,
+          nama_lengkap: 'Timothy',
+          nik: '8272739292010101',
+          nip: null,
+          tanggal_lahir: '2025-06-05',
+          jenis_kelamin: 'Laki-laki',
+          alamat: 'bekasi',
+          status_pernikahan: 'Belum Menikah',
+          jabatan_saat_ini: 'Office Assistant',
+          manager_id: 8,
+          tanggal_mulai_kerja: '2025-05-29',
+          tingkat_pendidikan: 'S1',
+          gaji_pokok: 900000.00,
+          tunjangan: 0.00,
+          bonus: 0.00,
+          nomor_bpjs_kesehatan: null,
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-26 02:33:01',
+          updated_at: '2025-06-26 02:33:01'
+        },
+        {
+          id: 23,
+          nama_lengkap: 'Steven Mandey',
+          nik: '7178487865416789',
+          nip: '9891818',
+          tanggal_lahir: '2025-06-23',
+          jenis_kelamin: 'Laki-laki',
+          alamat: 'bandung',
+          status_pernikahan: 'Belum Menikah',
+          jabatan_saat_ini: 'Distribution Manager',
+          manager_id: null,
+          tanggal_mulai_kerja: '2025-06-23',
+          tingkat_pendidikan: 'S1',
+          gaji_pokok: 10000000.00,
+          tunjangan: 0.00,
+          bonus: 0.00,
+          nomor_bpjs_kesehatan: '124243234',
+          nomor_bpjs_ketenagakerjaan: null,
+          npwp: null,
+          nomor_kontrak: null,
+          tanggal_kontrak_berakhir: null,
+          created_at: '2025-06-23 02:36:32',
+          updated_at: '2025-06-23 02:55:42'
+        }
+      ];
+    },
+    
     async fetchEmployees() {
       try {
-        const response = await axios.get('/ga/employees')
-        this.employees = response.data.data
+        const response = await axios.get('/api/employees');
+        this.employees = response.data.data || response.data;
       } catch (error) {
-        console.error('Error fetching employees:', error)
-        this.employees = []
+        console.warn('Error fetching employees:', error.message);
+        this.employees = [];
       }
     },
     
     async fetchReflections() {
       try {
-        const response = await axios.get('/ga/morning-reflections')
-        this.reflections = response.data.data
+        // Untuk sementara, gunakan data lokal karena backend belum ada
+        const localReflections = JSON.parse(localStorage.getItem('reflections') || '[]');
+        this.reflections = localReflections;
       } catch (error) {
         console.error('Error fetching reflections:', error)
         this.reflections = []
@@ -134,8 +334,9 @@ export const useGaStore = defineStore('ga', {
     async fetchDashboardAttendances() {
       this.dashboardLoading = true
       try {
-        const response = await axios.get('/ga/dashboard/attendances')
-        this.dashboardAttendances = response.data.data
+        // Untuk sementara, gunakan data lokal karena backend belum ada
+        const localAttendances = JSON.parse(localStorage.getItem('dashboardAttendances') || '[]');
+        this.dashboardAttendances = localAttendances;
       } catch (error) {
         console.error('Error fetching dashboard attendances:', error)
         this.dashboardAttendances = []
@@ -185,16 +386,72 @@ export const useGaStore = defineStore('ga', {
     
     // Fetch morning reflection history
     async fetchMorningReflectionHistory() {
-      this.loading = true
       try {
-        const response = await axios.get('/ga/dashboard/morning-reflection-history')
-        this.morningReflectionHistory = response.data.data
-        return this.morningReflectionHistory
+        const response = await morningReflectionService.getTodayAttendance(10);
+        this.morningReflectionHistory = response.data || [];
       } catch (error) {
-        console.error('Error fetching morning reflection history:', error)
-        return []
-      } finally {
-        this.loading = false
+        console.warn('Error fetching morning reflection history:', error.message);
+        // Fallback: jika error role, gunakan data kosong
+        if (error.message.includes('Access denied') || error.message.includes('403')) {
+          console.log('User tidak memiliki akses GA, menggunakan data kosong');
+          this.morningReflectionHistory = [];
+        } else {
+          this.morningReflectionHistory = [];
+        }
+      }
+    },
+    
+    // Record worship morning attendance
+    async recordWorshipAttendance(attendanceData) {
+      try {
+        const userId = attendanceData.user_id;
+        if (!userId) {
+          throw new Error('User ID tidak ditemukan');
+        }
+
+        // Gunakan service untuk absen dengan validasi
+        const result = await morningReflectionService.attendWithValidation(userId, this.testingMode);
+        
+        if (result.success) {
+          // Refresh data setelah berhasil mencatat
+          await this.fetchMorningReflectionHistory();
+          return { success: true, message: 'Kehadiran berhasil dicatat' };
+        } else {
+          throw new Error(result.message || 'Gagal mencatat kehadiran');
+        }
+      } catch (error) {
+        console.error('Error recording worship attendance:', error);
+        return { success: false, message: error.message };
+      }
+    },
+    
+    // Add user to employees data
+    async addUserToEmployees(userId) {
+      try {
+        // Ambil data user dari localStorage
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
+        
+        const user = JSON.parse(userStr);
+        
+        // Cek apakah user sudah ada di employees
+        const existingEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+        const userExists = existingEmployees.find(emp => emp.id === userId);
+        
+        if (!userExists) {
+          // Tambahkan user baru
+          const newEmployee = {
+            id: userId,
+            nama_lengkap: user.nama_lengkap || user.name || 'Unknown User',
+            jabatan: user.jabatan || user.role || 'Employee'
+          };
+          
+          existingEmployees.push(newEmployee);
+          localStorage.setItem('employees', JSON.stringify(existingEmployees));
+          this.employees = existingEmployees;
+        }
+      } catch (error) {
+        console.error('Error adding user to employees:', error);
       }
     },
     
@@ -204,10 +461,7 @@ export const useGaStore = defineStore('ga', {
       try {
         const response = await axios.post('/ga/morning-reflections', attendanceData)
         // Add the new attendance to the history
-        if (response.data.success) {
-          // Refresh the morning reflection history
           await this.fetchMorningReflectionHistory()
-        }
         return response.data
       } catch (error) {
         console.error('Error submitting attendance:', error)
