@@ -417,7 +417,10 @@ export default {
       },
       notifications: [],
       loading: false,
-      notificationInterval: null
+      notificationInterval: null,
+      // Reactive user data untuk auto-update
+      userProfileData: null,
+      profileUpdateKey: 0 // Key untuk force re-render
     }
   },
   computed: {
@@ -480,13 +483,30 @@ export default {
       }
     },
     userAvatar() {
+      // Force reactivity dengan profileUpdateKey
+      this.profileUpdateKey
+      
+      // Gunakan reactive data jika tersedia
+      if (this.userProfileData && this.userProfileData.avatar) {
+        return this.userProfileData.avatar
+      }
+      
       try {
         const userStr = localStorage.getItem('user')
         if (!userStr || userStr === 'undefined' || userStr === 'null') {
           return null
         }
         const user = JSON.parse(userStr)
-        return user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
+        const avatar = user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
+        
+        // Update reactive data
+        if (!this.userProfileData) {
+          this.userProfileData = { avatar }
+        } else {
+          this.userProfileData.avatar = avatar
+        }
+        
+        return avatar
       } catch (error) {
         console.warn('Error parsing user data:', error)
         return null
@@ -620,12 +640,32 @@ export default {
     },
     handleStorageChange(event) {
       if (event.key === 'user') {
+        this.loadUserData()
+        this.profileUpdateKey++
         this.$forceUpdate()
       }
     },
     handleProfileUpdate(event) {
       // Handle profile updates from Profile component
-      this.refreshUserData()
+      this.loadUserData()
+      this.profileUpdateKey++
+      this.$forceUpdate()
+    },
+    loadUserData() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+          const user = JSON.parse(userStr)
+          this.userProfileData = {
+            avatar: user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : null
+          }
+        } else {
+          this.userProfileData = { avatar: null }
+        }
+      } catch (error) {
+        console.warn('Error loading user data:', error)
+        this.userProfileData = { avatar: null }
+      }
     },
     async refreshUserData() {
       try {
@@ -743,6 +783,9 @@ export default {
   async mounted() {
     // Load theme preference
     this.loadThemePreference()
+    
+    // Load initial user data
+    this.loadUserData()
     
     // Refresh user data saat komponen dimount
     await this.refreshUserData()

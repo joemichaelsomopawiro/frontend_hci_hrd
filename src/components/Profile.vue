@@ -309,14 +309,12 @@ export default {
         const result = await authService.uploadProfilePicture(file)
         
         if (result.success) {
-          // Show success message
-          this.$nextTick(() => {
-            alert('Foto profil berhasil diubah!')
-          })
-          
           // Update reactive data immediately
           this.loadUserData()
           this.profileUpdateKey++
+          
+          // Force update komponen
+          this.$forceUpdate()
           
           // Dispatch custom event untuk komponen lain
           window.dispatchEvent(new CustomEvent('profile-updated', {
@@ -325,6 +323,11 @@ export default {
           
           // Emit event untuk komponen parent jika ada
           this.$emit('profile-updated', result.data)
+          
+          // Show success message setelah update
+          this.$nextTick(() => {
+            alert('Foto profil berhasil diubah!')
+          })
           
         } else {
           alert(result.message || 'Gagal mengunggah foto profil')
@@ -350,14 +353,12 @@ export default {
         const result = await authService.deleteProfilePicture()
         
         if (result.success) {
-          // Show success message
-          this.$nextTick(() => {
-            alert('Foto profil berhasil dihapus!')
-          })
-          
           // Update reactive data immediately
           this.loadUserData()
           this.profileUpdateKey++
+          
+          // Force update komponen
+          this.$forceUpdate()
           
           // Dispatch custom event untuk komponen lain
           window.dispatchEvent(new CustomEvent('profile-updated', {
@@ -366,6 +367,11 @@ export default {
           
           // Emit event untuk komponen parent jika ada
           this.$emit('profile-updated', result.data)
+          
+          // Show success message setelah update
+          this.$nextTick(() => {
+            alert('Foto profil berhasil dihapus!')
+          })
           
         } else {
           alert(result.message || 'Gagal menghapus foto profil')

@@ -214,55 +214,88 @@ class AuthService {
   }
 
   // Upload profile picture
-  async uploadProfilePicture(file) {
-    try {
-      const formData = new FormData()
-      formData.append('profile_picture', file)
-      
-      const response = await apiClient.post('/auth/upload-profile-picture', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      
-      const currentUser = this.getCurrentUser()
-      if (currentUser && response.data.data?.profile_picture_url) {
-        currentUser.profile_picture = response.data.data.profile_picture_url
-        localStorage.setItem('user', JSON.stringify(currentUser))
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'user',
-          newValue: JSON.stringify(currentUser)
-        }))
-      }
-      
-      return { success: true, data: currentUser }
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Gagal mengunggah foto profil' }
-    }
-  }
+  async uploadProfilePicture(file) {
+    try {
+      const formData = new FormData()
+      formData.append('profile_picture', file)
+      
+      const response = await apiClient.post('/auth/upload-profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      // Fetch updated user data from server
+      const userResult = await this.fetchUserProfile()
+      if (userResult.success) {
+        localStorage.setItem('user', JSON.stringify(userResult.data))
+        
+        // Dispatch storage event untuk komponen lain
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(userResult.data)
+        }))
+        
+        // Dispatch custom event untuk komponen yang mendengarkan profile-updated
+        window.dispatchEvent(new CustomEvent('profile-updated', {
+          detail: userResult.data
+        }))
+        
+        return { success: true, data: userResult.data }
+      }
+      
+      return { success: true, data: response.data.data }
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Gagal mengunggah foto profil' }
+    }
+  }
 
   // Delete profile picture
-  async deleteProfilePicture() {
-    try {
-      await apiClient.delete('/auth/delete-profile-picture')
-      
-      const currentUser = this.getCurrentUser()
-      if (currentUser) {
-        currentUser.profile_picture = null
-        localStorage.setItem('user', JSON.stringify(currentUser))
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'user',
-          newValue: JSON.stringify(currentUser)
-        }))
-      }
-      
-      return { success: true, data: currentUser }
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Gagal menghapus foto profil' }
-    }
-  }
+  async deleteProfilePicture() {
+    try {
+      await apiClient.delete('/auth/delete-profile-picture')
+      
+      // Fetch updated user data from server
+      const userResult = await this.fetchUserProfile()
+      if (userResult.success) {
+        localStorage.setItem('user', JSON.stringify(userResult.data))
+        
+        // Dispatch storage event untuk komponen lain
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(userResult.data)
+        }))
+        
+        // Dispatch custom event untuk komponen yang mendengarkan profile-updated
+        window.dispatchEvent(new CustomEvent('profile-updated', {
+          detail: userResult.data
+        }))
+        
+        return { success: true, data: userResult.data }
+      }
+      
+      // Fallback jika fetch gagal
+      const currentUser = this.getCurrentUser()
+      if (currentUser) {
+        currentUser.profile_picture = null
+        localStorage.setItem('user', JSON.stringify(currentUser))
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(currentUser)
+        }))
+        
+        // Dispatch custom event untuk komponen yang mendengarkan profile-updated
+        window.dispatchEvent(new CustomEvent('profile-updated', {
+          detail: currentUser
+        }))
+      }
+      
+      return { success: true, data: currentUser }
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Gagal menghapus foto profil' }
+    }
+  }
 
   // Refresh user data in localStorage by fetching from API
   async refreshUserData() {
